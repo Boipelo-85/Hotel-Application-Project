@@ -24,7 +24,7 @@ export function validateParams(schema: ZodType): RequestHandler {
   };
 }
 
-export function validateQuery(schema: ZodType): RequestHandler {
+export function validateQuery<T extends Record<string, unknown>>(schema: ZodType<T>): RequestHandler {
   return (request, _response, next) => {
     const result = schema.safeParse(request.query);
     if (!result.success) {
