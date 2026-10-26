@@ -32,7 +32,7 @@ export async function updateUserProfile(
 
 export async function updateUserRole(
   userId: string,
-  role: 'customer' | 'hotel_partner',
+  role: 'customer' | 'branch_manager',
 ): Promise<AuthenticatedUser> {
   const result = await saveUserRole(userId, role);
   const user = result.rows[0];

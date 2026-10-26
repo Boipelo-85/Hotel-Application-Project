@@ -9,7 +9,7 @@ import {
   createBooking,
   deleteBookingController,
   getBooking,
-  listHotelBookingsController,
+  listBranchBookingsController,
   getBookings,
   updateBooking,
   updateBookingStatusController,
@@ -40,12 +40,6 @@ export function bookingRoutes(config: AppConfig, cookieName: string): Router {
   router.post('/', validateBody(createBookingSchema), createBooking);
   router.get('/', getBookings);
   router.get('/:bookingId', validateParams(idParams), getBooking);
-  router.get(
-    '/hotels/:hotelId',
-    requireRoles('admin', 'hotel_partner'),
-    validateParams(z.object({ hotelId: z.string().regex(/^\d+$/) })),
-    listHotelBookingsController,
-  );
   router.post(
     '/:bookingId/cancel',
     validateParams(idParams),
@@ -54,7 +48,7 @@ export function bookingRoutes(config: AppConfig, cookieName: string): Router {
   router.delete('/:bookingId', validateParams(idParams), deleteBookingController);
   router.patch(
     '/:bookingId/status',
-    requireRoles('admin', 'hotel_partner'),
+    requireRoles('admin', 'branch_manager'),
     validateParams(idParams),
     validateBody(statusSchema),
     updateBookingStatusController,

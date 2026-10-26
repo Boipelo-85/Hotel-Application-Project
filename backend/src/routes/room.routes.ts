@@ -22,7 +22,7 @@ const createRoomSchema = z.object({
   price: z.number().nonnegative().max(1_000_000),
   currency: z.string().regex(/^[A-Za-z]{3}$/).optional(),
 }).strict();
-const createRoomAtRootSchema = createRoomSchema.extend({ hotelId: id });
+const createRoomAtRootSchema = createRoomSchema.extend({ branchId: id });
 const updateRoomSchema = z.object({
   roomType: z.string().trim().min(1).max(120).optional(),
   description: z.string().max(5000).nullable().optional(),
@@ -38,47 +38,47 @@ const availabilitySchema = z.object({
   guests: z.coerce.number().int().min(1),
   quantity: z.coerce.number().int().min(1).default(1),
 }).strict();
-const roomsQuerySchema = z.object({ hotelId: id.optional() }).strict();
+const roomsQuerySchema = z.object({ branchId: id.optional() }).strict();
 
 export function roomRoutes(_config: AppConfig, cookieName: string): Router {
   const router = Router();
   const auth = createAuthMiddleware(cookieName);
 
-  router.get('/', validateQuery(roomsQuerySchema), getRooms);
-  router.get('/hotels/:hotelId/rooms', validateParams(z.object({ hotelId: id })), getRooms);
+  router.get('/rooms', validateQuery(roomsQuerySchema), getRooms);
+  router.get('/branches/:branchId/rooms', validateParams(z.object({ branchId: id })), getRooms);
   router.post(
-    '/',
+    '/rooms',
     auth,
-    requireRoles('admin', 'hotel_partner'),
+    requireRoles('admin', 'branch_manager'),
     validateBody(createRoomAtRootSchema),
     createRoom,
   );
   router.post(
-    '/hotels/:hotelId/rooms',
+    '/branches/:branchId/rooms',
     auth,
-    requireRoles('admin', 'hotel_partner'),
-    validateParams(z.object({ hotelId: id })),
+    requireRoles('admin', 'branch_manager'),
+    validateParams(z.object({ branchId: id })),
     validateBody(createRoomSchema),
     createRoom,
   );
   router.get(
-    '/:roomId/availability',
+    '/rooms/:roomId/availability',
     validateQuery(availabilitySchema),
     checkAvailabilityController,
   );
-  router.get('/:roomId', validateParams(z.object({ roomId: id })), getRoomById);
+  router.get('/rooms/:roomId', validateParams(z.object({ roomId: id })), getRoomById);
   router.patch(
-    '/:roomId',
+    '/rooms/:roomId',
     auth,
-    requireRoles('admin', 'hotel_partner'),
+    requireRoles('admin', 'branch_manager'),
     validateParams(z.object({ roomId: id })),
     validateBody(updateRoomSchema),
     updateRoom,
   );
   router.delete(
-    '/:roomId',
+    '/rooms/:roomId',
     auth,
-    requireRoles('admin', 'hotel_partner'),
+    requireRoles('admin', 'branch_manager'),
     validateParams(z.object({ roomId: id })),
     deleteRoomController,
   );

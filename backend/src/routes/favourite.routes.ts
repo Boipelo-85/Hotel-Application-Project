@@ -9,8 +9,8 @@ import {
   removeFavourite,
 } from '../controllers/favourite.controller.js';
 
-const hotelIdParams = z.object({ hotelId: z.string().regex(/^\d+$/) });
-const createFavouriteSchema = z.object({ hotelId: z.string().regex(/^\d+$/) }).strict();
+const branchIdParams = z.object({ branchId: z.string().regex(/^\d+$/) });
+const createFavouriteSchema = z.object({ branchId: z.string().regex(/^\d+$/) }).strict();
 
 export function favouriteRoutes(_config: AppConfig, cookieName: string): Router {
   const router = Router();
@@ -18,6 +18,6 @@ export function favouriteRoutes(_config: AppConfig, cookieName: string): Router 
   router.use(auth);
   router.get('/', getFavourites);
   router.post('/', validateBody(createFavouriteSchema), addFavourite);
-  router.delete('/:hotelId', validateParams(hotelIdParams), removeFavourite);
+  router.delete('/:branchId', validateParams(branchIdParams), removeFavourite);
   return router;
 }

@@ -14,18 +14,18 @@ function authenticated(request: Parameters<RequestHandler>[0]) {
 }
 
 export const listRoomsController: RequestHandler = async (request, response) => {
-  const routeHotelId = request.params.hotelId;
-  const hotelId = (typeof routeHotelId === 'string' ? routeHotelId : undefined) ??
-    (request.validatedQuery as { hotelId?: string } | undefined)?.hotelId;
-  response.json({ rooms: await listRooms(hotelId) });
+  const routeBranchId = request.params.branchId;
+  const branchId = (typeof routeBranchId === 'string' ? routeBranchId : undefined) ??
+    (request.validatedQuery as { branchId?: string } | undefined)?.branchId;
+  response.json({ rooms: await listRooms(branchId) });
 };
 
 export const createRoomController: RequestHandler = async (request, response) => {
-  const routeHotelId = request.params.hotelId;
-  const hotelId = (typeof routeHotelId === 'string' ? routeHotelId : undefined) ?? request.body.hotelId;
-  if (!hotelId) throw new AppError(400, 'hotelId is required', 'INVALID_DATA');
+  const routeBranchId = request.params.branchId;
+  const branchId = (typeof routeBranchId === 'string' ? routeBranchId : undefined) ?? request.body.branchId;
+  if (!branchId) throw new AppError(400, 'branchId is required', 'INVALID_DATA');
   response.status(201).json({
-    room: await createRoomService(hotelId, authenticated(request), request.body),
+    room: await createRoomService(branchId, authenticated(request), request.body),
   });
 };
 

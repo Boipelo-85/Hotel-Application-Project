@@ -12,16 +12,16 @@ export async function createAmenity(name: string, category: string | null) {
   );
 }
 
-export async function replaceHotelAmenities(
+export async function replaceBranchAmenities(
   client: PoolClient,
-  hotelId: string,
+  branchId: string,
   amenityIds: string[],
 ) {
-  await client.query('DELETE FROM hotel_amenities WHERE hotel_id = $1', [hotelId]);
+  await client.query('DELETE FROM branch_amenities WHERE branch_id = $1', [branchId]);
   const result = await client.query(
-    `INSERT INTO hotel_amenities (hotel_id, amenity_id)
+    `INSERT INTO branch_amenities (branch_id, amenity_id)
      SELECT $1, unnest($2::BIGINT[])`,
-    [hotelId, amenityIds],
+    [branchId, amenityIds],
   );
   return result.rowCount ?? 0;
 }

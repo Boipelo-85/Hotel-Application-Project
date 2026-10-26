@@ -3,11 +3,12 @@ import type { PoolClient } from 'pg';
 import type { BookingRow } from '../types/models.js';
 
 export async function findBookingById(bookingId: string) {
-  return query<BookingRow & { partner_user_id: string | null }>(
-    `SELECT b.*, h.name AS hotel_name, r.room_type, h.partner_user_id
-     FROM bookings b
-     JOIN rooms r ON r.id = b.room_id
-     JOIN hotels h ON h.id = r.hotel_id
+  return query<BookingRow & { manager_user_id: string | null }>(
+    `SELECT b.*, h.name AS branch_name, r.room_type,
+           h.manager_user_id
+    FROM bookings b
+    JOIN rooms r ON r.id = b.room_id
+    JOIN branches h ON h.id = r.branch_id
      WHERE b.id = $1`,
     [bookingId],
   );
@@ -30,18 +31,20 @@ export async function createBookingRecord(
        booking_reference, user_id, room_id, check_in, check_out, guests, quantity,
        price_per_night_snapshot, total_amount, currency, status, expires_at
      )
-     SELECT $1, $2, r.id, $4::DATE, $5::DATE, $6, $7, r.price,
-            r.price * $7 * ($5::DATE - $4::DATE), r.currency,
+     SELECT $1, $2, r.id, $4::DATE, $5::DATE, $6, $7::INTEGER, r.price,
+            r.price * $7::INTEGER * ($5::DATE - $4::DATE), r.currency,
             'pending', CURRENT_TIMESTAMP + INTERVAL '15 minutes'
      FROM rooms r WHERE r.id = $3 RETURNING *`,
     [input.reference, input.userId, input.roomId, input.checkIn, input.checkOut, input.guests, input.quantity],
   );
 }
 
-export async function findHotelPartner(client: PoolClient, hotelId: string) {
-  return client.query<{ partner_user_id: string | null }>(
-    'SELECT partner_user_id FROM hotels WHERE id = $1',
-    [hotelId],
+export async function findBranchManager(client: PoolClient, branchId: string) {
+  return client.query<{ manager_user_id: string | null }>(
+    `SELECT h.manager_user_id
+     FROM branches h
+     WHERE h.id = $1`,
+    [branchId],
   );
 }
 
@@ -61,37 +64,42 @@ export async function insertBookingNotification(
 
 export async function listUserBookings(userId: string, isAdmin: boolean) {
   return query<BookingRow>(
-    `SELECT b.*, h.name AS hotel_name, r.room_type
+    `SELECT b.*, h.name AS branch_name, r.room_type
      FROM bookings b JOIN rooms r ON r.id = b.room_id
-     JOIN hotels h ON h.id = r.hotel_id
+     JOIN branches h ON h.id = r.branch_id
      WHERE ($1::BOOLEAN OR b.user_id = $2)
      ORDER BY b.created_at DESC`,
     [isAdmin, userId],
   );
 }
 
-export async function listBookingsForHotel(hotelId: string) {
+export async function listBookingsForBranch(branchId: string) {
   return query<BookingRow>(
-    `SELECT b.*, h.name AS hotel_name, r.room_type
+    `SELECT b.*, h.name AS branch_name, r.room_type
      FROM bookings b JOIN rooms r ON r.id = b.room_id
-     JOIN hotels h ON h.id = r.hotel_id
+     JOIN branches h ON h.id = r.branch_id
      WHERE h.id = $1 ORDER BY b.created_at DESC`,
-    [hotelId],
+    [branchId],
   );
 }
 
-export async function findHotelPartnerAccess(hotelId: string, userId: string) {
-  return query('SELECT 1 FROM hotels WHERE id = $1 AND partner_user_id = $2', [hotelId, userId]);
+export async function findBranchManagerAccess(branchId: string, userId: string) {
+  return query(
+    `SELECT 1 FROM branches h
+     WHERE h.id = $1 AND h.manager_user_id = $2`,
+    [branchId, userId],
+  );
 }
 
 export async function findBookingForUpdate(client: PoolClient, bookingId: string) {
   return client.query<BookingRow>('SELECT * FROM bookings WHERE id = $1 FOR UPDATE', [bookingId]);
 }
 
-export async function findPartnerAccessToRoom(client: PoolClient, roomId: string, userId: string) {
+export async function findManagerAccessToRoom(client: PoolClient, roomId: string, userId: string) {
   return client.query(
-    `SELECT 1 FROM rooms r JOIN hotels h ON h.id = r.hotel_id
-     WHERE r.id = $1 AND h.partner_user_id = $2`,
+    `SELECT 1 FROM rooms r
+     JOIN branches h ON h.id = r.branch_id
+     WHERE r.id = $1 AND h.manager_user_id = $2`,
     [roomId, userId],
   );
 }

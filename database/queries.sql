@@ -18,9 +18,9 @@ WHERE r.id = $1
   AND r.availability = TRUE;
 
 -- User booking history. Supply the authenticated user id.
-SELECT b.*, h.name AS hotel_name, r.room_type
-FROM bookings b
-JOIN rooms r ON r.id = b.room_id
-JOIN hotels h ON h.id = r.hotel_id
-WHERE b.user_id = $1
-ORDER BY b.created_at DESC;
+SELECT bk.*, br.name AS branch_name, r.room_type
+FROM bookings bk
+JOIN rooms r ON r.id = bk.room_id
+JOIN branches br ON br.id = r.branch_id
+WHERE bk.user_id = $1
+ORDER BY bk.created_at DESC;

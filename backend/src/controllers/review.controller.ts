@@ -3,12 +3,12 @@ import { AppError, getRouteParam } from '../utils/errors.js';
 import {
   createReview as createReviewService,
   deleteReview as deleteReviewService,
-  getHotelReviews as getHotelReviewsService,
+  getBranchReviews as getBranchReviewsService,
   updateReview as updateReviewService,
 } from '../services/review.service.js';
 
 export const listHotelReviewsController: RequestHandler = async (request, response) => {
-  response.json({ reviews: await getHotelReviewsService(getRouteParam(request, 'hotelId')) });
+  response.json({ reviews: await getBranchReviewsService(getRouteParam(request, 'branchId')) });
 };
 
 export const createReviewController: RequestHandler = async (request, response) => {

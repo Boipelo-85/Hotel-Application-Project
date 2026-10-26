@@ -49,9 +49,15 @@ test('serves health checks and rejects cross-origin state-changing requests', as
       assert.equal(protectedRoute.status, 401, `${path} should require authentication`);
     }
 
-    const invalidRoomFilter = await fetch(`${baseUrl}/api/v1/rooms?hotelId=not-a-number`);
+    const invalidRoomFilter = await fetch(`${baseUrl}/api/v1/rooms?branchId=not-a-number`);
     assert.equal(invalidRoomFilter.status, 400);
     assert.equal((await invalidRoomFilter.json()).error, 'VALIDATION_ERROR');
+
+    const invalidSearch = await fetch(
+      `${baseUrl}/api/v1/search?destination=Pretoria&checkIn=2026-11-01&checkOut=2026-11-02&rooms=0&guests=2`,
+    );
+    assert.equal(invalidSearch.status, 400);
+    assert.equal((await invalidSearch.json()).error, 'VALIDATION_ERROR');
 
     const missingRoute = await fetch(`${baseUrl}/api/v1/does-not-exist?private=value`);
     assert.equal(missingRoute.status, 404);

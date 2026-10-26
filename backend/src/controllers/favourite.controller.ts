@@ -17,12 +17,12 @@ export const listFavouritesController: RequestHandler = async (request, response
 
 export const addFavouriteController: RequestHandler = async (request, response) => {
   const id = userId(request);
-  const result = await addFavouriteService(id, request.body.hotelId);
+  const result = await addFavouriteService(id, request.body.branchId);
   response.status(result.created ? 201 : 200).json({ favourite: result.favourite });
 };
 
 export const deleteFavouriteController: RequestHandler = async (request, response) => {
-  await removeFavouriteService(userId(request), getRouteParam(request, 'hotelId'));
+  await removeFavouriteService(userId(request), getRouteParam(request, 'branchId'));
   response.status(204).end();
 };
 

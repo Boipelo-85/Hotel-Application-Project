@@ -4,7 +4,7 @@ import { AppError } from '../utils/errors.js';
 
 export interface RoomInventory {
   id: string;
-  hotel_id: string;
+  branch_id: string;
   capacity: number;
   quantity: number;
   price: string;

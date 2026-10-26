@@ -1,16 +1,16 @@
 import { query } from '../config/database.js';
 import type { PoolClient } from 'pg';
 
-export async function listHotelReviews(hotelId: string) {
+export async function listBranchReviews(branchId: string) {
   return query(
-    `SELECT rv.id, rv.user_id, u.name AS user_name, rv.hotel_id, rv.rating, rv.comment,
+    `SELECT rv.id, rv.user_id, u.name AS user_name, rv.branch_id, rv.rating, rv.comment,
             rv.created_at, rv.updated_at, rv.deleted_at, h.publication_status
      FROM reviews rv
      JOIN users u ON u.id = rv.user_id
-     JOIN hotels h ON h.id = rv.hotel_id
-     WHERE rv.hotel_id = $1
+     JOIN branches h ON h.id = rv.branch_id
+     WHERE rv.branch_id = $1
      ORDER BY rv.created_at DESC`,
-    [hotelId],
+    [branchId],
   );
 }
 
@@ -18,14 +18,14 @@ export async function findBookingForReview(client: PoolClient, bookingId: string
   return client.query<{
     id: string;
     user_id: string;
-    hotel_id: string;
+    branch_id: string;
     status: string;
     check_out: string;
   }>(
-    `SELECT b.id, b.user_id, h.id AS hotel_id, b.status, b.check_out
+    `SELECT b.id, b.user_id, h.id AS branch_id, b.status, b.check_out
      FROM bookings b
      JOIN rooms r ON r.id = b.room_id
-     JOIN hotels h ON h.id = r.hotel_id
+     JOIN branches h ON h.id = r.branch_id
      WHERE b.id = $1
      FOR UPDATE OF b`,
     [bookingId],
@@ -35,16 +35,16 @@ export async function findBookingForReview(client: PoolClient, bookingId: string
 export async function createReview(
   client: PoolClient,
   userId: string,
-  hotelId: string,
+  branchId: string,
   bookingId: string,
   rating: number,
   comment: string | null,
 ) {
   return client.query(
-    `INSERT INTO reviews (user_id, hotel_id, booking_id, rating, comment)
+    `INSERT INTO reviews (user_id, branch_id, booking_id, rating, comment)
      VALUES ($1, $2, $3, $4, $5)
      RETURNING *`,
-    [userId, hotelId, bookingId, rating, comment],
+    [userId, branchId, bookingId, rating, comment],
   );
 }
 

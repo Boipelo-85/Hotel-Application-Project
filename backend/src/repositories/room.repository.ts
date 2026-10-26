@@ -3,7 +3,7 @@ import type { PoolClient } from 'pg';
 
 interface RoomInventoryRow {
   id: string;
-  hotel_id: string;
+  branch_id: string;
   capacity: number;
   quantity: number;
   price: string;
@@ -18,8 +18,8 @@ export async function findInventoryRoom(
 ) {
   const lockClause = lock ? 'FOR UPDATE OF r' : '';
   return client.query<RoomInventoryRow>(
-    `SELECT r.id, r.hotel_id, r.capacity, r.quantity, r.price, r.currency, r.status
-     FROM rooms r JOIN hotels h ON h.id = r.hotel_id
+    `SELECT r.id, r.branch_id, r.capacity, r.quantity, r.price, r.currency, r.status
+     FROM rooms r JOIN branches h ON h.id = r.branch_id
      WHERE r.id = $1 AND r.availability = TRUE AND h.publication_status = 'published' ${lockClause}`,
     [roomId],
   );
@@ -53,29 +53,34 @@ export async function expireRoomBookings(client: PoolClient, roomId: string) {
 
 export async function findAvailableRoom(roomId: string) {
   return query<RoomInventoryRow>(
-    `SELECT r.id, r.hotel_id, r.capacity, r.quantity, r.price, r.currency, r.status
-     FROM rooms r JOIN hotels h ON h.id = r.hotel_id
+    `SELECT r.id, r.branch_id, r.capacity, r.quantity, r.price, r.currency, r.status
+     FROM rooms r JOIN branches h ON h.id = r.branch_id
      WHERE r.id = $1 AND r.availability = TRUE AND r.status = 'active'
        AND h.publication_status = 'published'`,
     [roomId],
   );
 }
 
-export async function findHotelManager(
-  hotelId: string,
+export async function findBranchManager(
+  branchId: string,
   client: PoolClient,
   lock = false,
 ) {
-  return client.query<{ partner_user_id: string | null; currency: string }>(
-    `SELECT partner_user_id, currency FROM hotels WHERE id = $1 ${lock ? 'FOR UPDATE' : ''}`,
-    [hotelId],
+  return client.query<{
+    manager_user_id: string | null;
+    currency: string;
+  }>(
+    `SELECT h.manager_user_id, h.currency
+     FROM branches h
+     WHERE h.id = $1 ${lock ? 'FOR UPDATE OF h' : ''}`,
+    [branchId],
   );
 }
 
 export async function findRoomForUpdate(client: PoolClient, roomId: string) {
-  return client.query<{ hotel_id: string; quantity: number }>(
-    `SELECT r.hotel_id, r.quantity FROM rooms r
-     JOIN hotels h ON h.id = r.hotel_id
+  return client.query<{ branch_id: string; quantity: number }>(
+    `SELECT r.branch_id, r.quantity FROM rooms r
+     JOIN branches h ON h.id = r.branch_id
      WHERE r.id = $1 FOR UPDATE OF r, h`,
     [roomId],
   );
@@ -108,7 +113,7 @@ export async function hasBookingsExceedingCapacity(
 
 export async function insertRoom(
   client: PoolClient,
-  hotelId: string,
+  branchId: string,
   input: {
     roomType: string;
     description: string | null;
@@ -119,10 +124,10 @@ export async function insertRoom(
   },
 ) {
   return client.query(
-    `INSERT INTO rooms (hotel_id, room_type, description, capacity, quantity, price, currency, status)
+    `INSERT INTO rooms (branch_id, room_type, description, capacity, quantity, price, currency, status)
      VALUES ($1, $2, $3, $4, $5, $6, $7, 'active')
-     RETURNING id, hotel_id, room_type, description, capacity, quantity, price, currency, status`,
-    [hotelId, input.roomType, input.description, input.capacity, input.quantity, input.price, input.currency],
+     RETURNING id, branch_id, room_type, description, capacity, quantity, price, currency, status`,
+    [branchId, input.roomType, input.description, input.capacity, input.quantity, input.price, input.currency],
   );
 }
 
@@ -151,7 +156,7 @@ export async function updateRoomRecord(
        availability = CASE WHEN $9 = 'inactive' THEN FALSE WHEN $9 = 'active' THEN TRUE ELSE availability END,
        updated_at = CURRENT_TIMESTAMP
      WHERE id = $1
-     RETURNING id, hotel_id, room_type, description, capacity, quantity, price, currency, status`,
+     RETURNING id, branch_id, room_type, description, capacity, quantity, price, currency, status`,
     [
       roomId,
       input.roomType ?? null,
@@ -169,7 +174,7 @@ export async function updateRoomRecord(
 export async function findRoomById(roomId: string) {
   return query<{
     id: string;
-    hotel_id: string;
+    branch_id: string;
     room_type: string;
     description: string | null;
     capacity: number;
@@ -180,19 +185,19 @@ export async function findRoomById(roomId: string) {
     availability: boolean;
     publication_status: string;
   }>(
-    `SELECT r.id, r.hotel_id, r.room_type, r.description, r.capacity, r.quantity,
+    `SELECT r.id, r.branch_id, r.room_type, r.description, r.capacity, r.quantity,
             r.price, r.currency, r.status, r.availability,
             h.publication_status
-     FROM rooms r JOIN hotels h ON h.id = r.hotel_id
+     FROM rooms r JOIN branches h ON h.id = r.branch_id
      WHERE r.id = $1`,
     [roomId],
   );
 }
 
-export async function listRooms(hotelId?: string) {
+export async function listRooms(branchId?: string) {
   return query<{
     id: string;
-    hotel_id: string;
+    branch_id: string;
     room_type: string;
     description: string | null;
     capacity: number;
@@ -203,13 +208,13 @@ export async function listRooms(hotelId?: string) {
     availability: boolean;
     publication_status: string;
   }>(
-    `SELECT r.id, r.hotel_id, r.room_type, r.description, r.capacity,
+    `SELECT r.id, r.branch_id, r.room_type, r.description, r.capacity,
             r.quantity, r.price, r.currency, r.status, r.availability,
             h.publication_status
      FROM rooms r
-     JOIN hotels h ON h.id = r.hotel_id
-     WHERE ($1::BIGINT IS NULL OR r.hotel_id = $1)
+     JOIN branches h ON h.id = r.branch_id
+     WHERE ($1::BIGINT IS NULL OR r.branch_id = $1)
      ORDER BY r.price`,
-    [hotelId ?? null],
+    [branchId ?? null],
   );
 }

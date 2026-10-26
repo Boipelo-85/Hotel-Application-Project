@@ -1,6 +1,6 @@
 //User types
 
-export type UserRole = 'customer' | 'hotel_partner' | 'admin';
+export type UserRole = 'customer' | 'branch_manager' | 'admin';
 
 export interface AuthenticatedUser {
   id: string;
@@ -47,13 +47,13 @@ export interface BookingRow {
   updated_at: Date;
 
   // Optional fields from JOIN queries
-  hotel_name?: string;
+  branch_name?: string;
   room_type?: string;
 }
 
 //Hotel types
 
-export interface HotelRow {
+export interface BranchRow {
   id: string;
   owner_id: string;
 
@@ -78,8 +78,11 @@ export interface HotelRow {
 
 // Used for create/update requests
 
-export interface HotelInput {
+export interface BranchInput {
   name?: string;
+  managerUserId?: string | null;
+  city?: string;
+  province?: string;
   address?: string;
 
   description?: string | null;
@@ -102,7 +105,7 @@ export interface HotelInput {
 export interface RoomRow {
   id: string;
 
-  hotel_id: string;
+  branch_id: string;
 
   room_type: string;
   description: string | null;

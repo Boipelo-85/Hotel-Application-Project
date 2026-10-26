@@ -4,7 +4,7 @@ import {
   createBooking as createBookingService,
   getBooking as getBookingService,
   listBookings,
-  listHotelBookings,
+  listBranchBookings,
   modifyBooking,
   updateBookingStatus,
 } from '../services/booking.service.js';
@@ -56,10 +56,10 @@ export const modifyBookingController: RequestHandler = async (request, response)
   });
 };
 
-export const listHotelBookingsController: RequestHandler = async (request, response) => {
+export const listBranchBookingsController: RequestHandler = async (request, response) => {
   const user = authenticated(request);
   response.json({
-    bookings: await listHotelBookings(getRouteParam(request, 'hotelId'), { id: user.userId, role: user.role }),
+    bookings: await listBranchBookings(getRouteParam(request, 'branchId'), { id: user.userId, role: user.role }),
   });
 };
 

@@ -7,13 +7,13 @@ import {
   createBookingRecord,
   findBookingById,
   findBookingForUpdate,
-  findHotelPartner,
-  findHotelPartnerAccess,
-  findPartnerAccessToRoom,
+  findBranchManager,
+  findBranchManagerAccess,
+  findManagerAccessToRoom,
   hasActivePayment,
   hasSuccessfulPayment,
   insertBookingNotification,
-  listBookingsForHotel,
+  listBookingsForBranch,
   listUserBookings,
   listActivePaymentsForBooking,
   updateBookingDatesAndGuests,
@@ -74,9 +74,9 @@ export async function createBooking(userId: string, input: BookingInput): Promis
     await insertBookingNotification(client, userId, 'booking_pending',
       'Your reservation request is awaiting payment.',
       { bookingId: booking.id, bookingReference: reference });
-    const partner = await findHotelPartner(client, room.hotel_id);
-    if (partner.rows[0]?.partner_user_id) {
-      await insertBookingNotification(client, partner.rows[0].partner_user_id, 'booking_received',
+    const manager = await findBranchManager(client, room.branch_id);
+    if (manager.rows[0]?.manager_user_id) {
+      await insertBookingNotification(client, manager.rows[0].manager_user_id, 'booking_received',
         'A new reservation is awaiting payment.',
         { bookingId: booking.id, bookingReference: reference });
     }
@@ -99,22 +99,22 @@ export async function getBooking(
     !booking ||
     (booking.user_id !== user.id &&
       user.role !== 'admin' &&
-      !(user.role === 'hotel_partner' && booking.partner_user_id === user.id))
+      !(user.role === 'branch_manager' && booking.manager_user_id === user.id))
   ) {
     throw new AppError(404, 'Booking not found', 'NOT_FOUND');
   }
-  const { partner_user_id: _partnerUserId, ...publicBooking } = booking;
+  const { manager_user_id: _managerUserId, ...publicBooking } = booking;
   return publicBooking;
 }
 
-export async function listHotelBookings(
-  hotelId: string,
+export async function listBranchBookings(
+  branchId: string,
   user: Pick<AuthenticatedUser, 'id' | 'role'>,
 ): Promise<BookingRow[]> {
-  const result = await listBookingsForHotel(hotelId);
+  const result = await listBookingsForBranch(branchId);
   if (user.role !== 'admin') {
-    const hotel = await findHotelPartnerAccess(hotelId, user.id);
-    if (!hotel.rowCount) throw new AppError(404, 'Hotel not found', 'NOT_FOUND');
+    const branch = await findBranchManagerAccess(branchId, user.id);
+    if (!branch.rowCount) throw new AppError(404, 'Branch not found', 'NOT_FOUND');
   }
   return result.rows;
 }
@@ -159,7 +159,7 @@ export async function modifyBooking(
     const booking = bookingResult.rows[0];
     if (!booking) throw new AppError(404, 'Booking not found', 'NOT_FOUND');
     if (actor.role !== 'admin' && booking.user_id !== actor.id) {
-      const access = await findPartnerAccessToRoom(client, booking.room_id, actor.id);
+      const access = await findManagerAccessToRoom(client, booking.room_id, actor.id);
       if (!access.rowCount) throw new AppError(404, 'Booking not found', 'NOT_FOUND');
     }
     if (
@@ -224,7 +224,7 @@ export async function updateBookingStatus(
     const booking = result.rows[0];
     if (!booking) throw new AppError(404, 'Booking not found', 'NOT_FOUND');
     if (actor.role !== 'admin') {
-      const access = await findPartnerAccessToRoom(client, booking.room_id, actor.id);
+      const access = await findManagerAccessToRoom(client, booking.room_id, actor.id);
       if (!access.rowCount) throw new AppError(404, 'Booking not found', 'NOT_FOUND');
     }
     if (booking.status === 'cancelled' || booking.status === 'completed') {

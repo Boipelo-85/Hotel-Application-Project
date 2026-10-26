@@ -1,5 +1,7 @@
-import { Pool, type PoolClient, type QueryResult, type QueryResultRow } from 'pg';
+import { Pool, types, type PoolClient, type QueryResult, type QueryResultRow } from 'pg';
 import type { AppConfig } from './env.js';
+
+types.setTypeParser(types.builtins.DATE, (value) => value);
 
 let pool: Pool | undefined;
 

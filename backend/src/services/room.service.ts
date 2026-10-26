@@ -3,7 +3,7 @@ import type { PoolClient } from 'pg';
 import type { AuthenticatedUser } from '../types/models.js';
 import { AppError } from '../utils/errors.js';
 import {
-  findHotelManager,
+  findBranchManager,
   findRoomById,
   findRoomForUpdate,
   hasBookingsExceedingCapacity,
@@ -23,22 +23,25 @@ export interface RoomInput {
   status?: 'active' | 'inactive';
 }
 
-async function assertCanManageHotel(
-  hotelId: string,
+async function assertCanManageBranch(
+  branchId: string,
   user: Pick<AuthenticatedUser, 'id' | 'role'>,
   client: PoolClient,
   lock = false,
 ): Promise<{ currency: string }> {
-  const result = await findHotelManager(hotelId, client, lock);
-  if (!result.rows[0]) throw new AppError(404, 'Hotel not found', 'NOT_FOUND');
-  if (user.role !== 'admin' && result.rows[0].partner_user_id !== user.id) {
-    throw new AppError(403, 'You cannot manage this hotel', 'FORBIDDEN');
+  const result = await findBranchManager(branchId, client, lock);
+  if (!result.rows[0]) throw new AppError(404, 'Branch not found', 'NOT_FOUND');
+  if (
+    user.role !== 'admin' &&
+    result.rows[0].manager_user_id !== user.id
+  ) {
+    throw new AppError(403, 'You cannot manage this branch', 'FORBIDDEN');
   }
   return { currency: result.rows[0].currency };
 }
 
-export async function listRooms(hotelId?: string): Promise<unknown[]> {
-  const result = await selectRooms(hotelId);
+export async function listRooms(branchId?: string): Promise<unknown[]> {
+  const result = await selectRooms(branchId);
   return result.rows.filter(
     (room) => room.status === 'active' && room.availability && room.publication_status === 'published',
   ).map(({ availability: _availability, publication_status: _publicationStatus, ...room }) => room);
@@ -60,19 +63,19 @@ export async function getRoomById(roomId: string): Promise<unknown> {
 }
 
 export async function createRoom(
-  hotelId: string,
+  branchId: string,
   user: Pick<AuthenticatedUser, 'id' | 'role'>,
   input: Required<Pick<RoomInput, 'roomType' | 'capacity' | 'price'>> & RoomInput,
 ): Promise<unknown> {
   return inTransaction(async (client) => {
-    const hotel = await assertCanManageHotel(hotelId, user, client, true);
-    const result = await insertRoom(client, hotelId, {
+    const branch = await assertCanManageBranch(branchId, user, client, true);
+    const result = await insertRoom(client, branchId, {
       roomType: input.roomType.trim(),
       description: input.description ?? null,
       capacity: input.capacity,
       quantity: input.quantity ?? 1,
       price: input.price,
-      currency: input.currency?.toUpperCase() ?? hotel.currency,
+      currency: input.currency?.toUpperCase() ?? branch.currency,
     });
     return result.rows[0];
   });
@@ -86,7 +89,7 @@ export async function updateRoom(
   return inTransaction(async (client) => {
     const room = await findRoomForUpdate(client, roomId);
     if (!room.rows[0]) throw new AppError(404, 'Room not found', 'NOT_FOUND');
-    await assertCanManageHotel(room.rows[0].hotel_id, user, client);
+    await assertCanManageBranch(room.rows[0].branch_id, user, client);
 
     if (input.quantity !== undefined && input.quantity !== room.rows[0].quantity) {
       const reservations = await hasFutureReservations(client, roomId);

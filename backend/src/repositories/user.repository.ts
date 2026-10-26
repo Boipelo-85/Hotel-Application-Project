@@ -36,7 +36,7 @@ export async function upsertVerifiedUser(
   );
 }
 
-export async function updateUserRole(userId: string, role: 'customer' | 'hotel_partner') {
+export async function updateUserRole(userId: string, role: 'customer' | 'branch_manager') {
   return query<AuthenticatedUser>(
     `UPDATE users SET role = $2, updated_at = CURRENT_TIMESTAMP
      WHERE id = $1 AND is_active = TRUE

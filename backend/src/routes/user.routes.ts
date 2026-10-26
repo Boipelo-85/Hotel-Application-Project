@@ -10,7 +10,7 @@ const profileSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
   phone: z.string().trim().max(50).nullable().optional(),
 }).strict().refine((body) => Object.keys(body).length > 0, 'At least one field is required');
-const roleSchema = z.object({ role: z.enum(['customer', 'hotel_partner']) }).strict();
+const roleSchema = z.object({ role: z.enum(['customer', 'branch_manager']) }).strict();
 
 export function userRoutes(config: AppConfig, cookieName: string): Router {
   const router = Router();

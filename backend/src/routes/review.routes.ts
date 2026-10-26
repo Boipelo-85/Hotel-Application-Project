@@ -15,7 +15,7 @@ const reviewBody = {
   comment: z.string().max(5000).nullable().optional(),
 };
 const createReviewSchema = z.object({
-  hotelId: z.string().regex(/^\d+$/),
+  branchId: z.string().regex(/^\d+$/),
   bookingId: z.string().regex(/^\d+$/),
   ...reviewBody,
 }).strict();
@@ -24,8 +24,6 @@ const updateReviewSchema = z.object(reviewBody).strict().refine((body) => Object
 export function reviewRoutes(_config: AppConfig, cookieName: string): Router {
   const router = Router();
   const auth = createAuthMiddleware(cookieName);
-  router.get('/hotels/:hotelId', validateParams(z.object({ hotelId: z.string().regex(/^\d+$/) })), getHotelReviews);
-  router.get('/hotel/:hotelId', validateParams(z.object({ hotelId: z.string().regex(/^\d+$/) })), getHotelReviews);
   router.use(auth);
   router.post('/', validateBody(createReviewSchema), createReview);
   router.patch(
