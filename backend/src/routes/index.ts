@@ -11,6 +11,7 @@ import { reviewRoutes } from './review.routes.js';
 import { roomRoutes } from './room.routes.js';
 import { searchRoutes } from './search.routes.js';
 import { userRoutes } from './user.routes.js';
+import { adminRoutes } from './admin.routes.js';
 
 export function apiRoutes(config: AppConfig, cookieName: string): Router {
   const router = Router();
@@ -25,5 +26,6 @@ export function apiRoutes(config: AppConfig, cookieName: string): Router {
   router.use('/favourites', favouriteRoutes(config, cookieName));
   router.use('/notifications', notificationRoutes(config, cookieName));
   router.use('/payments', paymentRoutes(config, cookieName));
+  router.use('/admin', adminRoutes(config, cookieName));
   return router;
 }

@@ -27,7 +27,6 @@ export const Text : React.FC<Props> = ({variant,children,style}) => {
          if(variant === 'span'){
 
             return <span style={style}>{children}</span>
-
     }
 
   return (

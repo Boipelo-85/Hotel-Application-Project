@@ -25,7 +25,7 @@ export interface BookingRow {
   id: string;
   booking_reference: string;
 
-  user_id: string;
+  user_id: string | null;
   room_id: string;
 
   check_in: string;
@@ -128,4 +128,47 @@ export interface RoomInput {
   quantityAvailable?: number;
   pricePerNight?: number;
   currency?: string;
+}
+
+// User types for simple controller
+
+export interface User {
+  user_id: number;
+  fullname: string;
+  email: string;
+  password: string;
+  role: UserRole;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+export interface UserInput {
+  fullname: string;
+  email: string;
+  password: string;
+  role?: UserRole;
+}
+
+// Payment types
+
+export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
+
+export interface Payment {
+  payment_id: number;
+  booking_id: number;
+  amount: string;
+  currency: string;
+  status: PaymentStatus;
+  payment_method: string;
+  transaction_id?: string;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+export interface PaymentInput {
+  booking_id: number;
+  amount: number;
+  currency: string;
+  payment_method: string;
+  transaction_id?: string;
 }

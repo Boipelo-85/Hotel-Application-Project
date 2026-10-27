@@ -12,7 +12,7 @@ export const createPaymentController: RequestHandler = async (request, response)
 };
 
 export const getPaymentsByBookingController: RequestHandler = async (request, response) => {
-  const booking_id = parseInt(request.params.bookingId);
+  const booking_id = parseInt(String(request.params.bookingId));
   if (isNaN(booking_id)) {
     return response.status(400).json({ error: 'Invalid booking ID' });
   }

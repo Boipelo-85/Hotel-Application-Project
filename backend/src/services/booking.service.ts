@@ -35,7 +35,7 @@ export interface BookingChanges {
   quantity?: number;
 }
 
-export async function createBooking(userId: string, input: BookingInput): Promise<BookingRow> {
+export async function createBooking(userId: string | null, input: BookingInput): Promise<BookingRow> {
   const nights = countNights(input.checkIn, input.checkOut);
   if (!Number.isSafeInteger(input.guests) || input.guests < 1 ||
       !Number.isSafeInteger(input.quantity) || input.quantity < 1) {
@@ -71,9 +71,11 @@ export async function createBooking(userId: string, input: BookingInput): Promis
       quantity: input.quantity,
     });
     const booking = bookingResult.rows[0];
-    await insertBookingNotification(client, userId, 'booking_pending',
-      'Your reservation request is awaiting payment.',
-      { bookingId: booking.id, bookingReference: reference });
+    if (userId) {
+      await insertBookingNotification(client, userId, 'booking_pending',
+        'Your reservation request is awaiting payment.',
+        { bookingId: booking.id, bookingReference: reference });
+    }
     const manager = await findBranchManager(client, room.branch_id);
     if (manager.rows[0]?.manager_user_id) {
       await insertBookingNotification(client, manager.rows[0].manager_user_id, 'booking_received',
@@ -142,9 +144,11 @@ export async function cancelBooking(
       throw new AppError(409, 'A paid booking requires a configured refund provider before cancellation', 'REFUND_UNAVAILABLE');
     }
     const cancelled = await saveBookingStatus(client, bookingId, 'cancelled');
-    await insertBookingNotification(client, booking.user_id, 'booking_cancelled',
-      'Your reservation was cancelled.',
-      { bookingId: booking.id, bookingReference: booking.booking_reference });
+    if (booking.user_id) {
+      await insertBookingNotification(client, booking.user_id, 'booking_cancelled',
+        'Your reservation was cancelled.',
+        { bookingId: booking.id, bookingReference: booking.booking_reference });
+    }
     return cancelled.rows[0];
   });
 }
@@ -207,9 +211,11 @@ export async function modifyBooking(
       price: room.price,
       currency: room.currency,
     });
-    await insertBookingNotification(client, booking.user_id, 'booking_updated',
-      'Your reservation details were updated.',
-      { bookingId: booking.id, bookingReference: booking.booking_reference });
+    if (booking.user_id) {
+      await insertBookingNotification(client, booking.user_id, 'booking_updated',
+        'Your reservation details were updated.',
+        { bookingId: booking.id, bookingReference: booking.booking_reference });
+    }
     return updated.rows[0];
   });
 }
@@ -258,9 +264,11 @@ export async function updateBookingStatus(
       }
     }
     const updated = await saveBookingStatus(client, bookingId, status);
-    await insertBookingNotification(client, booking.user_id, `booking_${status}`,
-      `Your reservation was ${status}.`,
-      { bookingId: booking.id, bookingReference: booking.booking_reference });
+    if (booking.user_id) {
+      await insertBookingNotification(client, booking.user_id, `booking_${status}`,
+        `Your reservation was ${status}.`,
+        { bookingId: booking.id, bookingReference: booking.booking_reference });
+    }
     return updated.rows[0];
   });
 }

@@ -14,7 +14,7 @@ export const listRoomsController: RequestHandler = async (_request, response) =>
 };
 
 export const getRoomController: RequestHandler = async (request, response) => {
-  const room_id = parseInt(request.params.id);
+  const room_id = parseInt(String(request.params.id));
   if (isNaN(room_id)) {
     return response.status(400).json({ error: 'Invalid room ID' });
   }
@@ -33,7 +33,7 @@ export const createRoomController: RequestHandler = async (request, response) =>
 };
 
 export const updateRoomController: RequestHandler = async (request, response) => {
-  const room_id = parseInt(request.params.id);
+  const room_id = parseInt(String(request.params.id));
   if (isNaN(room_id)) {
     return response.status(400).json({ error: 'Invalid room ID' });
   }
@@ -47,7 +47,7 @@ export const updateRoomController: RequestHandler = async (request, response) =>
 };
 
 export const deleteRoomController: RequestHandler = async (request, response) => {
-  const room_id = parseInt(request.params.id);
+  const room_id = parseInt(String(request.params.id));
   if (isNaN(room_id)) {
     return response.status(400).json({ error: 'Invalid room ID' });
   }

@@ -18,7 +18,7 @@ export async function createBookingRecord(
   client: PoolClient,
   input: {
     reference: string;
-    userId: string;
+    userId: string | null;
     roomId: string;
     checkIn: string;
     checkOut: string;

@@ -1,34 +1,29 @@
 import type { RequestHandler } from 'express';
 import {
+  cancelBooking,
   createBooking,
-  findBookingById,
-  findAllBookings,
-  findBookingsByUserId,
-  updateBookingStatus,
-  deleteBooking,
-} from '../repositories/booking-simple.repository.js';
-import type { BookingInput } from '../types/models.js';
+  listBookings,
+} from '../services/booking.service.js';
+import { AppError, getRouteParam } from '../utils/errors.js';
+
+function authenticated(request: Parameters<RequestHandler>[0]) {
+  if (!request.auth) throw new AppError(401, 'Authentication required', 'UNAUTHENTICATED');
+  return request.auth;
+}
 
 export const listBookingsController: RequestHandler = async (request, response) => {
-  const bookings = await findAllBookings();
+  const user = authenticated(request);
+  const bookings = await listBookings({ id: user.userId, role: user.role });
   response.json({ bookings });
 };
 
 export const createBookingController: RequestHandler = async (request, response) => {
-  const booking = await createBooking(request.body as BookingInput);
+  const booking = await createBooking(request.auth?.userId ?? null, request.body);
   response.status(201).json({ booking });
 };
 
 export const deleteBookingController: RequestHandler = async (request, response) => {
-  const booking_id = parseInt(request.params.id);
-  if (isNaN(booking_id)) {
-    return response.status(400).json({ error: 'Invalid booking ID' });
-  }
-
-  const deleted = await deleteBooking(booking_id);
-  if (!deleted) {
-    return response.status(404).json({ error: 'Booking not found' });
-  }
-
+  const user = authenticated(request);
+  await cancelBooking(getRouteParam(request, 'id'), user.userId, user.role === 'admin');
   response.status(204).end();
 };

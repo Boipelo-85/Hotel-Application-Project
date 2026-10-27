@@ -6,6 +6,8 @@ import { createApp } from './app.js';
 import { pruneExpiredData } from './services/maintenance.service.js';
 import { checkDatabaseConnection } from './repositories/database-health.repository.js';
 
+//Initialze the maintenance time variable
+
 let maintenanceTimer: NodeJS.Timeout | undefined;
 const MAINTENANCE_INTERVAL_MS = 60_000;
 const SHUTDOWN_SIGNALS = [
@@ -44,6 +46,7 @@ async function start(): Promise<Server> {
 
   console.info(`Hotel API listening on port ${config.PORT}`,);
   return server;
+  
 }
 
 const serverPromise = start();
@@ -61,11 +64,7 @@ for (const signal of SHUTDOWN_SIGNALS) {
 
         await new Promise<void>(
           (resolve, reject) => {
-            server.close((error) =>
-              error
-                ? reject(error)
-                : resolve(),
-            );
+            server.close((error) => error  ? reject(error) : resolve(), );
           },
         );
         await closeDatabase();

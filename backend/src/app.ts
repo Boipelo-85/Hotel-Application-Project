@@ -1,6 +1,7 @@
 import express, { type Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import passport from 'passport';
 
 import type { AppConfig } from './config/env.js';
 
@@ -10,6 +11,7 @@ import { notFoundMiddleware } from './middleware/notFoundMiddleware.js';
 import { requestLoggerMiddleware } from './middleware/requestLoggerMiddleware.js';
 
 import { apiRoutes } from './routes/index.js';
+import { configurePassport } from './config/passport.js';
 
 const API_PREFIX = '/api/v1';
 
@@ -24,6 +26,10 @@ const ALLOWED_METHODS = [
 
 export function createApp(config: AppConfig): Express {
   const app = express();
+
+  // Configure Passport for OAuth
+  configurePassport(config);
+  app.use(passport.initialize());
 
   const cookieName =
     config.NODE_ENV === 'production'

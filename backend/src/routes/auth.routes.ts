@@ -10,6 +10,12 @@ import {
   requestCodeController,
   verifyCodeController,
 } from '../controllers/auth.controller.js';
+import {
+  facebookAuthController,
+  facebookCallbackController,
+  googleAuthController,
+  googleCallbackController,
+} from '../controllers/oauth.controller.js';
 
 const requestCodeSchema = z.object({
   email: z.string().trim().email().max(320),
@@ -25,6 +31,7 @@ export function authRoutes(config: AppConfig, cookieName: string): Router {
   const router = Router();
   const sameOrigin = createSameOriginMiddleware(config.APP_ORIGIN);
 
+  // Email OTP Authentication
   router.post(
     '/request-code',
     sameOrigin,
@@ -39,6 +46,15 @@ export function authRoutes(config: AppConfig, cookieName: string): Router {
     validateBody(verifyCodeSchema),
     verifyCodeController(config, cookieName),
   );
+
+  // Google OAuth
+  router.get('/google', googleAuthController(config));
+  router.get('/google/callback', ...googleCallbackController(config, cookieName));
+
+  // Facebook OAuth
+  router.get('/facebook', facebookAuthController(config));
+  router.get('/facebook/callback', ...facebookCallbackController(config, cookieName));
+
   router.post('/logout', sameOrigin, createAuthMiddleware(cookieName), logoutController(config, cookieName));
   router.get('/me', createAuthMiddleware(cookieName), currentUserController);
   return router;

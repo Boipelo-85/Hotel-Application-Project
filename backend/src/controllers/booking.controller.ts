@@ -16,8 +16,8 @@ function authenticated(request: Parameters<RequestHandler>[0]) {
 }
 
 export const createBookingController: RequestHandler = async (request, response) => {
-  const user = authenticated(request);
-  response.status(201).json({ booking: await createBookingService(user.userId, request.body) });
+  const userId = request.auth?.userId ?? null;
+  response.status(201).json({ booking: await createBookingService(userId, request.body) });
 };
 
 export const listBookingsController: RequestHandler = async (request, response) => {

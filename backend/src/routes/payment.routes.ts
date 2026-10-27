@@ -3,8 +3,7 @@ import { z } from 'zod';
 import type { AppConfig } from '../config/env.js';
 import { createAuthMiddleware } from '../middleware/authMiddleware.js';
 import { validateBody, validateParams } from '../middleware/validationMiddleware.js';
-import { getPayment, handleWebhook, initiatePayment, refundBookingController } from '../controllers/payment.controller.js';
-import { requireAdmin } from '../middleware/adminMiddleware.js';
+import { getPayment, handleWebhook, initiatePayment } from '../controllers/payment.controller.js';
 
 export function paymentRoutes(_config: AppConfig, cookieName: string): Router {
   const router = Router();
@@ -25,12 +24,6 @@ export function paymentRoutes(_config: AppConfig, cookieName: string): Router {
     '/bookings/:bookingId/checkout',
     validateParams(z.object({ bookingId: z.string().regex(/^\d+$/) })),
     initiatePayment,
-  );
-  router.post(
-    '/bookings/:bookingId/refund',
-    requireAdmin,
-    validateParams(z.object({ bookingId: z.string().regex(/^\d+$/) })),
-    refundBookingController,
   );
   return router;
 }

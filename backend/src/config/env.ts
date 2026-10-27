@@ -24,6 +24,12 @@ const envSchema = z.object({
   SMTP_USER: optionalString,
   SMTP_PASSWORD: optionalString,
   SMTP_FROM: optionalEmail,
+  GOOGLE_CLIENT_ID: optionalString,
+  GOOGLE_CLIENT_SECRET: optionalString,
+  GOOGLE_CALLBACK_URL: z.string().url().optional(),
+  FACEBOOK_CLIENT_ID: optionalString,
+  FACEBOOK_CLIENT_SECRET: optionalString,
+  FACEBOOK_CALLBACK_URL: z.string().url().optional(),
 });
 
 export type AppConfig = z.infer<typeof envSchema>;
