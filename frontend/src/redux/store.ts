@@ -4,6 +4,10 @@ import hotelReducer from './hotelSlice';
 import roomReducer from './roomSlice';
 import bookingReducer from './bookingSlice';
 import paymentReducer from './paymentSlice';
+import adminReducer from './adminSlice';
+import favouriteReducer from './favouriteSlice';
+import notificationReducer from './notificationSlice';
+import reviewReducer from './reviewSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +16,10 @@ export const store = configureStore({
     rooms: roomReducer,
     bookings: bookingReducer,
     payments: paymentReducer,
+    admin: adminReducer,
+    favourites: favouriteReducer,
+    notifications: notificationReducer,
+    reviews: reviewReducer,
   },
 });
 

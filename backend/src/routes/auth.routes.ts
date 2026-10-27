@@ -31,18 +31,24 @@ export function authRoutes(config: AppConfig, cookieName: string): Router {
   const router = Router();
   const sameOrigin = createSameOriginMiddleware(config.APP_ORIGIN);
 
+  // Development mode: relaxed rate limits
+  const isDev = config.NODE_ENV === 'development';
+  const requestCodeLimit = isDev ? 100 : 8;
+  const verifyCodeLimit = isDev ? 100 : 10;
+  const windowSeconds = isDev ? 60 : 15 * 60;
+
   // Email OTP Authentication
   router.post(
     '/request-code',
     sameOrigin,
-    createRateLimitMiddleware(config, 'otp:request-ip', 8, 15 * 60),
+    createRateLimitMiddleware(config, 'otp:request-ip', requestCodeLimit, windowSeconds),
     validateBody(requestCodeSchema),
     requestCodeController(config),
   );
   router.post(
     '/verify-code',
     sameOrigin,
-    createRateLimitMiddleware(config, 'otp:verify-ip', 10, 15 * 60),
+    createRateLimitMiddleware(config, 'otp:verify-ip', verifyCodeLimit, windowSeconds),
     validateBody(verifyCodeSchema),
     verifyCodeController(config, cookieName),
   );
