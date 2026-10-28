@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 interface User {
   id: string;
@@ -29,10 +29,12 @@ export const requestCode = createAsyncThunk(
     const response = await fetch('/api/v1/auth/request-code', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ email }),
     });
     if (!response.ok) {
-      throw new Error('Failed to request code');
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.message || 'Failed to request code');
     }
     return await response.json();
   }
@@ -48,7 +50,8 @@ export const verifyCode = createAsyncThunk(
       body: JSON.stringify({ email, code, name }),
     });
     if (!response.ok) {
-      throw new Error('Invalid code');
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.message || 'Invalid code');
     }
     return await response.json();
   }
@@ -72,10 +75,9 @@ export const logout = createAsyncThunk('auth/logout', async () => {
     method: 'POST',
     credentials: 'include',
   });
-  if (!response.ok) {
+  if (!response.ok && response.status !== 204) {
     throw new Error('Failed to logout');
   }
-  return await response.json();
 });
 
 const authSlice = createSlice({

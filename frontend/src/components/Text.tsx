@@ -23,10 +23,12 @@ export const Text : React.FC<Props> = ({variant,children,style}) => {
          if(variant === 'p'){
 
             return <p style={style}>{children}</p>
+
     }
          if(variant === 'span'){
 
             return <span style={style}>{children}</span>
+            
     }
 
   return (

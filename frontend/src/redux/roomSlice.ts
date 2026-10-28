@@ -1,16 +1,18 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-interface Room {
+export interface Room {
   id: string;
   branch_id: string;
   room_type: string;
   description: string | null;
   capacity: number;
-  quantity_available: number;
-  price_per_night: string;
+  quantity?: number;
+  quantity_available?: number;
+  price?: string;
+  price_per_night?: string;
   currency: string;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface RoomState {
@@ -69,7 +71,7 @@ const roomSlice = createSlice({
       })
       .addCase(fetchRooms.fulfilled, (state, action) => {
         state.loading = false;
-        state.rooms = action.payload;
+        state.rooms = action.payload || [];
       })
       .addCase(fetchRooms.rejected, (state, action) => {
         state.loading = false;

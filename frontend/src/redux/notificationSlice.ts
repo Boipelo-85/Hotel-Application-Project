@@ -3,11 +3,16 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 interface Notification {
   id: string;
   user_id: string;
-  type: 'booking' | 'payment' | 'review' | 'system';
-  title: string;
+  type: string;
+  title?: string;
   message: string;
-  read: boolean;
+  read?: boolean;
+  read_at?: string | null;
   created_at: string;
+}
+
+function isUnread(notification: Notification): boolean {
+  return !notification.read && !notification.read_at;
 }
 
 interface NotificationState {
@@ -42,14 +47,13 @@ export const markAsRead = createAsyncThunk(
   'notifications/markAsRead',
   async (notificationId: string) => {
     const response = await fetch(`/api/v1/notifications/${notificationId}/read`, {
-      method: 'POST',
+      method: 'PATCH',
       credentials: 'include',
     });
-    if (!response.ok) {
+    if (!response.ok && response.status !== 204) {
       throw new Error('Failed to mark notification as read');
     }
-    const data = await response.json();
-    return data.notification;
+    return notificationId;
   }
 );
 
@@ -101,8 +105,8 @@ const notificationSlice = createSlice({
       })
       .addCase(fetchNotifications.fulfilled, (state, action) => {
         state.loading = false;
-        state.notifications = action.payload;
-        state.unreadCount = action.payload.filter((n: Notification) => !n.read).length;
+        state.notifications = action.payload || [];
+        state.unreadCount = state.notifications.filter(isUnread).length;
       })
       .addCase(fetchNotifications.rejected, (state, action) => {
         state.loading = false;
@@ -110,10 +114,11 @@ const notificationSlice = createSlice({
       })
       // Mark As Read
       .addCase(markAsRead.fulfilled, (state, action) => {
-        const index = state.notifications.findIndex((n) => n.id === action.payload.id);
+        const index = state.notifications.findIndex((n) => n.id === action.payload);
         if (index !== -1) {
-          state.notifications[index] = action.payload;
-          state.unreadCount = state.notifications.filter((n) => !n.read).length;
+          state.notifications[index].read_at = new Date().toISOString();
+          state.notifications[index].read = true;
+          state.unreadCount = state.notifications.filter(isUnread).length;
         }
       })
       // Mark All As Read

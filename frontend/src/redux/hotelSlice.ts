@@ -1,6 +1,19 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-interface Branch {
+export interface BranchImage {
+  id: string;
+  url: string;
+  altText?: string | null;
+  displayOrder?: number;
+}
+
+export interface BranchAmenity {
+  id: string;
+  name: string;
+  category: string | null;
+}
+
+export interface Branch {
   id: string;
   brand_id: string;
   manager_user_id: string | null;
@@ -17,14 +30,41 @@ interface Branch {
   contact_phone: string | null;
   latitude: number | null;
   longitude: number | null;
+  images: BranchImage[];
+  amenities: BranchAmenity[];
+  average_rating: number | null;
   publication_status: 'draft' | 'pending_review' | 'published' | 'rejected';
   created_at: string;
   updated_at: string;
 }
 
+export interface SearchResult {
+  branch: {
+    id: string;
+    name: string;
+    city: string;
+    province: string;
+    address: string;
+    starRating?: number | null;
+    pricePerNight?: string;
+    currency?: string;
+    description?: string | null;
+    images?: BranchImage[];
+    policies?: Record<string, string>;
+    latitude?: number | null;
+    longitude?: number | null;
+  };
+  roomType: string;
+  price: string;
+  currency: string;
+  availableRooms: number;
+  capacity: number;
+}
+
 interface HotelState {
   branches: Branch[];
   currentBranch: Branch | null;
+  searchResults: SearchResult[];
   loading: boolean;
   error: string | null;
 }
@@ -32,6 +72,7 @@ interface HotelState {
 const initialState: HotelState = {
   branches: [],
   currentBranch: null,
+  searchResults: [],
   loading: false,
   error: null,
 };
@@ -49,7 +90,8 @@ export const fetchBranches = createAsyncThunk(
       throw new Error('Failed to fetch branches');
     }
     const data = await response.json();
-    return data.branches || data;
+    const list = data.branches || data;
+    return Array.isArray(list) ? list : [];
   }
 );
 
@@ -62,6 +104,24 @@ export const fetchBranchById = createAsyncThunk(
     }
     const data = await response.json();
     return data.branch;
+  }
+);
+
+export const searchAvailability = createAsyncThunk(
+  'hotels/searchAvailability',
+  async (filters: {
+    destination: string;
+    checkIn: string;
+    checkOut: string;
+    rooms: string;
+    guests: string;
+  }) => {
+    const params = new URLSearchParams(filters);
+    const response = await fetch(`/api/v1/search?${params.toString()}`);
+    if (!response.ok) {
+      throw new Error('Failed to search availability');
+    }
+    return (await response.json()) as SearchResult[];
   }
 );
 
@@ -103,6 +163,18 @@ const hotelSlice = createSlice({
       .addCase(fetchBranchById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch branch';
+      })
+      .addCase(searchAvailability.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(searchAvailability.fulfilled, (state, action) => {
+        state.loading = false;
+        state.searchResults = Array.isArray(action.payload) ? action.payload : [];
+      })
+      .addCase(searchAvailability.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Failed to search availability';
       });
   },
 });

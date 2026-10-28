@@ -8,6 +8,7 @@ import adminReducer from './adminSlice';
 import favouriteReducer from './favouriteSlice';
 import notificationReducer from './notificationSlice';
 import reviewReducer from './reviewSlice';
+import uiReducer from './uiSlice';
 
 export const store = configureStore({
   reducer: {
@@ -20,6 +21,7 @@ export const store = configureStore({
     favourites: favouriteReducer,
     notifications: notificationReducer,
     reviews: reviewReducer,
+    ui: uiReducer,
   },
 });
 

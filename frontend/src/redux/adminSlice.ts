@@ -9,6 +9,7 @@ interface DashboardStats {
   today_bookings: number;
   today_revenue: string;
   monthly_revenue: string;
+  
 }
 
 interface User {

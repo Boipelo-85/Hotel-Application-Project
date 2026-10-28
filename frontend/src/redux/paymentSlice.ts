@@ -32,12 +32,16 @@ export const initiatePayment = createAsyncThunk(
   async (bookingId: string) => {
     const response = await fetch('/api/v1/payments', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': `checkout-${bookingId}-${Date.now()}`,
+      },
       credentials: 'include',
       body: JSON.stringify({ bookingId }),
     });
     if (!response.ok) {
-      throw new Error('Failed to initiate payment');
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.message || 'Failed to initiate payment');
     }
     const data = await response.json();
     return data.payment;

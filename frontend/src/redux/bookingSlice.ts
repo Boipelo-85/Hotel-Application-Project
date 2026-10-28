@@ -1,9 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-interface Booking {
+export interface Booking {
   id: string;
   booking_reference: string;
-  user_id: string;
+  user_id: string | null;
   room_id: string;
   check_in: string;
   check_out: string;
@@ -78,7 +78,8 @@ export const createBooking = createAsyncThunk(
       body: JSON.stringify(bookingData),
     });
     if (!response.ok) {
-      throw new Error('Failed to create booking');
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.message || 'Failed to create booking');
     }
     const data = await response.json();
     return data.booking;
@@ -120,7 +121,7 @@ const bookingSlice = createSlice({
       })
       .addCase(fetchBookings.fulfilled, (state, action) => {
         state.loading = false;
-        state.bookings = action.payload;
+        state.bookings = action.payload || [];
       })
       .addCase(fetchBookings.rejected, (state, action) => {
         state.loading = false;

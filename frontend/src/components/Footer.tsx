@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   const footerStyle: React.CSSProperties = {
@@ -68,16 +69,16 @@ const Footer: React.FC = () => {
             <h3 style={headingStyle}>Explore</h3>
             <ul style={listStyle}>
               <li style={listItemStyle}>
-                <a href="/" style={linkStyle}>Home</a>
+                <Link to="/" style={linkStyle}>Home</Link>
               </li>
               <li style={listItemStyle}>
-                <a href="/rooms" style={linkStyle}>Find a branch</a>
+                <Link to="/hotels" style={linkStyle}>Find a branch</Link>
               </li>
               <li style={listItemStyle}>
-                <a href="/bookings" style={linkStyle}>My bookings</a>
+                <Link to="/bookings" style={linkStyle}>My bookings</Link>
               </li>
               <li style={listItemStyle}>
-                <a href="/profile" style={linkStyle}>My profile</a>
+                <Link to="/profile" style={linkStyle}>My profile</Link>
               </li>
             </ul>
           </div>

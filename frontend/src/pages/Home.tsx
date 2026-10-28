@@ -1,14 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import SearchBar from '../components/SearchBar';
 
 const Home: React.FC = () => {
   return (
-    <div style={{ padding: '2rem', textAlign: 'center' }}>
-      <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>Welcome to Hotel Brand</h1>
+    <div style={{ padding: '2rem', textAlign: 'center', maxWidth: '1100px', margin: '0 auto' }}>
+      <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>Welcome to Grand-Rest Hotel</h1>
       <p style={{ fontSize: '1.2rem', color: '#666', marginBottom: '2rem' }}>
-        Find your perfect stay with our luxury hotel branches worldwide
+        Search our branches by destination and dates, then book a room.
       </p>
-      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+      <SearchBar />
+      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
         <Link
           to="/hotels"
           style={{
@@ -20,7 +22,7 @@ const Home: React.FC = () => {
             fontSize: '1rem',
           }}
         >
-          Find a Branch
+          Browse all branches
         </Link>
         <Link
           to="/login"
@@ -41,4 +43,3 @@ const Home: React.FC = () => {
 };
 
 export default Home;
-

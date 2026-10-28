@@ -1,194 +1,140 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { requestCode, verifyCode, clearError } from '../redux/authSlice';
-import type { RootState } from '../redux/store';
+import type { AppDispatch, RootState } from '../redux/store';
+
+function isValidEmail(email: string): boolean {
+  const trimmed = email.trim();
+  if (trimmed.length > 254) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(trimmed);
+}
 
 const Login: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { loading, error, isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const from = (location.state as { from?: string } | null)?.from || '/';
 
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
 
-  const handleRequestCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await dispatch(requestCode(email)).unwrap();
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, from]);
+
+  const handleRequestCode = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const trimmedEmail = email.trim();
+    if (!isValidEmail(trimmedEmail)) {
+      setEmailError('Enter a valid email address.');
+      return;
+    }
+
+    setEmailError('');
+    const result = await dispatch(requestCode(trimmedEmail));
+    if (requestCode.fulfilled.match(result)) {
       setStep('code');
-    } catch (err) {
-      console.error('Failed to request code:', err);
     }
   };
 
-  const handleVerifyCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await dispatch(verifyCode({ email, code, name: name || undefined })).unwrap();
-      navigate('/');
-    } catch (err) {
-      console.error('Failed to verify code:', err);
-    }
+  //verify code section(SMT backend)
+  const handleVerifyCode = async (event: React.FormEvent) => {
+    event.preventDefault();
+    await dispatch(verifyCode({ email, code, name: name || undefined }));
   };
-
-  const handleGoogleLogin = () => {
-    window.location.href = '/api/v1/auth/google';
-  };
-
-  const handleFacebookLogin = () => {
-    window.location.href = '/api/v1/auth/facebook';
-  };
-
-  if (isAuthenticated) {
-    navigate('/');
-    return null;
-  }
 
   return (
-    <div style={{ maxWidth: '400px', margin: '2rem auto', padding: '2rem', border: '1px solid #ddd', borderRadius: '0.5rem' }}>
-      <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Sign In</h2>
+    <div className="login-page">
+      <h2 className="login-title">Sign In</h2>
+      <p className="login-intro">
+        New accounts are created when you verify an email code. Social sign-in is optional and only works if OAuth is configured.
+      </p>
 
-      {/* OAuth Buttons */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
+      <div className="login-social-actions">
         <button
-          onClick={handleGoogleLogin}
-          style={{
-            padding: '0.75rem',
-            backgroundColor: '#db4437',
-            color: 'white',
-            border: 'none',
-            borderRadius: '0.25rem',
-            cursor: 'pointer',
-            fontSize: '1rem',
+          className="login-button login-button--google"
+          type="button"
+          onClick={() => {
+            window.location.href = '/api/v1/auth/google';
           }}
         >
           Sign in with Google
         </button>
-        <button
-          onClick={handleFacebookLogin}
-          style={{
-            padding: '0.75rem',
-            backgroundColor: '#4267B2',
-            color: 'white',
-            border: 'none',
-            borderRadius: '0.25rem',
-            cursor: 'pointer',
-            fontSize: '1rem',
+        {/* <button
+          className="login-button login-button--facebook"
+          type="button"
+          onClick={() => {
+            window.location.href = '/api/v1/auth/facebook';
           }}
         >
           Sign in with Facebook
-        </button>
+        </button> */}
       </div>
 
-      <div style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#666' }}>or</div>
+      <div className="login-divider">or</div>
 
-      {/* Email OTP Form */}
       {step === 'email' ? (
-        <form onSubmit={handleRequestCode}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Email</label>
+        <form onSubmit={(event) => void handleRequestCode(event)}>
+          <div className="login-field">
+            <label className="login-label">Email</label>
             <input
+              className="login-input"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                border: '1px solid #ddd',
-                borderRadius: '0.25rem',
-                boxSizing: 'border-box',
+              onChange={(event) => {
+                setEmail(event.target.value);
+                setEmailError('');
               }}
+              maxLength={254}
+              required
             />
           </div>
           <button
+            className="login-button login-button--submit"
             type="submit"
             disabled={loading}
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '0.25rem',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              fontSize: '1rem',
-            }}
           >
             {loading ? 'Sending...' : 'Send Code'}
           </button>
         </form>
       ) : (
-        <form onSubmit={handleVerifyCode}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Name (for new users)</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                border: '1px solid #ddd',
-                borderRadius: '0.25rem',
-                boxSizing: 'border-box',
-              }}
-            />
+        <form onSubmit={(event) => void handleVerifyCode(event)}>
+          <div className="login-field">
+            <label className="login-label">Name (for new users)</label>
+            <input className="login-input" type="text" value={name} onChange={(event) => setName(event.target.value)} />
           </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Verification Code</label>
+          <div className="login-field">
+            <label className="login-label">Verification Code</label>
             <input
+              className="login-input login-input--code"
               type="text"
               value={code}
-              onChange={(e) => setCode(e.target.value)}
+              onChange={(event) => setCode(event.target.value)}
               required
               maxLength={6}
               placeholder="123456"
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                border: '1px solid #ddd',
-                borderRadius: '0.25rem',
-                boxSizing: 'border-box',
-                fontSize: '1.5rem',
-                letterSpacing: '0.5rem',
-                textAlign: 'center',
-              }}
             />
           </div>
           <button
+            className="login-button login-button--submit"
             type="submit"
             disabled={loading}
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '0.25rem',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              fontSize: '1rem',
-            }}
           >
             {loading ? 'Verifying...' : 'Verify Code'}
           </button>
           <button
+            className="login-button login-button--back"
             type="button"
             onClick={() => {
               setStep('email');
               dispatch(clearError());
-            }}
-            style={{
-              width: '100%',
-              padding: '0.5rem',
-              backgroundColor: 'transparent',
-              color: '#666',
-              border: 'none',
-              cursor: 'pointer',
-              marginTop: '0.5rem',
             }}
           >
             Back
@@ -196,14 +142,16 @@ const Login: React.FC = () => {
         </form>
       )}
 
-      {error && (
-        <div style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: '#fee', color: '#c33', borderRadius: '0.25rem' }}>
-          {error}
+      {(emailError || error) && (
+        <div className="login-error">
+          {emailError || error}
         </div>
       )}
+      <p className="login-register-link">
+        <Link to="/register" className='reg-word'>How registration works</Link>
+      </p>
     </div>
   );
 };
 
 export default Login;
-

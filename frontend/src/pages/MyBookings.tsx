@@ -1,18 +1,20 @@
 import React, { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchBookings } from '../redux/bookingSlice';
-import type { RootState } from '../redux/store';
+import { cancelBooking, fetchBookings } from '../redux/bookingSlice';
+import type { AppDispatch, RootState } from '../redux/store';
+import Loading from '../components/Loading';
 
 const MyBookings: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const { bookings, loading, error } = useSelector((state: RootState) => state.bookings);
 
   useEffect(() => {
-    dispatch(fetchBookings() as any);
+    void dispatch(fetchBookings());
   }, [dispatch]);
 
-  if (loading) {
-    return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading bookings...</div>;
+  if (loading && bookings.length === 0) {
+    return <Loading message="Loading bookings..." />;
   }
 
   if (error) {
@@ -20,10 +22,12 @@ const MyBookings: React.FC = () => {
   }
 
   return (
-    <div style={{ padding: '2rem' }}>
+    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
       <h1 style={{ marginBottom: '1.5rem' }}>My Bookings</h1>
       {bookings.length === 0 ? (
-        <p>No bookings found.</p>
+        <p>
+          No bookings found. <Link to="/hotels">Find a branch</Link>
+        </p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {bookings.map((booking) => (
@@ -37,41 +41,32 @@ const MyBookings: React.FC = () => {
               }}
             >
               <h3 style={{ marginBottom: '0.5rem' }}>Booking #{booking.booking_reference}</h3>
-              <p style={{ color: '#666', marginBottom: '0.5rem' }}>
+              {booking.branch_name && <p style={{ color: '#666' }}>{booking.branch_name} · {booking.room_type}</p>}
+              <p style={{ color: '#666' }}>
                 Check-in: {new Date(booking.check_in).toLocaleDateString()}
               </p>
-              <p style={{ color: '#666', marginBottom: '0.5rem' }}>
+              <p style={{ color: '#666' }}>
                 Check-out: {new Date(booking.check_out).toLocaleDateString()}
               </p>
-              <p style={{ color: '#666', marginBottom: '0.5rem' }}>Guests: {booking.guests}</p>
-              <p style={{ color: '#666', marginBottom: '0.5rem' }}>
-                Total: ${booking.total_amount} {booking.currency}
+              <p style={{ color: '#666' }}>Guests: {booking.guests}</p>
+              <p style={{ color: '#666' }}>
+                Total: {booking.currency} {booking.total_amount}
               </p>
-              <div
-                style={{
-                  display: 'inline-block',
-                  padding: '0.25rem 0.75rem',
-                  borderRadius: '0.25rem',
-                  backgroundColor:
-                    booking.status === 'confirmed'
-                      ? '#d1fae5'
-                      : booking.status === 'pending'
-                      ? '#fef3c7'
-                      : booking.status === 'cancelled'
-                      ? '#fee'
-                      : '#dbeafe',
-                  color:
-                    booking.status === 'confirmed'
-                      ? '#065f46'
-                      : booking.status === 'pending'
-                      ? '#92400e'
-                      : booking.status === 'cancelled'
-                      ? '#991b1b'
-                      : '#1e40af',
-                  marginBottom: '0.5rem',
-                }}
-              >
-                {booking.status.toUpperCase()}
+              <p style={{ fontWeight: 600, marginBottom: '0.75rem' }}>{booking.status.toUpperCase()}</p>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <Link to={`/bookings/${booking.id}`}>View</Link>
+                {booking.status === 'pending' && (
+                  <Link to={`/bookings/${booking.id}/payment`}>Pay</Link>
+                )}
+                {(booking.status === 'pending' || booking.status === 'confirmed') && (
+                  <button
+                    type="button"
+                    onClick={() => void dispatch(cancelBooking(String(booking.id)))}
+                    style={{ background: 'none', border: 'none', color: '#991b1b', cursor: 'pointer', padding: 0 }}
+                  >
+                    Cancel
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -82,4 +77,3 @@ const MyBookings: React.FC = () => {
 };
 
 export default MyBookings;
-
