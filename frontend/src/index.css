@@ -199,30 +199,315 @@ a {
   text-decoration: none;
 }
 
-/* //Footer section hey */
-
-.footer{
-
-      background-color: #000;
-      margin-top: 100px;
-     
+/* Footer section */
+.footer {
+  background-color: #000;
+  margin-top: 100px;
+  padding: 2rem;
+  font-family: 'Courier New', Courier, monospace;
 }
-.links{
 
-    font-family: 'Courier New', Courier, monospace;
-
+.footer-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
-.link_1{
 
-    font-family: 'Courier New', Courier, monospace;
-    cursor: pointer;
+.footer-section-item {
+  flex: 1;
 }
-.ContactUs_section{
 
-    font-family: 'Courier New', Courier, monospace;
-    color: #fdfdfd;
+.footer-section-item h3 {
+  color: #fdfdfd;
+  font-family: 'Courier New', Courier, monospace;
+  margin-bottom: 1rem;
 }
-.footer-section{
 
-      margin-bottom: 20px;
+.footer-section-item p {
+  color: #fdfdfd;
+  font-family: 'Courier New', Courier, monospace;
+  margin: 0;
+}
+
+.links {
+  font-family: 'Courier New', Courier, monospace;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.links li {
+  margin-bottom: 0.5rem;
+}
+
+.link_1 {
+  font-family: 'Courier New', Courier, monospace;
+  cursor: pointer;
+  color: #fdfdfd;
+  text-decoration: none;
+}
+
+.link_1:hover {
+  text-decoration: underline;
+}
+
+.ContactUs_section {
+  font-family: 'Courier New', Courier, monospace;
+  color: #fdfdfd;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ContactUs_section li {
+  margin-bottom: 0.5rem;
+}
+
+.copyRight {
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #333;
+}
+
+.copyRight p {
+  color: #fdfdfd;
+  font-family: 'Courier New', Courier, monospace;
+  margin: 0;
+}
+
+/* Responsive footer for small screens */
+@media (max-width: 768px) {
+  .footer-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .footer-section-item {
+    width: 100%;
+  }
+}
+
+/* Homes guests love section */
+.homes-guests-love {
+  padding: 3rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.homes-guests-love__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.homes-guests-love__title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 0;
+  color: #000;
+}
+
+.homes-guests-love__discover {
+  color: #3b82f6;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.homes-guests-love__discover:hover {
+  text-decoration: underline;
+}
+
+.homes-guests-love__scroll-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.homes-guests-love__cards {
+  display: flex;
+  gap: 1.5rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 1rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.homes-guests-love__cards::-webkit-scrollbar {
+  display: none;
+}
+
+.homes-guests-love__card-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.homes-guests-love__card {
+  flex: 0 0 calc(25% - 1.125rem);
+  scroll-snap-align: start;
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.homes-guests-love__card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.homes-guests-love__card-image {
+  position: relative;
+  width: 100%;
+  height: 200px;
+}
+
+.homes-guests-love__card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.homes-guests-love__favorite-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.homes-guests-love__favorite-btn:hover {
+  background: white;
+}
+
+.homes-guests-love__card-content {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.homes-guests-love__card-name {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin: 0 0 0.5rem 0;
+  color: #000;
+}
+
+.homes-guests-love__card-location {
+  font-size: 0.875rem;
+  color: #666;
+  margin: 0 0 0.75rem 0;
+}
+
+.homes-guests-love__card-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.homes-guests-love__score {
+  background: #1e3a5f;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.homes-guests-love__label {
+  font-size: 0.875rem;
+  color: #000;
+  font-weight: 500;
+}
+
+.homes-guests-love__reviews {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.homes-guests-love__card-price {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.homes-guests-love__price-label {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.homes-guests-love__price-amount {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #000;
+}
+
+.homes-guests-love__scroll-btn {
+  position: absolute;
+  right: -1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: white;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  z-index: 10;
+}
+
+.homes-guests-love__scroll-btn:hover {
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive design for mobile */
+@media (max-width: 768px) {
+  .homes-guests-love {
+    padding: 2rem 1rem;
+  }
+
+  .homes-guests-love__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .homes-guests-love__title {
+    font-size: 1.5rem;
+  }
+
+  .homes-guests-love__card {
+    flex: 0 0 85%;
+  }
+
+  .homes-guests-love__scroll-btn {
+    right: 0.5rem;
+  }
 }

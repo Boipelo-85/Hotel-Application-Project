@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchBranchById } from '../redux/hotelSlice';
@@ -19,6 +19,7 @@ const HotelDetails: React.FC = () => {
   const { currentBranch, loading, error } = useSelector((state: RootState) => state.hotels);
   const rooms = useSelector((state: RootState) => state.rooms.rooms);
   const reviews = useSelector((state: RootState) => state.reviews.reviews);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const checkIn = searchParams.get('checkIn') || '';
   const checkOut = searchParams.get('checkOut') || '';
@@ -111,43 +112,94 @@ const HotelDetails: React.FC = () => {
       {rooms.length === 0 ? (
         <p>No rooms listed for this branch yet.</p>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {rooms.map((room) => {
-            const price = room.price || room.price_per_night;
-            const params = new URLSearchParams({
-              roomId: String(room.id),
-              branchId: String(room.branch_id),
-              guests,
-              quantity,
-            });
-            if (checkIn) params.set('checkIn', checkIn);
-            if (checkOut) params.set('checkOut', checkOut);
-            return (
-              <div key={room.id} style={{ border: '1px solid #ddd', borderRadius: '0.5rem', padding: '1rem' }}>
-                <h3>{room.room_type}</h3>
-                {room.description && <p style={{ color: '#666' }}>{room.description}</p>}
-                <p>Sleeps {room.capacity} · {room.quantity ?? room.quantity_available ?? 1} available</p>
-                <p style={{ fontWeight: 'bold', color: '#10b981' }}>
-                  {room.currency} {price}/night
-                </p>
-                <Link
-                  to={`/book?${params.toString()}`}
+        <>
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: viewMode === 'list' ? '#3b82f6' : '#e5e7eb',
+                color: viewMode === 'list' ? 'white' : '#000',
+                border: 'none',
+                borderRadius: '0.25rem',
+                cursor: 'pointer',
+                fontFamily: "'Courier New', Courier, monospace",
+              }}
+            >
+              List
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('grid')}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: viewMode === 'grid' ? '#3b82f6' : '#e5e7eb',
+                color: viewMode === 'grid' ? 'white' : '#000',
+                border: 'none',
+                borderRadius: '0.25rem',
+                cursor: 'pointer',
+                fontFamily: "'Courier New', Courier, monospace",
+              }}
+            >
+              Grid
+            </button>
+          </div>
+          <div
+            style={{
+              display: viewMode === 'grid' ? 'grid' : 'flex',
+              gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(280px, 1fr))' : 'auto',
+              gap: '1rem',
+              flexDirection: viewMode === 'list' ? 'column' : 'row',
+            }}
+          >
+            {rooms.map((room) => {
+              const price = room.price || room.price_per_night;
+              const params = new URLSearchParams({
+                roomId: String(room.id),
+                branchId: String(room.branch_id),
+                guests,
+                quantity,
+              });
+              if (checkIn) params.set('checkIn', checkIn);
+              if (checkOut) params.set('checkOut', checkOut);
+              return (
+                <div
+                  key={room.id}
                   style={{
-                    display: 'inline-block',
-                    marginTop: '0.75rem',
-                    padding: '0.5rem 1rem',
-                    backgroundColor: '#3b82f6',
-                    color: 'white',
-                    textDecoration: 'none',
-                    borderRadius: '0.25rem',
+                    border: '1px solid #ddd',
+                    borderRadius: '0.5rem',
+                    padding: '1rem',
+                    display: 'flex',
+                    flexDirection: 'column',
                   }}
                 >
-                  Book this room
-                </Link>
-              </div>
-            );
-          })}
-        </div>
+                  <h3>{room.room_type}</h3>
+                  {room.description && <p style={{ color: '#666', flex: 1 }}>{room.description}</p>}
+                  <p>Sleeps {room.capacity} · {room.quantity ?? room.quantity_available ?? 1} available</p>
+                  <p style={{ fontWeight: 'bold', color: '#10b981' }}>
+                    {room.currency} {price}/night
+                  </p>
+                  <Link
+                    to={`/book?${params.toString()}`}
+                    style={{
+                      display: 'inline-block',
+                      marginTop: '0.75rem',
+                      padding: '0.5rem 1rem',
+                      backgroundColor: '#3b82f6',
+                      color: 'white',
+                      textDecoration: 'none',
+                      borderRadius: '0.25rem',
+                      textAlign: 'center',
+                    }}
+                  >
+                    Book this room
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       <h2 style={{ marginTop: '2rem' }}>Reviews</h2>
