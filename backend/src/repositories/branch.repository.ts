@@ -76,7 +76,32 @@ export async function searchAvailableBranches(input: {
               'contactEmail', br.contact_email,
               'contactPhone', br.contact_phone,
               'latitude', br.latitude,
-              'longitude', br.longitude
+              'longitude', br.longitude,
+              'images', COALESCE((
+                SELECT jsonb_agg(jsonb_build_object(
+                  'id', image.id,
+                  'url', image.image_url,
+                  'altText', image.alt_text,
+                  'displayOrder', image.display_order
+                ) ORDER BY image.display_order)
+                FROM branch_images image
+                WHERE image.branch_id = br.id
+              ), '[]'::JSONB),
+              'amenities', COALESCE((
+                SELECT jsonb_agg(jsonb_build_object(
+                  'id', amenity.id,
+                  'name', amenity.name,
+                  'category', amenity.category
+                ) ORDER BY amenity.name)
+                FROM branch_amenities branch_amenity
+                JOIN amenities amenity ON amenity.id = branch_amenity.amenity_id
+                WHERE branch_amenity.branch_id = br.id
+              ), '[]'::JSONB),
+              'averageRating', (
+                SELECT ROUND(AVG(review.rating), 1)
+                FROM reviews review
+                WHERE review.branch_id = br.id AND review.deleted_at IS NULL
+              )
             ) AS branch,
             rr.room_type AS "roomType",
             rr.price,

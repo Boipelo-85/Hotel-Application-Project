@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { getCookie } from '../src/middleware/authMiddleware.js';
+import type { Request, Response } from 'express';
+import { createOptionalAuthMiddleware, getCookie } from '../src/middleware/authMiddleware.js';
 import { countNights } from '../src/services/availability.service.js';
 import { loadConfig } from '../src/config/env.js';
 import { AppError } from '../src/utils/errors.js';
@@ -9,6 +10,19 @@ test('reads only the requested cookie and safely decodes its value', () => {
   assert.equal(getCookie('other=first; hotel_session=token%2Bvalue', 'hotel_session'), 'token+value');
   assert.equal(getCookie('other=first', 'hotel_session'), undefined);
   assert.equal(getCookie('hotel_session=%E0%A4%A', 'hotel_session'), undefined);
+});
+
+test('allows booking requests without a session cookie', () => {
+  let nextCalled = false;
+  createOptionalAuthMiddleware('hotel_session')(
+    { headers: {} } as Request,
+    {} as Response,
+    (error) => {
+      assert.ifError(error);
+      nextCalled = true;
+    },
+  );
+  assert.equal(nextCalled, true);
 });
 
 test('counts valid calendar nights and rejects invalid or reversed ranges', () => {

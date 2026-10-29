@@ -6,11 +6,11 @@ body {
   margin: 0;
   font-family: system-ui, -apple-system, Segoe UI, sans-serif;
   background: #f9fafb;
-  color: #111827;
+  color: #000;
 }
 
 a {
-  color: #2563eb;
+  color: #fdfdfd;
 }
 
 .login-page {

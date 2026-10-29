@@ -67,7 +67,7 @@ const Login: React.FC = () => {
         >
           Sign in with Google
         </button>
-        {/* <button
+        <button
           className="login-button login-button--facebook"
           type="button"
           onClick={() => {
@@ -75,7 +75,7 @@ const Login: React.FC = () => {
           }}
         >
           Sign in with Facebook
-        </button> */}
+        </button>
       </div>
 
       <div className="login-divider">or</div>

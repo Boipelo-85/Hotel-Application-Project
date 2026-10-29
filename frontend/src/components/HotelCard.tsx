@@ -16,6 +16,8 @@ interface HotelCardProps {
   imageUrl?: string;
   imageAlt?: string;
   to?: string;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
 const HotelCard: React.FC<HotelCardProps> = ({
@@ -31,9 +33,14 @@ const HotelCard: React.FC<HotelCardProps> = ({
   imageUrl,
   imageAlt,
   to,
+  onMouseEnter,
+  onMouseLeave,
 }) => {
   return (
     <article
+      data-property-id={id}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       style={{
         border: '1px solid #ddd',
         borderRadius: '0.5rem',

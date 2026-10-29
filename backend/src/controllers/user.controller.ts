@@ -1,10 +1,5 @@
 import type { RequestHandler } from 'express';
-import {
-  updateUserRole,
-  deleteUserAccount,
-  getUserProfile,
-  updateUserProfile,
-} from '../services/user.service.js';
+import {updateUserRole,deleteUserAccount,getUserProfile,updateUserProfile,} from '../services/user.service.js';
 import { AppError, getRouteParam } from '../utils/errors.js';
 
 export const getProfileController: RequestHandler = async (request, response) => {

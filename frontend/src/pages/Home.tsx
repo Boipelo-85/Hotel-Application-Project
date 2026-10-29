@@ -1,8 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import SearchBar from '../components/SearchBar';
+import type { RootState } from '../redux/store';
 
 const Home: React.FC = () => {
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+
   return (
     <div style={{ padding: '2rem', textAlign: 'center', maxWidth: '1100px', margin: '0 auto' }}>
       <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>Welcome to Grand-Rest Hotel</h1>
@@ -25,7 +29,7 @@ const Home: React.FC = () => {
           Browse all branches
         </Link>
         <Link
-          to="/login"
+          to={isAuthenticated ? '/bookings' : '/login'}
           style={{
             padding: '0.75rem 2rem',
             backgroundColor: '#10b981',
@@ -35,7 +39,7 @@ const Home: React.FC = () => {
             fontSize: '1rem',
           }}
         >
-          Sign In
+          {isAuthenticated ? 'My bookings' : 'Sign In'}
         </Link>
       </div>
     </div>

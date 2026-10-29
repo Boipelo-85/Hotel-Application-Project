@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import type { AppConfig } from '../config/env.js';
-import { createAuthMiddleware } from '../middleware/authMiddleware.js';
+import { createAuthMiddleware, createOptionalAuthMiddleware } from '../middleware/authMiddleware.js';
 import { validateBody, validateParams } from '../middleware/validationMiddleware.js';
 import {
   cancelBookingController,
@@ -31,8 +31,7 @@ export function bookingRoutes(config: AppConfig, cookieName: string): Router {
   const router = Router();
   const auth = createAuthMiddleware(cookieName);
 
-  // Allow guest bookings (no auth required for POST)
-  router.post('/', validateBody(createBookingSchema), createBooking);
+  router.post('/', createOptionalAuthMiddleware(cookieName), validateBody(createBookingSchema), createBooking);
 
   // Require auth for all other booking operations
   router.use(auth);

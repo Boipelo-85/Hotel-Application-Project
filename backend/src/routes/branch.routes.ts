@@ -58,11 +58,11 @@ export function branchRoutes(_config: AppConfig, cookieName: string): Router {
   // Public routes
   router.get('/', validateQuery(branchSearchSchema), getBranches);
   router.get('/amenities', listAmenitiesController);
+  router.get('/managed', auth, requireRoles('admin', 'branch_manager'), listManagedBranchesController);
   router.get('/:branchId/reviews', validateParams(z.object({ branchId: id })), listHotelReviewsController);
   router.get('/:branchId', validateParams(z.object({ branchId: id })), getBranchById);
 
   // Authenticated routes
-  router.get('/managed', auth, requireRoles('admin', 'branch_manager'), listManagedBranchesController);
   router.get(
     '/:branchId/bookings',
     auth,

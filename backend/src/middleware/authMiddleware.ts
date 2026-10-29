@@ -35,6 +35,29 @@ export function createAuthMiddleware(cookieName: string): RequestHandler {
   };
 }
 
+export function createOptionalAuthMiddleware(cookieName: string): RequestHandler {
+  return async (request, _response, next) => {
+    try {
+      const token = getCookie(request.headers.cookie, cookieName);
+      if (!token) {
+        next();
+        return;
+      }
+
+      const user = await getSessionUser(token);
+      if (!user) {
+        next(new AppError(401, 'Session is invalid or expired', 'UNAUTHENTICATED'));
+        return;
+      }
+
+      request.auth = { userId: user.id, role: user.role, email: user.email };
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+}
+
 export function createSameOriginMiddleware(appOrigin: string): RequestHandler {
   return (request, _response, next) => {
     const origin = request.get('origin');

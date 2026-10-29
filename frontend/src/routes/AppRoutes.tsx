@@ -15,6 +15,11 @@ import Favourites from '../pages/Favourites';
 import Notifications from '../pages/Notifications';
 import NotFound from '../pages/NotFound';
 import AdminDashboard from '../pages/admin/AdminDashboard';
+import ManageHotels from '../pages/admin/ManageHotels';
+import AddHotel from '../pages/admin/AddHotel';
+import EditHotel from '../pages/admin/EditHotel';
+import ManageRooms from '../pages/admin/ManageRooms';
+import ManageBookings from '../pages/admin/ManageBookings';
 import ProtectedRoute from '../components/ProtectedRoute';
 import AdminRoute from '../components/AdminRoute';
 
@@ -82,6 +87,46 @@ const AppRoutes: React.FC = () => {
         element={
           <AdminRoute>
             <AdminDashboard />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/hotels"
+        element={
+          <AdminRoute>
+            <ManageHotels />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/hotels/new"
+        element={
+          <AdminRoute>
+            <AddHotel />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/hotels/:branchId/edit"
+        element={
+          <AdminRoute>
+            <EditHotel />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/rooms"
+        element={
+          <AdminRoute>
+            <ManageRooms />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/bookings"
+        element={
+          <AdminRoute>
+            <ManageBookings />
           </AdminRoute>
         }
       />

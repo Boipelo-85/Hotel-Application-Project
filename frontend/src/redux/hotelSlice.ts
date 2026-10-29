@@ -53,6 +53,7 @@ export interface SearchResult {
     policies?: Record<string, string>;
     latitude?: number | null;
     longitude?: number | null;
+    amenities?: BranchAmenity[];
   };
   roomType: string;
   price: string;

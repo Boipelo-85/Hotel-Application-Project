@@ -28,7 +28,7 @@ export function googleCallbackController(config: AppConfig, cookieName: string):
           path: '/',
           maxAge: config.SESSION_TTL_HOURS * 60 * 60 * 1000,
         });
-        response.redirect(`${config.APP_ORIGIN}/?login=success`);
+        response.redirect(`${config.APP_ORIGIN}/auth/callback?login=success`);
       } else {
         response.redirect(`${config.APP_ORIGIN}/login?error=oauth_failed`);
       }
@@ -62,7 +62,7 @@ export function facebookCallbackController(config: AppConfig, cookieName: string
           path: '/',
           maxAge: config.SESSION_TTL_HOURS * 60 * 60 * 1000,
         });
-        response.redirect(`${config.APP_ORIGIN}/?login=success`);
+        response.redirect(`${config.APP_ORIGIN}/auth/callback?login=success`);
       } else {
         response.redirect(`${config.APP_ORIGIN}/login?error=oauth_failed`);
       }
