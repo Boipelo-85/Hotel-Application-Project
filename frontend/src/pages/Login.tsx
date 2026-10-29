@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { requestCode, verifyCode, clearError } from '../redux/authSlice';
 import type { AppDispatch, RootState } from '../redux/store';
+import { BsArrowLeft } from 'react-icons/bs';
 
 function isValidEmail(email: string): boolean {
   const trimmed = email.trim();
@@ -52,9 +53,12 @@ const Login: React.FC = () => {
 
   return (
     <div className="login-page">
+       <Link to="/" className="back-button">
+        <BsArrowLeft style={{fontWeight:'bold'}}/>
+      </Link>
       <h2 className="login-title">Sign In</h2>
       <p className="login-intro">
-        New accounts are created when you verify an email code. Social sign-in is optional and only works if OAuth is configured.
+        New accounts are created when you verify an email code. 
       </p>
 
       <div className="login-social-actions">
@@ -147,6 +151,7 @@ const Login: React.FC = () => {
           {emailError || error}
         </div>
       )}
+    
       <p className="login-register-link">
         <Link to="/register" className='reg-word'>How registration works</Link>
       </p>

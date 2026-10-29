@@ -9,12 +9,12 @@ const Home: React.FC = () => {
 
   return (
     <div style={{ padding: '2rem', textAlign: 'center', maxWidth: '1100px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>Welcome to Grand-Rest Hotel</h1>
-      <p style={{ fontSize: '1.2rem', color: '#666', marginBottom: '2rem' }}>
+      <h1 style={{ fontSize: '3rem', marginBottom: '1rem',fontFamily: "'Courier New', Courier, monospace" }}>Welcome to Grand-Rest Hotel</h1>
+      <p style={{ fontSize: '1.2rem', color: '#666', marginBottom: '2rem',fontFamily: "'Courier New', Courier, monospace"}}>
         Search our branches by destination and dates, then book a room.
       </p>
       <SearchBar />
-      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
+      {/* <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
         <Link
           to="/hotels"
           style={{
@@ -41,7 +41,7 @@ const Home: React.FC = () => {
         >
           {isAuthenticated ? 'My bookings' : 'Sign In'}
         </Link>
-      </div>
+      </div> */}
     </div>
   );
 };

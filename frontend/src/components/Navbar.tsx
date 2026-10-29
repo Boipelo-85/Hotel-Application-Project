@@ -4,11 +4,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '../redux/store';
 import { logout } from '../redux/authSlice';
 
-const linkStyle: React.CSSProperties = {
-  color: 'white',
-  textDecoration: 'none',
-};
-
 const Navbar: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
@@ -20,45 +15,38 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <nav style={{ backgroundColor: '#1f2937', padding: '1rem 2rem', color: 'white' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-        <Link to="/" style={{ ...linkStyle, fontSize: '1.5rem', fontWeight: 'bold' }}>
+    <nav className="navbar">
+      <div className="navbar__container">
+        <Link to="/" className="navbar__brand">
           Grand-Rest Hotel
         </Link>
-        <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <Link to="/hotels" style={linkStyle}>
+        <div className="navbar__links">
+          <Link to="/hotels" className="navbar__link">
             Branches
           </Link>
           {isAuthenticated ? (
             <>
-              <Link to="/bookings" style={linkStyle}>
+              <Link to="/bookings" className="navbar__link">
                 My Bookings
               </Link>
-              <Link to="/favourites" style={linkStyle}>
+              <Link to="/favourites" className="navbar__link">
                 Favourites
               </Link>
-              <Link to="/notifications" style={linkStyle}>
+              <Link to="/notifications" className="navbar__link">
                 Notifications
               </Link>
-              <Link to="/profile" style={linkStyle}>
+              <Link to="/profile" className="navbar__link">
                 {user?.name || 'Profile'}
               </Link>
               {(user?.role === 'admin' || user?.role === 'branch_manager') && (
-                <Link to="/admin" style={linkStyle}>
+                <Link to="/admin" className="navbar__link">
                   Admin
                 </Link>
               )}
               <button
                 type="button"
                 onClick={() => void handleLogout()}
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: 'transparent',
-                  color: 'white',
-                  border: '1px solid #9ca3af',
-                  borderRadius: '0.25rem',
-                  cursor: 'pointer',
-                }}
+                className="navbar__button"
               >
                 Sign out
               </button>
@@ -66,13 +54,7 @@ const Navbar: React.FC = () => {
           ) : (
             <Link
               to="/login"
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#3b82f6',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '0.25rem',
-              }}
+              className="navbar__sign-in"
             >
               Sign In
             </Link>
