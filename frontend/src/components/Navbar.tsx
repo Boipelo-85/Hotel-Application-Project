@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '../redux/store';
 import { logout } from '../redux/authSlice';
@@ -7,7 +7,10 @@ import { logout } from '../redux/authSlice';
 const Navbar: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+  
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
   const handleLogout = async () => {
     await dispatch(logout());
@@ -52,12 +55,14 @@ const Navbar: React.FC = () => {
               </button>
             </>
           ) : (
-            <Link
-              to="/login"
-              className="navbar__sign-in"
-            >
-              Sign In
-            </Link>
+            !isAuthPage && (
+              <Link
+                to="/login"
+                className="navbar__sign-in"
+              >
+                Sign In
+              </Link>
+            )
           )}
         </div>
       </div>
