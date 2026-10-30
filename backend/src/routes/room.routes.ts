@@ -6,6 +6,7 @@ import {
   checkAvailabilityController,
   getRoomById,
   getRooms,
+  getBranchRoomsController,
 } from '../controllers/room.controller.js';
 
 const id = z.string().regex(/^\d+$/);
@@ -16,13 +17,18 @@ const availabilitySchema = z.object({
   quantity: z.coerce.number().int().min(1).default(1),
 }).strict();
 const roomsQuerySchema = z.object({ branchId: id.optional() }).strict();
+const branchRoomsQuerySchema = z.object({
+  checkIn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  checkOut: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  guests: z.coerce.number().int().min(1).optional(),
+}).strict();
 
 export function roomRoutes(_config: AppConfig, cookieName: string): Router {
   const router = Router();
 
   // Public routes
   router.get('/rooms', validateQuery(roomsQuerySchema), getRooms);
-  router.get('/branches/:branchId/rooms', validateParams(z.object({ branchId: id })), getRooms);
+  router.get('/branches/:branchId/rooms', validateParams(z.object({ branchId: id })), validateQuery(branchRoomsQuerySchema), getBranchRoomsController);
   router.get('/rooms/:roomId/availability', validateQuery(availabilitySchema), checkAvailabilityController);
   router.get('/rooms/:roomId', validateParams(z.object({ roomId: id })), getRoomById);
 

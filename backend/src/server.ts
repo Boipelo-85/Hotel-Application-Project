@@ -5,6 +5,7 @@ import { loadConfig } from './config/env.js';
 import { createApp } from './app.js';
 import { pruneExpiredData } from './services/maintenance.service.js';
 import { checkDatabaseConnection } from './repositories/database-health.repository.js';
+import { seedAdminUser } from './services/admin.service.js';
 
 //Initialze the maintenance time variable
 
@@ -21,6 +22,7 @@ async function start(): Promise<Server> {
   const config = loadConfig();
   initializeDatabase(config);
   await checkDatabaseConnection();
+  await seedAdminUser(config);
   await pruneExpiredData();
   maintenanceTimer = setInterval(() => {
     void pruneExpiredData().catch(

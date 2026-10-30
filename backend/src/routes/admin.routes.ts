@@ -3,8 +3,10 @@ import { z } from 'zod';
 import type { AppConfig } from '../config/env.js';
 import { requireAdmin, requireRoles } from '../middleware/adminMiddleware.js';
 import { createAuthMiddleware } from '../middleware/authMiddleware.js';
+import { createRateLimitMiddleware } from '../middleware/rateLimitMiddleware.js';
 import { validateBody, validateParams, validateQuery } from '../middleware/validationMiddleware.js';
 import {
+  adminLoginController,
   getDashboardStatsController,
   getRecentBookingsController,
   getBranchStatsController,
@@ -41,7 +43,20 @@ export function adminRoutes(config: AppConfig, cookieName: string): Router {
   const router = Router();
   const auth = createAuthMiddleware(cookieName);
 
-  // All admin routes require authentication
+  // Admin Login (public route with rate limiting)
+  const loginSchema = z.object({
+    email: z.string().trim().email().max(320),
+    password: z.string().min(6).max(200),
+  }).strict();
+
+  router.post(
+    '/login',
+    createRateLimitMiddleware(config, 'admin:login-ip', 5, 15 * 60),
+    validateBody(loginSchema),
+    adminLoginController(config, cookieName),
+  );
+
+  // All other admin routes require authentication
   router.use(auth);
 
   // Dashboard Stats

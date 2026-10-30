@@ -1,11 +1,12 @@
 import type { RequestHandler } from 'express';
-import { checkRoomAvailability } from '../services/availability.service.js';
+import { checkRoomAvailability, countNights } from '../services/availability.service.js';
 import {
   createRoom as createRoomService,
   getRoomById as getRoomByIdService,
   listRooms,
   updateRoom as updateRoomService,
 } from '../services/room.service.js';
+import { listActiveReservations } from '../repositories/room.repository.js';
 import { AppError, getRouteParam } from '../utils/errors.js';
 
 function authenticated(request: Parameters<RequestHandler>[0]) {
@@ -18,6 +19,49 @@ export const listRoomsController: RequestHandler = async (request, response) => 
   const branchId = (typeof routeBranchId === 'string' ? routeBranchId : undefined) ??
     (request.validatedQuery as { branchId?: string } | undefined)?.branchId;
   response.json({ rooms: await listRooms(branchId) });
+};
+
+export const getBranchRoomsController: RequestHandler = async (request, response) => {
+  const branchId = getRouteParam(request, 'branchId');
+  const query = request.validatedQuery as {
+    checkIn?: string;
+    checkOut?: string;
+    guests?: number;
+  };
+
+  const rooms = await listRooms(branchId);
+
+  if (query.checkIn && query.checkOut) {
+    countNights(query.checkIn, query.checkOut);
+    const nights = countNights(query.checkIn, query.checkOut);
+
+    const roomsWithAvailability = await Promise.all(
+      rooms.map(async (room: any) => {
+        const reservations = await listActiveReservations(
+          String(room.id),
+          query.checkIn!,
+          query.checkOut!
+        );
+        const reserved = reservations.rows[0]?.reserved || 0;
+        const available = Math.max(room.quantity - reserved, 0);
+        const pricePerNight = parseFloat(room.price);
+        const totalPrice = pricePerNight * nights;
+
+        return {
+          ...room,
+          quantity_available: available,
+          price_per_night: pricePerNight,
+          total_price: totalPrice,
+          is_available: available > 0,
+          can_accommodate_guests: query.guests ? room.capacity >= query.guests : true,
+        };
+      })
+    );
+
+    response.json({ rooms: roomsWithAvailability });
+  } else {
+    response.json({ rooms });
+  }
 };
 
 export const createRoomController: RequestHandler = async (request, response) => {

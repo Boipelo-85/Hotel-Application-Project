@@ -1,6 +1,54 @@
 import type { RequestHandler } from 'express';
 import { query } from '../config/database.js';
 import { AppError } from '../utils/errors.js';
+import type { AppConfig } from '../config/env.js';
+import { verifyAdminCredentials, getAdminUserByEmail } from '../services/admin.service.js';
+import { hashSessionToken } from '../utils/session.js';
+import { createSession as persistSession } from '../repositories/session.repository.js';
+import { inTransaction } from '../config/database.js';
+
+export function adminLoginController(config: AppConfig, cookieName: string): RequestHandler {
+  return async (request, response) => {
+    const { email, password } = request.body;
+
+    if (!email || !password) {
+      throw new AppError(400, 'Email and password are required', 'INVALID_DATA');
+    }
+
+    const isValid = await verifyAdminCredentials(email, password, config);
+    if (!isValid) {
+      throw new AppError(401, 'Invalid admin credentials', 'UNAUTHORIZED');
+    }
+
+    const adminUser = await getAdminUserByEmail(email);
+    if (!adminUser) {
+      throw new AppError(404, 'Admin user not found', 'NOT_FOUND');
+    }
+
+    const token = Buffer.from(Math.random().toString()).toString('base64').substring(0, 32);
+
+    await inTransaction(async (client) => {
+      await persistSession(client, hashSessionToken(token), adminUser.id, config.SESSION_TTL_HOURS);
+    });
+
+    response.cookie(cookieName, token, {
+      httpOnly: true,
+      secure: config.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: config.SESSION_TTL_HOURS * 60 * 60 * 1000,
+    });
+
+    response.json({
+      user: {
+        id: adminUser.id,
+        name: adminUser.name,
+        email: adminUser.email,
+        role: adminUser.role,
+      },
+    });
+  };
+}
 
 export const getDashboardStatsController: RequestHandler = async (_request, response) => {
   const stats = await query(`

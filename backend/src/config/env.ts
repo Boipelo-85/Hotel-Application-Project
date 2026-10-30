@@ -19,6 +19,8 @@ const envSchema = z.object({
   SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(720).default(168),
   OTP_TTL_MINUTES: z.coerce.number().int().min(1).max(30).default(10),
   ADMIN_EMAIL: z.string().email().optional(),
+  ADMIN_LOGIN_EMAIL: z.string().email().optional(),
+  ADMIN_LOGIN_PASSWORD: z.string().min(6).optional(),
   SMTP_HOST: optionalString,
   SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
   SMTP_SECURE: z.enum(['true', 'false']).default('false').transform((value) => value === 'true'),
