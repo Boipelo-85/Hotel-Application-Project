@@ -40,6 +40,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const [rooms, setRooms] = useState(initialRooms);
   const [adults, setAdults] = useState(initialAdults);
   const [children, setChildren] = useState(initialChildren);
+  const [isOccupancyDropdownOpen, setIsOccupancyDropdownOpen] = useState(false);
+  const [travelingWithPets, setTravelingWithPets] = useState(false);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -54,149 +56,130 @@ const SearchBar: React.FC<SearchBarProps> = ({
     navigate(`/hotels?${params.toString()}`);
   };
 
-  const containerStyle: React.CSSProperties = {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '0.5rem',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    padding: '1rem',
-    borderRadius: '2rem',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-    maxWidth: '900px',
-    margin: '0 auto',
-  };
-
-  const inputGroupStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    padding: '0.5rem 1rem',
-    border: '1px solid #e5e7eb',
-    borderRadius: '1.5rem',
-    backgroundColor: 'white',
-    flex: 1,
-    minWidth: '200px',
-  };
-
-  const labelStyle: React.CSSProperties = {
-    fontSize: '0.75rem',
-    color: '#6b7280',
-    fontWeight: 500,
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-  };
-
-  const inputStyle: React.CSSProperties = {
-    border: 'none',
-    outline: 'none',
-    fontSize: '1rem',
-    color: '#111827',
-    flex: 1,
-    minWidth: '0',
-  };
-
-  const buttonStyle: React.CSSProperties = {
-    padding: '0.75rem 2rem',
-    backgroundColor: '#3b82f6',
-    color: 'white',
-    border: 'none',
-    borderRadius: '1.5rem',
-    cursor: 'pointer',
-    fontSize: '1rem',
-    fontWeight: 600,
-    transition: 'background-color 0.2s',
-  };
-
   return (
-    <form onSubmit={handleSubmit} style={containerStyle}>
-      <div style={inputGroupStyle}>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={labelStyle}>Destination</span>
-          <input
-            required
-            type="text"
-            value={destination}
-            onChange={(event) => setDestination(event.target.value)}
-            placeholder="Enter destination"
-            style={inputStyle}
-          />
-        </div>
+    <form className='serach_part search-bar' onSubmit={handleSubmit}>
+       <div style={{border:'1px solid #c7c5c5', borderRadius:'10px', padding:'6px', flex: 1, height: '75px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between'}}>
+          <label style={{fontFamily:"'Courier New', Courier, monospace",fontWeight:'bold', display:'block', marginBottom:'0.25rem'}}>Destination</label>
+          <input type="text" className='input_destin' style={{width:'100%', border:'none', outline:'none', fontSize:'1rem'}} />
       </div>
 
-      <div style={inputGroupStyle}>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={labelStyle}>Select dates</span>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+      <div style={{border:'1px solid #c7c5c5', borderRadius:'10px', padding:'6px', flex: 1, height: '75px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between'}}>
+         <label style={{fontFamily:"'Courier New', Courier, monospace",fontWeight:'bold', display:'block', marginBottom:'0.25rem'}}>Select dates</label>
+         <div style={{display:'flex', gap:'0.5rem', alignItems:'center'}}>
             <input
-              required
               type="date"
+              className='input_date'
               value={checkIn}
               onChange={(event) => setCheckIn(event.target.value)}
-              style={{ ...inputStyle, fontSize: '0.9rem' }}
               min={isoDate(0)}
+              style={{border:'none', outline:'none'}}
             />
-            <span style={{ color: '#9ca3af' }}>-</span>
+            <span>-</span>
             <input
-              required
               type="date"
+              className='input_date'
               value={checkOut}
               onChange={(event) => setCheckOut(event.target.value)}
-              style={{ ...inputStyle, fontSize: '0.9rem' }}
               min={checkIn}
+              style={{border:'none', outline:'none'}}
             />
-          </div>
-        </div>
+         </div>
       </div>
-
-      <div style={inputGroupStyle}>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={labelStyle}>Select occupancy</span>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <input
-                type="number"
-                min={1}
-                max={10}
-                value={adults}
-                onChange={(event) => setAdults(event.target.value)}
-                style={{ ...inputStyle, width: '2.5rem', textAlign: 'center' }}
-              />
-              <span style={{ fontSize: '0.9rem', color: '#6b7280' }}>adults</span>
-            </div>
-            <span style={{ color: '#9ca3af' }}>-</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <input
-                type="number"
-                min={0}
-                max={10}
-                value={children}
-                onChange={(event) => setChildren(event.target.value)}
-                style={{ ...inputStyle, width: '2.5rem', textAlign: 'center' }}
-              />
-              <span style={{ fontSize: '0.9rem', color: '#6b7280' }}>children</span>
-            </div>
-            <span style={{ color: '#9ca3af' }}>-</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <input
-                type="number"
-                min={1}
-                max={10}
-                value={rooms}
-                onChange={(event) => setRooms(event.target.value)}
-                style={{ ...inputStyle, width: '2.5rem', textAlign: 'center' }}
-              />
-              <span style={{ fontSize: '0.9rem', color: '#6b7280' }}>room</span>
-            </div>
-          </div>
-        </div>
+      <div style={{position:'relative', border:'1px solid #c7c5c5', borderRadius:'10px', padding:'6px', flex: 1, height: '75px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between'}}>
+              <label style={{fontFamily:"'Courier New', Courier, monospace",fontWeight:'bold', display:'block', marginBottom:'0.25rem'}}>Select occupancy</label>
+              <div
+                className='occupancy_display'
+                onClick={() => setIsOccupancyDropdownOpen(!isOccupancyDropdownOpen)}
+                style={{cursor:'pointer', padding:'0.5rem', border:'1px solid #e5e7eb', borderRadius:'8px', display:'flex', alignItems:'center', gap:'0.5rem'}}
+              >
+                  <span>{adults} adult{Number(adults) > 1 ? 's' : ''} • {children} child{Number(children) !== 1 ? 'ren' : ''} • {rooms} room{Number(rooms) > 1 ? 's' : ''}</span>
+              </div>
+              {isOccupancyDropdownOpen && (
+                <div className='occupancy_dropdown' style={{position:'absolute', top:'100%', left:0, right:0, backgroundColor:'white', border:'1px solid #e5e7eb', borderRadius:'12px', padding:'1rem', boxShadow:'0 4px 12px rgba(0,0,0,0.15)', zIndex:1000, marginTop:'0.5rem'}}>
+                  <div style={{marginBottom:'1rem'}}>
+                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'0.5rem'}}>
+                      <span style={{fontWeight:'bold'}}>Adults</span>
+                      <div style={{display:'flex', alignItems:'center', gap:'0.5rem'}}>
+                        <button 
+                          type='button'
+                          onClick={() => setAdults(String(Math.max(1, Number(adults) - 1)))}
+                          style={{width:'32px', height:'32px', borderRadius:'50%', border:'1px solid #e5e7eb', backgroundColor:'white', cursor:'pointer', fontSize:'1.2rem'}}
+                        >-</button>
+                        <span style={{minWidth:'20px', textAlign:'center'}}>{adults}</span>
+                        <button 
+                          type='button'
+                          onClick={() => setAdults(String(Math.min(10, Number(adults) + 1)))}
+                          style={{width:'32px', height:'32px', borderRadius:'50%', border:'1px solid #e5e7eb', backgroundColor:'white', cursor:'pointer', fontSize:'1.2rem'}}
+                        >+</button>
+                      </div>
+                    </div>
+                    <span style={{fontSize:'0.75rem', color:'#6b7280'}}>Ages 13 or above</span>
+                  </div>
+                  
+                  <div style={{marginBottom:'1rem'}}>
+                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'0.5rem'}}>
+                      <span style={{fontWeight:'bold'}}>Children</span>
+                      <div style={{display:'flex', alignItems:'center', gap:'0.5rem'}}>
+                        <button 
+                          type='button'
+                          onClick={() => setChildren(String(Math.max(0, Number(children) - 1)))}
+                          style={{width:'32px', height:'32px', borderRadius:'50%', border:'1px solid #e5e7eb', backgroundColor:'white', cursor:'pointer', fontSize:'1.2rem'}}
+                        >-</button>
+                        <span style={{minWidth:'20px', textAlign:'center'}}>{children}</span>
+                        <button 
+                          type='button'
+                          onClick={() => setChildren(String(Math.min(10, Number(children) + 1)))}
+                          style={{width:'32px', height:'32px', borderRadius:'50%', border:'1px solid #e5e7eb', backgroundColor:'white', cursor:'pointer', fontSize:'1.2rem'}}
+                        >+</button>
+                      </div>
+                    </div>
+                    <span style={{fontSize:'0.75rem', color:'#6b7280'}}>Ages 0-12</span>
+                  </div>
+                  
+                  <div style={{marginBottom:'1rem'}}>
+                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'0.5rem'}}>
+                      <span style={{fontWeight:'bold'}}>Rooms</span>
+                      <div style={{display:'flex', alignItems:'center', gap:'0.5rem'}}>
+                        <button 
+                          type='button'
+                          onClick={() => setRooms(String(Math.max(1, Number(rooms) - 1)))}
+                          style={{width:'32px', height:'32px', borderRadius:'50%', border:'1px solid #e5e7eb', backgroundColor:'white', cursor:'pointer', fontSize:'1.2rem'}}
+                        >-</button>
+                        <span style={{minWidth:'20px', textAlign:'center'}}>{rooms}</span>
+                        <button 
+                          type='button'
+                          onClick={() => setRooms(String(Math.min(10, Number(rooms) + 1)))}
+                          style={{width:'32px', height:'32px', borderRadius:'50%', border:'1px solid #e5e7eb', backgroundColor:'white', cursor:'pointer', fontSize:'1.2rem'}}
+                        >+</button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div style={{display:'flex', alignItems:'center', gap:'0.5rem', marginBottom:'1rem', paddingTop:'0.5rem', borderTop:'1px solid #e5e7eb'}}>
+                    <input 
+                      type='checkbox'
+                      id='pets'
+                      checked={travelingWithPets}
+                      onChange={(e) => setTravelingWithPets(e.target.checked)}
+                      style={{width:'18px', height:'18px', cursor:'pointer'}}
+                    />
+                    <label htmlFor='pets' style={{cursor:'pointer', fontSize:'0.875rem'}}>Traveling with pets?</label>
+                  </div>
+                  
+                  <button 
+                    type='button'
+                    onClick={() => setIsOccupancyDropdownOpen(false)}
+                    style={{width:'100%', padding:'0.75rem', backgroundColor:'#3b82f6', color:'white', border:'none', borderRadius:'8px', cursor:'pointer', fontWeight:'600'}}
+                  >
+                    Done
+                  </button>
+                </div>
+              )}
       </div>
 
       <button
         type="submit"
-        style={buttonStyle}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
-        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
+        className="search-bar__button"
       >
         Search
       </button>

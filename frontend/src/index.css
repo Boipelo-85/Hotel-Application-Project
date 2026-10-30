@@ -511,3 +511,133 @@ a {
     right: 0.5rem;
   }
 }
+
+/* Search section */
+.serach_part {
+  max-width: 160px;
+}
+
+.serach_part.search-bar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  background-color: white;
+  padding: 1rem;
+  border-radius: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-width: 1800px;
+  margin: 0 auto;
+}
+
+.search-bar__group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 1.5rem;
+  background-color: white;
+  flex: 1;
+  min-width: 200px;
+}
+
+.search-bar__stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.search-bar__label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.search-bar__input {
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  color: #111827;
+  flex: 1;
+  min-width: 0;
+}
+
+.search-bar__input--date,
+.search-bar__detail {
+  font-size: 0.9rem;
+}
+
+.search-bar__input--number {
+  width: 2.5rem;
+  text-align: center;
+}
+
+.search-bar__row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.search-bar__row--wrap {
+  flex-wrap: wrap;
+}
+
+.search-bar__counter {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.search-bar__separator {
+  color: #9ca3af;
+}
+
+.search-bar__detail {
+  color: #6b7280;
+}
+
+.search-bar__button {
+  padding: 0.75rem 2rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 1.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.search-bar__button:hover {
+  background-color: #2563eb;
+}
+.select_date{
+
+     border: 1px solid #c7c5c5;
+      border-radius: 10px;
+      padding: 6px;
+      margin-left: 20px;
+}
+.destination{
+
+   border: 1px solid #c7c5c5;
+    border-radius: 10px;
+    padding: 6px;
+    margin-left: 20px;
+
+}
+.num_occupancy{
+
+       border-radius: 10px;
+       border: 1px solid #c7c5c5;
+       padding: 6px;
+       width: 30%;
+       margin-left: 20px;
+       margin-right: 20px;
+}
+.occupation{
+
+    padding-left: 70px;
+    
+}
