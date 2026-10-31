@@ -15,7 +15,7 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       ) : user?.role === 'admin' || user?.role === 'branch_manager' ? (
         <>{children}</>
       ) : (
-        <Navigate to="/" replace />
+        <Navigate to="/admin/login" replace />
       )}
     </ProtectedRoute>
   );

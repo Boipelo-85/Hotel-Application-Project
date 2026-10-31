@@ -14,6 +14,7 @@ import Profile from '../pages/Profile';
 import Favourites from '../pages/Favourites';
 import Notifications from '../pages/Notifications';
 import NotFound from '../pages/NotFound';
+import AdminLogin from '../pages/admin/AdminLogin';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import ManageHotels from '../pages/admin/ManageHotels';
 import AddHotel from '../pages/admin/AddHotel';
@@ -30,8 +31,10 @@ const AppRoutes: React.FC = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/hotels" element={<Hotels />} />
       <Route path="/hotels/:branchId" element={<HotelDetails />} />
+      <Route path="/branches/:branchId" element={<HotelDetails />} />
       <Route path="/book" element={<Booking />} />
       <Route path="/booking-confirmation" element={<BookingConfirmation />} />
       <Route

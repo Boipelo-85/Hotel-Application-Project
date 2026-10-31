@@ -71,15 +71,6 @@ const Login: React.FC = () => {
         >
           Sign in with Google
         </button>
-        <button
-          className="login-button login-button--facebook"
-          type="button"
-          onClick={() => {
-            window.location.href = '/api/v1/auth/facebook';
-          }}
-        >
-          Sign in with Facebook
-        </button>
       </div>
 
       <div className="login-divider">or</div>

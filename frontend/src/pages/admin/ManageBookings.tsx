@@ -16,6 +16,9 @@ interface BranchBooking {
   status: string;
   total_amount: string;
   currency: string;
+  user_name?: string;
+  user_email?: string;
+  room_type?: string;
 }
 
 const ManageBookings: React.FC = () => {
@@ -23,6 +26,8 @@ const ManageBookings: React.FC = () => {
   const [branches, setBranches] = useState<ManagedBranch[]>([]);
   const [bookings, setBookings] = useState<BranchBooking[]>([]);
   const [branchId, setBranchId] = useState(searchParams.get('branchId') || '');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -77,6 +82,19 @@ const ManageBookings: React.FC = () => {
     )));
   };
 
+  const filteredBookings = bookings.filter((booking) => {
+    if (statusFilter && booking.status !== statusFilter) return false;
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      return (
+        booking.booking_reference.toLowerCase().includes(query) ||
+        booking.user_name?.toLowerCase().includes(query) ||
+        booking.user_email?.toLowerCase().includes(query)
+      );
+    }
+    return true;
+  });
+
   if (loading) return <Loading message="Loading bookings..." />;
 
   return (
@@ -98,14 +116,43 @@ const ManageBookings: React.FC = () => {
           ))}
         </select>
       </label>
+      <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+        <label>
+          Status
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            style={{ display: 'block', marginTop: '0.35rem', padding: '0.5rem' }}
+          >
+            <option value="">All</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="completed">Completed</option>
+          </select>
+        </label>
+        <label>
+          Search
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Reference, name, or email"
+            style={{ display: 'block', marginTop: '0.35rem', padding: '0.5rem', minWidth: '200px' }}
+          />
+        </label>
+      </div>
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      {bookings.length === 0 ? (
-        <p>No bookings for this branch.</p>
+      {filteredBookings.length === 0 ? (
+        <p>No bookings match the current filters.</p>
       ) : (
         <ul>
-          {bookings.map((booking) => (
+          {filteredBookings.map((booking) => (
             <li key={booking.id} style={{ margin: '1rem 0', padding: '1rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem', backgroundColor: 'white' }}>
               <strong>{booking.booking_reference}</strong> · {booking.status}
+              {booking.room_type && <div>Room: {booking.room_type}</div>}
+              {booking.user_name && <div>Guest: {booking.user_name}</div>}
+              {booking.user_email && <div>Email: {booking.user_email}</div>}
               <div>{new Date(booking.check_in).toLocaleDateString()} → {new Date(booking.check_out).toLocaleDateString()}</div>
               <div>{booking.currency} {booking.total_amount}</div>
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>

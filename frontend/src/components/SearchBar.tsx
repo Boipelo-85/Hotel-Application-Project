@@ -60,7 +60,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
     <form className='serach_part search-bar' onSubmit={handleSubmit}>
        <div style={{border:'1px solid #c7c5c5', borderRadius:'10px', padding:'6px', flex: 1, height: '75px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between'}}>
           <label style={{fontFamily:"'Courier New', Courier, monospace",fontWeight:'bold', display:'block', marginBottom:'0.25rem'}}>Destination</label>
-          <input type="text" className='input_destin' style={{width:'100%', border:'none', outline:'none', fontSize:'1rem'}} />
+          <input type="text" className='input_destin' style={{width:'100%', border:'1px solid #000', outline:'none', fontSize:'1rem'}} />
       </div>
 
       <div style={{border:'1px solid #c7c5c5', borderRadius:'10px', padding:'6px', flex: 1, height: '75px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between'}}>

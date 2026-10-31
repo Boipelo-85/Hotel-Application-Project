@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDashboardStats, fetchRecentBookings } from '../../redux/adminSlice';
+import { logout } from '../../redux/authSlice';
 import type { AppDispatch, RootState } from '../../redux/store';
 import Loading from '../../components/Loading';
 
@@ -16,8 +17,14 @@ const navLinkStyle: React.CSSProperties = {
 
 const AdminDashboard: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.auth.user);
   const { dashboardStats, recentBookings, loading, error } = useSelector((state: RootState) => state.admin);
+
+  const handleLogout = async () => {
+    await dispatch(logout());
+    navigate('/admin/login', { replace: true });
+  };
 
   useEffect(() => {
     void dispatch(fetchDashboardStats());
@@ -39,6 +46,18 @@ const AdminDashboard: React.FC = () => {
         )}
         <Link to="/admin/rooms" style={navLinkStyle}>Rooms</Link>
         <Link to="/admin/bookings" style={navLinkStyle}>Bookings</Link>
+        <button
+          type="button"
+          onClick={() => void handleLogout()}
+          style={{
+            ...navLinkStyle,
+            backgroundColor: '#dc2626',
+            cursor: 'pointer',
+            border: 'none',
+          }}
+        >
+          Logout
+        </button>
       </div>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {dashboardStats && (

@@ -80,6 +80,24 @@ export const logout = createAsyncThunk('auth/logout', async () => {
   }
 });
 
+export const loginAdmin = createAsyncThunk(
+  'auth/loginAdmin',
+  async ({ email, password }: { email: string; password: string }) => {
+    const response = await fetch('/api/v1/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email, password }),
+    });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.message || 'Invalid credentials');
+    }
+    const data = await response.json();
+    return data.user;
+  }
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -129,6 +147,20 @@ const authSlice = createSlice({
         state.loading = false;
         state.user = null;
         state.isAuthenticated = false;
+      })
+      // Admin Login
+      .addCase(loginAdmin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loginAdmin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+        state.isAuthenticated = true;
+      })
+      .addCase(loginAdmin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Login failed';
       })
       // Logout
       .addCase(logout.fulfilled, (state) => {

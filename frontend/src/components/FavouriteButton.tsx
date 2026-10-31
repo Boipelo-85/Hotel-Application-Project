@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import { addFavourite, fetchFavourites, removeFavourite } from '../redux/favouriteSlice';
 import type { AppDispatch, RootState } from '../redux/store';
 
@@ -42,14 +43,25 @@ const FavouriteButton: React.FC<{ branchId: string; loadOnMount?: boolean }> = (
         type="button"
         onClick={() => void toggle()}
         style={{
-          padding: '0.5rem 1rem',
-          border: '1px solid #ddd',
-          borderRadius: '0.25rem',
-          backgroundColor: isFavourite ? '#fef3c7' : 'white',
+          padding: '0.5rem',
+          border: '2px solid #000',
+          borderRadius: '50%',
+          backgroundColor: isFavourite ? '#ffebee' : 'white',
           cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '40px',
+          height: '40px',
+          transition: 'all 0.2s ease',
         }}
+        title={isFavourite ? 'Remove from favourites' : 'Save to favourites'}
       >
-        {isFavourite ? 'Saved' : 'Save to favourites'}
+        {isFavourite ? (
+          <FaHeart style={{ color: '#e53935', fontSize: '1.25rem' }} />
+        ) : (
+          <FaRegHeart style={{ color: '#e53935', fontSize: '1.25rem' }} />
+        )}
       </button>
       <span role="status" aria-live="polite" style={{ display: 'block', color: '#4b5563', fontSize: '0.85rem' }}>
         {message}

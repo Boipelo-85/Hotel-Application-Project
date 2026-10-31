@@ -16,6 +16,10 @@ interface Property {
   label: string;
   reviews: number;
   price: number;
+  starRating: number;
+  distanceDowntown?: string;
+  distanceBeach?: string;
+  description?: string;
 }
 
 const HomesGuestsLove: React.FC = () => {
@@ -31,6 +35,10 @@ const HomesGuestsLove: React.FC = () => {
       label: 'Exceptional',
       reviews: 245,
       price: 299,
+      starRating: 5,
+      distanceDowntown: '0.2 km from downtown',
+      distanceBeach: '1.5 km from beach',
+      description: 'Luxurious suite with panoramic city views and premium amenities.',
     },
     {
       id: '2',
@@ -41,6 +49,10 @@ const HomesGuestsLove: React.FC = () => {
       label: 'Superb',
       reviews: 189,
       price: 349,
+      starRating: 4,
+      distanceDowntown: '3.0 km from downtown',
+      distanceBeach: '0.1 km from beach',
+      description: 'Beachfront resort with direct ocean access and spa facilities.',
     },
     {
       id: '3',
@@ -51,6 +63,10 @@ const HomesGuestsLove: React.FC = () => {
       label: 'Superb',
       reviews: 156,
       price: 279,
+      starRating: 4,
+      distanceDowntown: '5.0 km from downtown',
+      distanceBeach: '10 km from beach',
+      description: 'Cozy mountain lodge with hiking trails and fireplace.',
     },
     {
       id: '4',
@@ -61,6 +77,10 @@ const HomesGuestsLove: React.FC = () => {
       label: 'Wonderful',
       reviews: 312,
       price: 199,
+      starRating: 3,
+      distanceDowntown: '0.5 km from downtown',
+      distanceBeach: '2.0 km from beach',
+      description: 'Modern hotel in the heart of the business district.',
     },
     {
       id: '5',
@@ -71,6 +91,10 @@ const HomesGuestsLove: React.FC = () => {
       label: 'Superb',
       reviews: 98,
       price: 249,
+      starRating: 4,
+      distanceDowntown: '2.0 km from downtown',
+      distanceBeach: '3.0 km from beach',
+      description: 'Peaceful retreat surrounded by beautiful gardens.',
     },
     {
       id: '6',
@@ -81,6 +105,10 @@ const HomesGuestsLove: React.FC = () => {
       label: 'Exceptional',
       reviews: 67,
       price: 499,
+      starRating: 5,
+      distanceDowntown: '1.0 km from downtown',
+      distanceBeach: '2.5 km from beach',
+      description: 'Exclusive penthouse with rooftop terrace and city skyline views.',
     },
   ];
 
@@ -120,7 +148,7 @@ const HomesGuestsLove: React.FC = () => {
       <div className="homes-guests-love__scroll-container">
         <div id="cards-container" className="homes-guests-love__cards">
           {properties.map((property) => (
-            <Link key={property.id} to={`/hotels/${property.id}`} className="homes-guests-love__card-link">
+            <Link key={property.id} to={`/branches/${property.id}`} className="homes-guests-love__card-link">
               <div className="homes-guests-love__card">
                 <div className="homes-guests-love__card-image">
                   <img
@@ -153,6 +181,11 @@ const HomesGuestsLove: React.FC = () => {
 
                 <div className="homes-guests-love__card-content">
                   <h3 className="homes-guests-love__card-name">{property.name}</h3>
+                  
+                  <div className="homes-guests-love__card-stars">
+                    <span className="homes-guests-love__stars">{'★'.repeat(property.starRating)}</span>
+                  </div>
+
                   <p className="homes-guests-love__card-location">{property.location}</p>
 
                   <div className="homes-guests-love__card-rating">
@@ -162,6 +195,17 @@ const HomesGuestsLove: React.FC = () => {
                       ({property.reviews} reviews)
                     </span>
                   </div>
+
+                  {property.distanceDowntown && (
+                    <p className="homes-guests-love__card-distance">{property.distanceDowntown}</p>
+                  )}
+                  {property.distanceBeach && (
+                    <p className="homes-guests-love__card-distance">{property.distanceBeach}</p>
+                  )}
+                  
+                  {property.description && (
+                    <p className="homes-guests-love__card-description">{property.description}</p>
+                  )}
 
                   <div className="homes-guests-love__card-price">
                     <span className="homes-guests-love__price-label">Starting from</span>

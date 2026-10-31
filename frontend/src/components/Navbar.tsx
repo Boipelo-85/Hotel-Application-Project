@@ -24,8 +24,8 @@ const Navbar: React.FC = () => {
           Grand-Rest Hotel
         </Link>
         <div className="navbar__links">
-          <Link to="/hotels" className="navbar__link">
-            Branches
+          <Link to="/admin/login" className="admin_section">
+            Admin
           </Link>
           {isAuthenticated ? (
             <>

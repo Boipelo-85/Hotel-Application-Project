@@ -10,7 +10,10 @@ export interface Room {
   quantity_available?: number;
   price?: string;
   price_per_night?: string;
+  total_price?: number;
   currency: string;
+  is_available?: boolean;
+  can_accommodate_guests?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -29,11 +32,13 @@ const initialState: RoomState = {
 
 export const fetchRooms = createAsyncThunk(
   'rooms/fetchRooms',
-  async (branchId?: string) => {
+  async ({ branchId, params }: { branchId?: string; params?: Record<string, string> } = {}) => {
     const url = branchId
       ? `/api/v1/branches/${branchId}/rooms`
       : '/api/v1/rooms';
-    const response = await fetch(url);
+    const queryString = params ? new URLSearchParams(params).toString() : '';
+    const fullUrl = queryString ? `${url}?${queryString}` : url;
+    const response = await fetch(fullUrl);
     if (!response.ok) {
       throw new Error('Failed to fetch rooms');
     }
