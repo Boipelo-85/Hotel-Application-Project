@@ -88,7 +88,7 @@ const HotelCard: React.FC<HotelCardProps> = ({
           View accommodation
         </span>
       </Link>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'center', marginTop: '0.75rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'center', marginTop: '0.75rem' }} onClick={(e) => e.stopPropagation()}>
         <FavouriteButton branchId={id} loadOnMount={false} />
         <ShareButton title={name} text={`Take a look at ${name}${city ? ` in ${city}` : ''}.`} url={`${window.location.origin}/hotels/${id}`} />
       </div>

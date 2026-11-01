@@ -16,6 +16,20 @@ export interface Room {
   can_accommodate_guests?: boolean;
   created_at?: string;
   updated_at?: string;
+  size_sqm?: number | null;
+  bed_types?: string | null;
+  rating?: number | null;
+  review_count?: number | null;
+  images?: Array<{
+    id: string;
+    image_url: string;
+    alt_text: string | null;
+    display_order: number;
+  }>;
+  amenities?: Array<{
+    amenity_name: string;
+    category: string;
+  }>;
 }
 
 interface RoomState {

@@ -20,6 +20,11 @@ a {
   padding: 1rem 2rem;
   color: white;
   font-family: 'Courier New', Courier, monospace;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
 }
 
 .navbar__container {

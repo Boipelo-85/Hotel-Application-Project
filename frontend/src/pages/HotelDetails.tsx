@@ -11,6 +11,7 @@ import ReviewList from '../components/ReviewList';
 import ImageGallery from '../components/ImageGallery';
 import Map from '../components/Map';
 import ShareButton from '../components/ShareButton';
+import RoomDetailsModal from '../components/RoomDetailsModal';
 
 const HotelDetails: React.FC = () => {
   const { branchId } = useParams<{ branchId: string }>();
@@ -19,10 +20,13 @@ const HotelDetails: React.FC = () => {
   const { currentBranch, loading, error } = useSelector((state: RootState) => state.hotels);
   const rooms = useSelector((state: RootState) => state.rooms.rooms);
   const reviews = useSelector((state: RootState) => state.reviews.reviews);
+  const roomsLoading = useSelector((state: RootState) => state.rooms.loading);
+  const roomsError = useSelector((state: RootState) => state.rooms.error);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [localCheckIn, setLocalCheckIn] = useState('');
   const [localCheckOut, setLocalCheckOut] = useState('');
   const [localGuests, setLocalGuests] = useState('2');
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
 
   const checkIn = searchParams.get('checkIn') || localCheckIn;
   const checkOut = searchParams.get('checkOut') || localCheckOut;
@@ -41,6 +45,7 @@ const HotelDetails: React.FC = () => {
     if (checkIn) params.checkIn = checkIn;
     if (checkOut) params.checkOut = checkOut;
     if (guests) params.guests = guests;
+    console.log('Fetching rooms for branch:', branchId, 'with params:', params);
     void dispatch(fetchRooms({ branchId, params }));
   }, [dispatch, branchId, checkIn, checkOut, guests]);
 
@@ -133,6 +138,18 @@ const HotelDetails: React.FC = () => {
       />
 
       <h2 style={{ marginTop: '2rem', fontFamily: "'Courier New', Courier, monospace" }}>Available Rooms</h2>
+      
+      {roomsError && (
+        <div style={{ padding: '1rem', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '0.5rem', marginBottom: '1rem', fontFamily: "'Courier New', Courier, monospace" }}>
+          Error loading rooms: {roomsError}
+        </div>
+      )}
+      
+      {roomsLoading && (
+        <div style={{ padding: '1rem', color: '#666', fontFamily: "'Courier New', Courier, monospace" }}>
+          Loading rooms...
+        </div>
+      )}
       
       <div style={{ 
         display: 'flex', 
@@ -266,9 +283,27 @@ const HotelDetails: React.FC = () => {
               if (checkIn) params.set('checkIn', checkIn);
               if (checkOut) params.set('checkOut', checkOut);
               
+              // Get room amenities if available and group by category
+              const amenitiesArray = room.amenities || [];
+              const amenitiesByCategory = amenitiesArray.reduce((acc: any, amenity: any) => {
+                if (!acc[amenity.category]) {
+                  acc[amenity.category] = [];
+                }
+                acc[amenity.category].push(amenity.amenity_name);
+                return acc;
+              }, {});
+              
+              const features = [
+                ...(amenitiesByCategory.facilities || []),
+                ...(amenitiesByCategory.view || []),
+                ...(amenitiesByCategory.general || [])
+              ];
+              const keyFeatures = features.slice(0, 4);
+              
               return (
                 <div
                   key={room.id}
+                  onClick={() => setSelectedRoomId(String(room.id))}
                   style={{
                     border: '1px solid #ddd',
                     borderRadius: '0.5rem',
@@ -276,53 +311,143 @@ const HotelDetails: React.FC = () => {
                     display: 'flex',
                     flexDirection: 'column',
                     backgroundColor: isAvailable && canAccommodate ? 'white' : '#f9fafb',
+                    cursor: 'pointer',
+                    transition: 'box-shadow 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
-                  <h3 style={{ fontFamily: "'Courier New', Courier, monospace", margin: '0 0 0.5rem 0' }}>{room.room_type}</h3>
-                  {room.description && <p style={{ color: '#666', flex: 1, fontSize: '0.875rem', fontFamily: "'Courier New', Courier, monospace" }}>{room.description}</p>}
-                  <p style={{ color: '#666', fontSize: '0.875rem', fontFamily: "'Courier New', Courier, monospace" }}>
-                    Capacity: {room.capacity} guests · {quantityAvailable} room{quantityAvailable !== 1 ? 's' : ''} available
-                  </p>
-                  <div style={{ marginTop: '0.5rem' }}>
-                    <p style={{ fontWeight: 'bold', color: '#10b981', margin: '0', fontFamily: "'Courier New', Courier, monospace" }}>
-                      {room.currency} {price}/night
-                    </p>
-                    {checkIn && checkOut && (
-                      <p style={{ fontWeight: 'bold', color: '#059669', margin: '0.25rem 0', fontFamily: "'Courier New', Courier, monospace" }}>
-                        Total: {room.currency} {totalPrice.toFixed(2)}
+                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.75rem' }}>
+                    {room.images && room.images.length > 0 ? (
+                      <img
+                        src={room.images[0].image_url}
+                        alt={room.images[0].alt_text || room.room_type}
+                        style={{
+                          width: '120px',
+                          height: '90px',
+                          objectFit: 'cover',
+                          borderRadius: '0.25rem',
+                          flexShrink: 0,
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: '120px',
+                          height: '90px',
+                          backgroundColor: '#e5e7eb',
+                          borderRadius: '0.25rem',
+                          flexShrink: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#6b7280',
+                          fontSize: '0.75rem',
+                          fontFamily: "'Courier New', Courier, monospace",
+                        }}
+                      >
+                        No image
+                      </div>
+                    )}
+                    <div style={{ flex: 1 }}>
+                      <h3 style={{ fontFamily: "'Courier New', Courier, monospace", margin: '0 0 0.25rem 0', fontSize: '1rem' }}>{room.room_type}</h3>
+                      {room.size_sqm && (
+                        <p style={{ color: '#666', fontSize: '0.875rem', margin: '0', fontFamily: "'Courier New', Courier, monospace" }}>
+                          {room.size_sqm} m²
+                        </p>
+                      )}
+                      {room.bed_types && (
+                        <p style={{ color: '#666', fontSize: '0.875rem', margin: '0', fontFamily: "'Courier New', Courier, monospace" }}>
+                          {room.bed_types}
+                        </p>
+                      )}
+                      <p style={{ color: '#666', fontSize: '0.875rem', margin: '0.25rem 0 0', fontFamily: "'Courier New', Courier, monospace" }}>
+                        Capacity: {room.capacity} guests
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Key Features */}
+                  {keyFeatures.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginBottom: '0.5rem' }}>
+                      {keyFeatures.map((feature, idx) => (
+                        <span
+                          key={idx}
+                          style={{
+                            fontSize: '0.75rem',
+                            color: '#6b7280',
+                            backgroundColor: '#f3f4f6',
+                            padding: '0.125rem 0.375rem',
+                            borderRadius: '0.125rem',
+                            fontFamily: "'Courier New', Courier, monospace",
+                          }}
+                        >
+                          {feature}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <div style={{ marginTop: 'auto', paddingTop: '0.5rem', borderTop: '1px solid #e5e7eb' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <div>
+                        <p style={{ fontWeight: 'bold', color: '#10b981', margin: '0', fontFamily: "'Courier New', Courier, monospace" }}>
+                          {room.currency} {price}/night
+                        </p>
+                        {checkIn && checkOut && (
+                          <p style={{ fontWeight: 'bold', color: '#059669', margin: '0', fontSize: '0.875rem', fontFamily: "'Courier New', Courier, monospace" }}>
+                            Total: {room.currency} {totalPrice.toFixed(2)}
+                          </p>
+                        )}
+                      </div>
+                      <p style={{ 
+                        color: quantityAvailable <= 2 ? '#dc2626' : '#10b981', 
+                        fontSize: '0.875rem', 
+                        margin: '0',
+                        fontFamily: "'Courier New', Courier, monospace",
+                        fontWeight: quantityAvailable <= 2 ? '600' : 'normal'
+                      }}>
+                        {quantityAvailable <= 2 ? `Only ${quantityAvailable} left` : `${quantityAvailable} available`}
+                      </p>
+                    </div>
+                    
+                    {!isAvailable && (
+                      <p style={{ color: '#dc2626', fontSize: '0.875rem', marginTop: '0.5rem', fontFamily: "'Courier New', Courier, monospace" }}>
+                        Not available for these dates
                       </p>
                     )}
+                    {!canAccommodate && (
+                      <p style={{ color: '#dc2626', fontSize: '0.875rem', marginTop: '0.5rem', fontFamily: "'Courier New', Courier, monospace" }}>
+                        Cannot accommodate {guests} guests
+                      </p>
+                    )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isAvailable && canAccommodate) {
+                          window.location.href = `/book?${params.toString()}`;
+                        }
+                      }}
+                      disabled={!isAvailable || !canAccommodate}
+                      style={{
+                        marginTop: '0.5rem',
+                        padding: '0.5rem 1rem',
+                        backgroundColor: isAvailable && canAccommodate ? '#3b82f6' : '#9ca3af',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '0.25rem',
+                        cursor: isAvailable && canAccommodate ? 'pointer' : 'not-allowed',
+                        fontFamily: "'Courier New', Courier, monospace",
+                        width: '100%',
+                      }}
+                    >
+                      {isAvailable && canAccommodate ? 'Book now' : 'Not available'}
+                    </button>
                   </div>
-                  {!isAvailable && (
-                    <p style={{ color: '#dc2626', fontSize: '0.875rem', marginTop: '0.5rem', fontFamily: "'Courier New', Courier, monospace" }}>
-                      Not available for these dates
-                    </p>
-                  )}
-                  {!canAccommodate && (
-                    <p style={{ color: '#dc2626', fontSize: '0.875rem', marginTop: '0.5rem', fontFamily: "'Courier New', Courier, monospace" }}>
-                      Cannot accommodate {guests} guests
-                    </p>
-                  )}
-                  <Link
-                    to={isAvailable && canAccommodate ? `/book?${params.toString()}` : '#'}
-                    onClick={(e) => {
-                      if (!isAvailable || !canAccommodate) e.preventDefault();
-                    }}
-                    style={{
-                      display: 'inline-block',
-                      marginTop: '0.75rem',
-                      padding: '0.5rem 1rem',
-                      backgroundColor: isAvailable && canAccommodate ? '#3b82f6' : '#9ca3af',
-                      color: 'white',
-                      textDecoration: 'none',
-                      borderRadius: '0.25rem',
-                      textAlign: 'center',
-                      cursor: isAvailable && canAccommodate ? 'pointer' : 'not-allowed',
-                      fontFamily: "'Courier New', Courier, monospace",
-                    }}
-                  >
-                    {isAvailable && canAccommodate ? 'Book now' : 'Not available'}
-                  </Link>
                 </div>
               );
             })}
@@ -332,6 +457,24 @@ const HotelDetails: React.FC = () => {
 
       <h2 style={{ marginTop: '2rem' }}>Reviews</h2>
       <ReviewList reviews={reviews || []} />
+
+      {selectedRoomId && (
+        <RoomDetailsModal
+          roomId={selectedRoomId}
+          onClose={() => setSelectedRoomId(null)}
+          onBook={(room) => {
+            const params = new URLSearchParams({
+              roomId: String(room.id),
+              branchId: branchId || String((room as any).branch_id),
+              guests,
+              quantity,
+            });
+            if (checkIn) params.set('checkIn', checkIn);
+            if (checkOut) params.set('checkOut', checkOut);
+            window.location.href = `/book?${params.toString()}`;
+          }}
+        />
+      )}
     </div>
   );
 };

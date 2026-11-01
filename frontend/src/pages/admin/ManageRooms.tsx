@@ -35,6 +35,7 @@ const ManageRooms: React.FC = () => {
   const [capacity, setCapacity] = useState('2');
   const [quantity, setQuantity] = useState('1');
   const [price, setPrice] = useState('100');
+  const [description, setDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -84,6 +85,7 @@ const ManageRooms: React.FC = () => {
         capacity: Number(capacity),
         quantity: Number(quantity),
         price: Number(price),
+        description,
       }),
     });
     if (!response.ok) {
@@ -93,6 +95,7 @@ const ManageRooms: React.FC = () => {
     const refresh = await fetch(`/api/v1/branches/${branchId}/rooms`);
     const data = await readJson<{ rooms: Room[] }>(refresh);
     setRooms(data?.rooms || []);
+    setDescription('');
   };
 
   if (loading) return <Loading message="Loading rooms..." />;
@@ -130,6 +133,7 @@ const ManageRooms: React.FC = () => {
         <label>Capacity<input required type="number" min={1} value={capacity} onChange={(event) => setCapacity(event.target.value)} style={fieldStyle} /></label>
         <label>Quantity<input required type="number" min={1} value={quantity} onChange={(event) => setQuantity(event.target.value)} style={fieldStyle} /></label>
         <label>Price<input required type="number" min={0} step="0.01" value={price} onChange={(event) => setPrice(event.target.value)} style={fieldStyle} /></label>
+        <label>Description<textarea value={description} onChange={(event) => setDescription(event.target.value)} style={fieldStyle} rows={3} placeholder="Room amenities, appliances, and features..." /></label>
         <button type="submit" style={{ padding: '0.75rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '0.25rem' }}>
           Add room
         </button>

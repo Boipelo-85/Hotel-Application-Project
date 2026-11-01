@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 function isoDate(offsetDays = 0): string {
   const date = new Date();
@@ -9,7 +11,9 @@ function isoDate(offsetDays = 0): string {
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const day = date.getDate().toString().padStart(2, '0');
+  const weekday = date.toLocaleDateString('en-US', { weekday: 'short' });
+  return `${weekday},${day}`;
 }
 
 function formatDateRange(checkIn: string, checkOut: string): string {
@@ -35,8 +39,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
 }) => {
   const navigate = useNavigate();
   const [destination, setDestination] = useState(initialDestination);
-  const [checkIn, setCheckIn] = useState(initialCheckIn || isoDate(1));
-  const [checkOut, setCheckOut] = useState(initialCheckOut || isoDate(2));
+  const [checkIn, setCheckIn] = useState<Date | null>(initialCheckIn ? new Date(initialCheckIn) : null);
+  const [checkOut, setCheckOut] = useState<Date | null>(initialCheckOut ? new Date(initialCheckOut) : null);
   const [rooms, setRooms] = useState(initialRooms);
   const [adults, setAdults] = useState(initialAdults);
   const [children, setChildren] = useState(initialChildren);
@@ -48,8 +52,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
     const guests = String(Number(adults) + Number(children));
     const params = new URLSearchParams({
       destination: destination.trim(),
-      checkIn,
-      checkOut,
+      checkIn: checkIn ? checkIn.toISOString().slice(0, 10) : '',
+      checkOut: checkOut ? checkOut.toISOString().slice(0, 10) : '',
       rooms,
       guests,
     });
@@ -60,29 +64,50 @@ const SearchBar: React.FC<SearchBarProps> = ({
     <form className='serach_part search-bar' onSubmit={handleSubmit}>
        <div style={{border:'1px solid #c7c5c5', borderRadius:'10px', padding:'6px', flex: 1, height: '75px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between'}}>
           <label style={{fontFamily:"'Courier New', Courier, monospace",fontWeight:'bold', display:'block', marginBottom:'0.25rem'}}>Destination</label>
-          <input type="text" className='input_destin' style={{width:'100%', border:'1px solid #000', outline:'none', fontSize:'1rem'}} />
+          <input 
+            type="text" 
+            className='input_destin' 
+            value={destination}
+            onChange={(event) => setDestination(event.target.value)}
+       
+            style={{width:'100%', border:'1px solid #000', outline:'none', fontSize:'1rem'}} 
+          />
       </div>
 
       <div style={{border:'1px solid #c7c5c5', borderRadius:'10px', padding:'6px', flex: 1, height: '75px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between'}}>
          <label style={{fontFamily:"'Courier New', Courier, monospace",fontWeight:'bold', display:'block', marginBottom:'0.25rem'}}>Select dates</label>
          <div style={{display:'flex', gap:'0.5rem', alignItems:'center'}}>
-            <input
-              type="date"
-              className='input_date'
-              value={checkIn}
-              onChange={(event) => setCheckIn(event.target.value)}
-              min={isoDate(0)}
-              style={{border:'none', outline:'none'}}
-            />
+            <div style={{flex: 1, position: 'relative'}}>
+               <DatePicker
+                 selected={checkIn}
+                 onChange={(date: Date | null) => setCheckIn(date)}
+                 minDate={new Date()}
+                 dateFormat="EEE,dd"
+                 placeholderText="Check-in date"
+                 customInput={
+                   <div style={{fontSize: '0.9rem', color: checkIn ? '#000' : '#999', cursor: 'pointer', padding: '8px 0'}}>
+                     {checkIn ? formatDate(checkIn.toISOString().slice(0, 10)) : 'Check-in date'}
+                   </div>
+                 }
+                 popperPlacement="bottom-start"
+               />
+            </div>
             <span>-</span>
-            <input
-              type="date"
-              className='input_date'
-              value={checkOut}
-              onChange={(event) => setCheckOut(event.target.value)}
-              min={checkIn}
-              style={{border:'none', outline:'none'}}
-            />
+            <div style={{flex: 1, position: 'relative'}}>
+               <DatePicker
+                 selected={checkOut}
+                 onChange={(date: Date | null) => setCheckOut(date)}
+                 minDate={checkIn || new Date()}
+                 dateFormat="EEE,dd"
+                 placeholderText="Check-out date"
+                 customInput={
+                   <div style={{fontSize: '0.9rem', color: checkOut ? '#000' : '#999', cursor: 'pointer', padding: '8px 0'}}>
+                     {checkOut ? formatDate(checkOut.toISOString().slice(0, 10)) : 'Check-out date'}
+                   </div>
+                 }
+                 popperPlacement="bottom-start"
+               />
+            </div>
          </div>
       </div>
       <div style={{position:'relative', border:'1px solid #c7c5c5', borderRadius:'10px', padding:'6px', flex: 1, height: '75px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between'}}>
