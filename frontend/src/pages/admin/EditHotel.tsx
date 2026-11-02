@@ -11,6 +11,15 @@ const fieldStyle: React.CSSProperties = {
   boxSizing: 'border-box',
 };
 
+const PROVINCES = [
+  'Gauteng',
+  'Limpopo',
+  'Western Cape',
+  'Eastern Cape',
+  'KwaZulu-Natal',
+  'Mpumalanga',
+] as const;
+
 interface ManagedBranch {
   id: string;
   name: string;
@@ -101,7 +110,14 @@ const EditHotel: React.FC = () => {
       <form onSubmit={(event) => void handleSubmit(event)} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         <label>Name<input required value={name} onChange={(event) => setName(event.target.value)} style={fieldStyle} /></label>
         <label>City<input required value={city} onChange={(event) => setCity(event.target.value)} style={fieldStyle} /></label>
-        <label>Province<input required value={province} onChange={(event) => setProvince(event.target.value)} style={fieldStyle} /></label>
+        <label>Province
+          <select required value={province} onChange={(event) => setProvince(event.target.value)} style={fieldStyle}>
+            <option value="">Select a province</option>
+            {PROVINCES.map((prov) => (
+              <option key={prov} value={prov}>{prov}</option>
+            ))}
+          </select>
+        </label>
         <label>Address<input required value={address} onChange={(event) => setAddress(event.target.value)} style={fieldStyle} /></label>
         <label>Description<textarea value={description} onChange={(event) => setDescription(event.target.value)} style={{ ...fieldStyle, minHeight: '6rem' }} /></label>
         <label>Price per night<input required type="number" min={0} step="0.01" value={pricePerNight} onChange={(event) => setPricePerNight(event.target.value)} style={fieldStyle} /></label>

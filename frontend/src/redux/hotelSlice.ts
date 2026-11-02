@@ -118,9 +118,12 @@ export const searchAvailability = createAsyncThunk(
     guests: string;
   }) => {
     const params = new URLSearchParams(filters);
-    const response = await fetch(`/api/v1/search?${params.toString()}`);
+    const response = await fetch(`/api/v1/search?${params.toString()}`, {
+      credentials: 'include',
+    });
     if (!response.ok) {
-      throw new Error('Failed to search availability');
+      const errorText = await response.text();
+      throw new Error(`Failed to search availability: ${errorText}`);
     }
     return (await response.json()) as SearchResult[];
   }

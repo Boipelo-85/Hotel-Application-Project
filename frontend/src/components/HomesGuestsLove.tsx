@@ -1,19 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import hotel1 from '../assets/hotelPictures/hotel_room_2.jpg';
-import hotel2 from '../assets/hotelPictures/hotel_room_4.jpg';
-import hotel3 from '../assets/hotelPictures/hotel_room5.jpg';
-import hotel4 from '../assets/hotelPictures/hotel-_room_1.jpg';
-import hotel5 from '../assets/hotelPictures/hotel_out_2.jpg';
-import hotel6 from '../assets/hotelPictures/hotel_out_4.jpg';
 
 interface Property {
   id: string;
   image: string;
   name: string;
   location: string;
+  province: string;
   score: number;
-  label: string;
   reviews: number;
   price: number;
   starRating: number;
@@ -22,95 +16,57 @@ interface Property {
   description?: string;
 }
 
-const HomesGuestsLove: React.FC = () => {
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+interface HomesGuestsLoveProps {
+  filterProvince?: string;
+}
 
-  const properties: Property[] = [
-    {
-      id: '1',
-      image: hotel1,
-      name: 'Grand Suite Deluxe',
-      location: 'Downtown, City Center',
-      score: 9.7,
-      label: 'Exceptional',
-      reviews: 245,
-      price: 299,
-      starRating: 5,
-      distanceDowntown: '0.2 km from downtown',
-      distanceBeach: '1.5 km from beach',
-      description: 'Luxurious suite with panoramic city views and premium amenities.',
-    },
-    {
-      id: '2',
-      image: hotel2,
-      name: 'Ocean View Resort',
-      location: 'Beachfront, Coastal Area',
-      score: 9.5,
-      label: 'Superb',
-      reviews: 189,
-      price: 349,
-      starRating: 4,
-      distanceDowntown: '3.0 km from downtown',
-      distanceBeach: '0.1 km from beach',
-      description: 'Beachfront resort with direct ocean access and spa facilities.',
-    },
-    {
-      id: '3',
-      image: hotel3,
-      name: 'Mountain Lodge',
-      location: 'Mountain View, Highlands',
-      score: 9.3,
-      label: 'Superb',
-      reviews: 156,
-      price: 279,
-      starRating: 4,
-      distanceDowntown: '5.0 km from downtown',
-      distanceBeach: '10 km from beach',
-      description: 'Cozy mountain lodge with hiking trails and fireplace.',
-    },
-    {
-      id: '4',
-      image: hotel4,
-      name: 'City Center Hotel',
-      location: 'Business District',
-      score: 9.1,
-      label: 'Wonderful',
-      reviews: 312,
-      price: 199,
-      starRating: 3,
-      distanceDowntown: '0.5 km from downtown',
-      distanceBeach: '2.0 km from beach',
-      description: 'Modern hotel in the heart of the business district.',
-    },
-    {
-      id: '5',
-      image: hotel5,
-      name: 'Garden Retreat',
-      location: 'Suburban Gardens',
-      score: 9.4,
-      label: 'Superb',
-      reviews: 98,
-      price: 249,
-      starRating: 4,
-      distanceDowntown: '2.0 km from downtown',
-      distanceBeach: '3.0 km from beach',
-      description: 'Peaceful retreat surrounded by beautiful gardens.',
-    },
-    {
-      id: '6',
-      image: hotel6,
-      name: 'Luxury Penthouse',
-      location: 'Skyline District',
-      score: 9.8,
-      label: 'Exceptional',
-      reviews: 67,
-      price: 499,
-      starRating: 5,
-      distanceDowntown: '1.0 km from downtown',
-      distanceBeach: '2.5 km from beach',
-      description: 'Exclusive penthouse with rooftop terrace and city skyline views.',
-    },
-  ];
+const HomesGuestsLove: React.FC<HomesGuestsLoveProps> = ({ filterProvince }) => {
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBranches = async () => {
+      try {
+        const response = await fetch('/api/v1/branches');
+        if (!response.ok) {
+          console.error('Failed to fetch branches');
+          setLoading(false);
+          return;
+        }
+        const data = await response.json();
+        const branches = data.branches || [];
+
+        const mappedProperties: Property[] = branches.map((branch: any) => ({
+          id: String(branch.id),
+          image: branch.images?.[0]?.url || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800',
+          name: branch.name,
+          location: `${branch.city}, ${branch.province}`,
+          province: branch.province,
+          score: 9.0 + Math.random() * 0.9,
+          reviews: Math.floor(Math.random() * 500) + 50,
+          price: branch.price_per_night || 100,
+          starRating: branch.star_rating || 4,
+          description: branch.description || 'Beautiful hotel with excellent amenities.',
+        }));
+
+        setProperties(mappedProperties);
+      } catch (error) {
+        console.error('Error fetching branches:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBranches();
+  }, []);
+
+  const filteredProperties = filterProvince
+    ? properties.filter(
+        (property) =>
+          property.province.toLowerCase() === filterProvince.toLowerCase()
+      )
+    : properties;
 
   const toggleFavorite = (id: string) => {
     setFavorites((prev) => {
@@ -136,6 +92,30 @@ const HomesGuestsLove: React.FC = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <section className="homes-guests-love">
+        <div className="homes-guests-love__header">
+          <h2 className="homes-guests-love__title">Homes guests love</h2>
+        </div>
+        <p style={{ padding: '2rem', color: '#666' }}>Loading properties...</p>
+      </section>
+    );
+  }
+
+  if (filteredProperties.length === 0) {
+    return (
+      <section className="homes-guests-love">
+        <div className="homes-guests-love__header">
+          <h2 className="homes-guests-love__title">Homes guests love</h2>
+        </div>
+        <p style={{ padding: '2rem', color: '#666' }}>
+          {filterProvince ? `No properties found in ${filterProvince}` : 'No properties available yet.'}
+        </p>
+      </section>
+    );
+  }
+
   return (
     <section className="homes-guests-love">
       <div className="homes-guests-love__header">
@@ -147,7 +127,7 @@ const HomesGuestsLove: React.FC = () => {
 
       <div className="homes-guests-love__scroll-container">
         <div id="cards-container" className="homes-guests-love__cards">
-          {properties.map((property) => (
+          {filteredProperties.map((property) => (
             <Link key={property.id} to={`/branches/${property.id}`} className="homes-guests-love__card-link">
               <div className="homes-guests-love__card">
                 <div className="homes-guests-love__card-image">
@@ -186,11 +166,11 @@ const HomesGuestsLove: React.FC = () => {
                     <span className="homes-guests-love__stars">{'★'.repeat(property.starRating)}</span>
                   </div>
 
-                  <p className="homes-guests-love__card-location">{property.location}</p>
+                  <p className="homes-guests-love__card-location">{property.location}  </p>
 
                   <div className="homes-guests-love__card-rating">
                     <span className="homes-guests-love__score">{property.score}</span>
-                    <span className="homes-guests-love__label">{property.label}</span>
+                    <span className="homes-guests-love__label"> 'boo  now sp' </span>
                     <span className="homes-guests-love__reviews">
                       ({property.reviews} reviews)
                     </span>

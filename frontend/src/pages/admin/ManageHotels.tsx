@@ -21,15 +21,20 @@ const ManageHotels: React.FC = () => {
 
   useEffect(() => {
     const load = async () => {
-      const response = await fetch('/api/v1/branches/managed', { credentials: 'include' });
-      if (!response.ok) {
-        setError(await parseApiError(response));
+      try {
+        const response = await fetch('/api/v1/branches/managed', { credentials: 'include' });
+        if (!response.ok) {
+          setError(await parseApiError(response));
+          setLoading(false);
+          return;
+        }
+        const data = await readJson<{ branches: ManagedBranch[] }>(response);
+        setBranches(data?.branches || []);
+      } catch (err) {
+        setError('Failed to load branches');
+      } finally {
         setLoading(false);
-        return;
       }
-      const data = await readJson<{ branches: ManagedBranch[] }>(response);
-      setBranches(data?.branches || []);
-      setLoading(false);
     };
     void load();
   }, []);

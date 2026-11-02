@@ -55,7 +55,6 @@ a {
 .admin_section {
   color: white;
   text-decoration: none;
-  
 }
 
 .navbar__button {
@@ -356,7 +355,7 @@ a {
 }
 
 .homes-guests-love__card {
-  flex: 0 0 calc(25% - 1.125rem);
+  flex: 0 0 calc(30% - 1.05rem);
   scroll-snap-align: start;
   background: white;
   border-radius: 0.75rem;
@@ -412,10 +411,11 @@ a {
 }
 
 .homes-guests-love__card-name {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: bold;
-  margin: 0 0 0.25rem 0;
+  margin: 0 0 0.5rem 0;
   color: #000;
+  line-height: 1.3;
 }
 
 .homes-guests-love__card-stars {
@@ -424,21 +424,22 @@ a {
 
 .homes-guests-love__stars {
   color: #b45309;
-  font-size: 1rem;
-  letter-spacing: 0.1rem;
+  font-size: 0.9rem;
+  letter-spacing: 0.05rem;
 }
 
 .homes-guests-love__card-location {
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   color: #666;
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.75rem 0;
+  line-height: 1.2;
 }
 
 .homes-guests-love__card-rating {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .homes-guests-love__card-distance {
@@ -462,20 +463,20 @@ a {
 .homes-guests-love__score {
   background: #1e3a5f;
   color: white;
-  padding: 0.25rem 0.5rem;
+  padding: 0.35rem 0.6rem;
   border-radius: 0.25rem;
   font-weight: bold;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 .homes-guests-love__label {
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   color: #000;
   font-weight: 500;
 }
 
 .homes-guests-love__reviews {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: #666;
 }
 
@@ -483,16 +484,19 @@ a {
   margin-top: auto;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f0f0f0;
 }
 
 .homes-guests-love__price-label {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: #666;
+  margin-bottom: 0.25rem;
 }
 
 .homes-guests-love__price-amount {
-  font-size: 1.25rem;
+  font-size: 1.4rem;
   font-weight: bold;
   color: #000;
 }

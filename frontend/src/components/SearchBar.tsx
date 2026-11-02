@@ -3,14 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
-function isoDate(offsetDays = 0): string {
-  const date = new Date();
-  date.setDate(date.getDate() + offsetDays);
-  return date.toISOString().slice(0, 10);
+function parseLocalDate(dateString: string): Date {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function formatDateInput(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function formatDate(dateString: string): string {
-  const date = new Date(dateString);
+  const date = parseLocalDate(dateString);
   const day = date.getDate().toString().padStart(2, '0');
   const weekday = date.toLocaleDateString('en-US', { weekday: 'short' });
   return `${weekday},${day}`;
@@ -27,6 +33,7 @@ interface SearchBarProps {
   initialRooms?: string;
   initialAdults?: string;
   initialChildren?: string;
+  onSearch?: (destination: string) => void;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
@@ -36,11 +43,12 @@ const SearchBar: React.FC<SearchBarProps> = ({
   initialRooms = '1',
   initialAdults = '1',
   initialChildren = '0',
+  onSearch,
 }) => {
   const navigate = useNavigate();
   const [destination, setDestination] = useState(initialDestination);
-  const [checkIn, setCheckIn] = useState<Date | null>(initialCheckIn ? new Date(initialCheckIn) : null);
-  const [checkOut, setCheckOut] = useState<Date | null>(initialCheckOut ? new Date(initialCheckOut) : null);
+  const [checkIn, setCheckIn] = useState<Date | null>(initialCheckIn ? parseLocalDate(initialCheckIn) : null);
+  const [checkOut, setCheckOut] = useState<Date | null>(initialCheckOut ? parseLocalDate(initialCheckOut) : null);
   const [rooms, setRooms] = useState(initialRooms);
   const [adults, setAdults] = useState(initialAdults);
   const [children, setChildren] = useState(initialChildren);
@@ -49,13 +57,37 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    const guests = String(Number(adults) + Number(children));
+
+    if (!destination.trim()) {
+      alert('Destination is required');
+      return;
+    }
+    if (!checkIn) {
+      alert('Check-in date is required');
+      return;
+    }
+    if (!checkOut) {
+      alert('Check-out date is required');
+      return;
+    }
+    if (checkOut <= checkIn) {
+      alert('Check-out date must be after check-in date');
+      return;
+    }
+
+    if (onSearch) {
+      onSearch(destination.trim());
+    }
+
+    const guestCount = String(Number(adults) + Number(children));
     const params = new URLSearchParams({
       destination: destination.trim(),
-      checkIn: checkIn ? checkIn.toISOString().slice(0, 10) : '',
-      checkOut: checkOut ? checkOut.toISOString().slice(0, 10) : '',
+      checkIn: checkIn ? formatDateInput(checkIn) : '',
+      checkOut: checkOut ? formatDateInput(checkOut) : '',
       rooms,
-      guests,
+      adults,
+      children,
+      guests: guestCount,
     });
     navigate(`/hotels?${params.toString()}`);
   };
@@ -64,19 +96,19 @@ const SearchBar: React.FC<SearchBarProps> = ({
     <form className='serach_part search-bar' onSubmit={handleSubmit}>
        <div style={{border:'1px solid #c7c5c5', borderRadius:'10px', padding:'6px', flex: 1, height: '75px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between'}}>
           <label style={{fontFamily:"'Courier New', Courier, monospace",fontWeight:'bold', display:'block', marginBottom:'0.25rem'}}>Destination</label>
-          <input 
-            type="text" 
-            className='input_destin' 
+          <input
+            type="text"
+            className='input_destin'
             value={destination}
             onChange={(event) => setDestination(event.target.value)}
-       
-            style={{width:'100%', border:'1px solid #000', outline:'none', fontSize:'1rem'}} 
+
+            style={{width:'100%', border:'1px solid #dad9d9', outline:'none', fontSize:'1.5rem',borderRadius:'8px',height:'2.3rem'}}
           />
       </div>
 
       <div style={{border:'1px solid #c7c5c5', borderRadius:'10px', padding:'6px', flex: 1, height: '75px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between'}}>
          <label style={{fontFamily:"'Courier New', Courier, monospace",fontWeight:'bold', display:'block', marginBottom:'0.25rem'}}>Select dates</label>
-         <div style={{display:'flex', gap:'0.5rem', alignItems:'center'}}>
+         <div style={{display:'flex', gap:'0.5rem', alignItems:'center',border:'1px solid #d6d6d6',borderRadius:'8px'}}>
             <div style={{flex: 1, position: 'relative'}}>
                <DatePicker
                  selected={checkIn}
@@ -86,7 +118,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                  placeholderText="Check-in date"
                  customInput={
                    <div style={{fontSize: '0.9rem', color: checkIn ? '#000' : '#999', cursor: 'pointer', padding: '8px 0'}}>
-                     {checkIn ? formatDate(checkIn.toISOString().slice(0, 10)) : 'Check-in date'}
+                     {checkIn ? formatDate(formatDateInput(checkIn)) : 'Check-in date'}
                    </div>
                  }
                  popperPlacement="bottom-start"
@@ -102,7 +134,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                  placeholderText="Check-out date"
                  customInput={
                    <div style={{fontSize: '0.9rem', color: checkOut ? '#000' : '#999', cursor: 'pointer', padding: '8px 0'}}>
-                     {checkOut ? formatDate(checkOut.toISOString().slice(0, 10)) : 'Check-out date'}
+                     {checkOut ? formatDate(formatDateInput(checkOut)) : 'Check-out date'}
                    </div>
                  }
                  popperPlacement="bottom-start"
