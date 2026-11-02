@@ -53,6 +53,10 @@ test('serves health checks and rejects cross-origin state-changing requests', as
     assert.equal(invalidRoomFilter.status, 400);
     assert.equal((await invalidRoomFilter.json()).error, 'VALIDATION_ERROR');
 
+    const invalidBranchFilter = await fetch(`${baseUrl}/api/v1/branches?unknown=value`);
+    assert.equal(invalidBranchFilter.status, 400);
+    assert.equal((await invalidBranchFilter.json()).error, 'VALIDATION_ERROR');
+
     const invalidSearch = await fetch(
       `${baseUrl}/api/v1/search?destination=Pretoria&checkIn=2026-11-01&checkOut=2026-11-02&rooms=0&guests=2`,
     );

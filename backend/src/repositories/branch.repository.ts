@@ -8,7 +8,17 @@ export async function listBranches(search: string | null, city: string | null = 
     `SELECT h.id, h.brand_id, h.name, h.city, h.province, h.address, h.star_rating, h.description, h.policies,
        h.price_per_night, h.currency, h.contact_email, h.contact_phone,
        h.latitude, h.longitude, h.created_at, h.updated_at,
-       brand.name AS brand_name
+      brand.name AS brand_name,
+      COALESCE((
+        SELECT jsonb_agg(jsonb_build_object(
+          'id', image.id,
+          'url', image.image_url,
+          'altText', image.alt_text,
+          'displayOrder', image.display_order
+        ) ORDER BY image.display_order)
+        FROM branch_images image
+        WHERE image.branch_id = h.id
+      ), '[]'::JSONB) AS images
      FROM branches h
      JOIN hotel_brand brand ON brand.id = h.brand_id
      WHERE h.publication_status = 'published'

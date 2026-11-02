@@ -100,7 +100,7 @@ const Hotels: React.FC = () => {
   }, [branches]);
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="hotels-page">
       <h1 style={{ marginBottom: '1.5rem' }}>{isSearch ? 'Available stays' : 'Our Branches'}</h1>
       <div style={{ marginBottom: '1.5rem' }}>
         <SearchBar
@@ -112,7 +112,7 @@ const Hotels: React.FC = () => {
           initialChildren={children}
         />
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '1.5rem' }}>
+      <div className="hotels-page__layout">
         <aside>
           <SidebarMapCard
             branches={filteredBranches}
@@ -135,7 +135,7 @@ const Hotels: React.FC = () => {
             <p>No rooms are available for those dates. Try another destination or stay length.</p>
           )}
           {!loading && !error && !isSearch && filteredBranches.length === 0 && <p>No branches available.</p>}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+          <div className="hotels-page__cards">
             {isSearch
               ? filteredSearchResults.map((result, index) => (
                   <HotelCard

@@ -42,31 +42,33 @@ const ManageHotels: React.FC = () => {
   if (loading) return <Loading message="Loading branches..." />;
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '960px', margin: '0 auto' }}>
-      <p><Link to="/admin">← Dashboard</Link></p>
-      <h1>Manage branches</h1>
-      {user?.role === 'admin' && (
-        <p>
-          <Link to="/admin/hotels/new">Add a branch</Link>
-        </p>
-      )}
+    <div className="manage-branches">
+      <p><Link className="manage-branches__back" to="/admin">← Dashboard</Link></p>
+      <div className="manage-branches__header">
+        <h1>Manage branches</h1>
+        {user?.role === 'admin' && (
+          <Link className="manage-branches__add" to="/admin/hotels/new">Add a branch</Link>
+        )}
+      </div>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {branches.length === 0 ? (
         <p>No branches assigned yet.</p>
       ) : (
-        <ul>
+        <ul className="manage-branches__list">
           {branches.map((branch) => (
-            <li key={branch.id} style={{ marginBottom: '0.75rem' }}>
-              <strong>{branch.name}</strong>
-              {' — '}
-              {branch.city}, {branch.province}
-              {branch.publication_status ? ` (${branch.publication_status})` : ''}
-              {' · '}
-              <Link to={`/admin/hotels/${branch.id}/edit`}>Edit</Link>
-              {' · '}
-              <Link to={`/admin/rooms?branchId=${branch.id}`}>Rooms</Link>
-              {' · '}
-              <Link to={`/admin/bookings?branchId=${branch.id}`}>Bookings</Link>
+            <li className="manage-branches__item" key={branch.id}>
+              <div>
+                <strong>{branch.name}</strong>
+                <p>
+                  {branch.city}, {branch.province}
+                  {branch.publication_status ? ` (${branch.publication_status})` : ''}
+                </p>
+              </div>
+              <div className="manage-branches__actions">
+                <Link className="manage-branches__action" to={`/admin/hotels/${branch.id}/edit`}>Edit branch</Link>
+                <Link className="manage-branches__action" to={`/admin/rooms?branchId=${branch.id}`}>Manage rooms</Link>
+                <Link className="manage-branches__action" to={`/admin/bookings?branchId=${branch.id}`}>Bookings</Link>
+              </div>
             </li>
           ))}
         </ul>

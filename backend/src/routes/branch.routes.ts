@@ -57,7 +57,7 @@ export function branchRoutes(_config: AppConfig, cookieName: string): Router {
   const auth = createAuthMiddleware(cookieName);
 
   // Public routes
-  router.get('/', getBranches);
+  router.get('/', validateQuery(branchSearchSchema), getBranches);
   router.get('/amenities', listAmenitiesController);
   router.get('/managed', auth, requireRoles('admin', 'branch_manager'), listManagedBranchesController);
   router.get('/:branchId/reviews', validateParams(z.object({ branchId: id })), listHotelReviewsController);
