@@ -16,7 +16,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   OTP_PEPPER: z.string().min(32),
   APP_ORIGIN: z.string().url().default('http://localhost:5173').transform((value) => new URL(value).origin),
-  SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(720).default(168),
+  SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(8760).default(720),
   OTP_TTL_MINUTES: z.coerce.number().int().min(1).max(30).default(10),
   ADMIN_EMAIL: z.string().email().optional(),
   ADMIN_LOGIN_EMAIL: z.string().email().optional(),

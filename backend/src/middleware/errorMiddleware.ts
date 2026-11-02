@@ -41,5 +41,6 @@ export const errorMiddleware: ErrorRequestHandler = (error, _request, response, 
   }
 
   console.error('Unhandled request error', error);
+  console.error('Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
   response.status(500).json({ error: 'INTERNAL_ERROR', message: 'An unexpected error occurred' });
 };

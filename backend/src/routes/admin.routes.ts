@@ -5,6 +5,7 @@ import { requireAdmin, requireRoles } from '../middleware/adminMiddleware.js';
 import { createAuthMiddleware } from '../middleware/authMiddleware.js';
 import { createRateLimitMiddleware } from '../middleware/rateLimitMiddleware.js';
 import { validateBody, validateParams, validateQuery } from '../middleware/validationMiddleware.js';
+import { uploadBranchImage, uploadRoomImage, uploadMultipleBranchImages, uploadMultipleRoomImages } from '../middleware/uploadMiddleware.js';
 import {
   adminLoginController,
   getDashboardStatsController,
@@ -32,6 +33,8 @@ import {
   createRoom,
   deleteRoomController,
   updateRoom,
+  addRoomImageController,
+  deleteRoomImageController,
 } from '../controllers/room.controller.js';
 import { updateHotelBrandController } from '../controllers/hotel-brand.controller.js';
 import { refundBookingController } from '../controllers/payment.controller.js';
@@ -147,6 +150,20 @@ export function adminRoutes(config: AppConfig, cookieName: string): Router {
     }).strict()),
     addBranchImageController,
   );
+  router.post(
+    '/branches/:branchId/upload-image',
+    requireRoles('admin', 'branch_manager'),
+    validateParams(z.object({ branchId: id })),
+    uploadBranchImage,
+    addBranchImageController,
+  );
+  router.post(
+    '/branches/:branchId/upload-images',
+    requireRoles('admin', 'branch_manager'),
+    validateParams(z.object({ branchId: id })),
+    uploadMultipleBranchImages,
+    addBranchImageController,
+  );
   router.delete(
     '/branches/:branchId/images/:imageId',
     requireRoles('admin', 'branch_manager'),
@@ -206,6 +223,26 @@ export function adminRoutes(config: AppConfig, cookieName: string): Router {
       currency: z.string().regex(/^[A-Za-z]{3}$/).optional(),
     }).strict()),
     createRoom,
+  );
+  router.post(
+    '/rooms/:roomId/upload-image',
+    requireRoles('admin', 'branch_manager'),
+    validateParams(z.object({ roomId: id })),
+    uploadRoomImage,
+    addRoomImageController,
+  );
+  router.post(
+    '/rooms/:roomId/upload-images',
+    requireRoles('admin', 'branch_manager'),
+    validateParams(z.object({ roomId: id })),
+    uploadMultipleRoomImages,
+    addRoomImageController,
+  );
+  router.delete(
+    '/rooms/:roomId/images/:imageId',
+    requireRoles('admin', 'branch_manager'),
+    validateParams(z.object({ roomId: id, imageId: id })),
+    deleteRoomImageController,
   );
   router.patch(
     '/rooms/:roomId',

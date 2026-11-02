@@ -2,6 +2,8 @@ import express, { type Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import passport from 'passport';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import type { AppConfig } from './config/env.js';
 
@@ -12,6 +14,9 @@ import { requestLoggerMiddleware } from './middleware/requestLoggerMiddleware.js
 
 import { apiRoutes } from './routes/index.js';
 import { configurePassport } from './config/passport.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const API_PREFIX = '/api/v1';
 
@@ -77,7 +82,12 @@ export function createApp(config: AppConfig): Express {
     }),
   );
 
+  // Serve uploaded images statically
+  const uploadsDir = path.join(__dirname, '../uploads');
+  app.use('/uploads', express.static(uploadsDir));
+
   app.get('/health', (_request, response) => {
+    console.log('Health endpoint called');
     response.status(200).json({
       status: 'ok',
       timestamp: new Date().toISOString(),

@@ -23,8 +23,17 @@ function authenticated(request: Parameters<RequestHandler>[0]) {
 }
 
 export const listBranchesController: RequestHandler = async (request, response) => {
-  const filters = request.validatedQuery as { search?: string; city?: string };
-  response.json({ branches: await listBranches(filters.search, filters.city) });
+  try {
+    console.log('listBranchesController called');
+    const filters = request.validatedQuery as { search?: string; city?: string };
+    console.log('Filters:', filters);
+    const branches = await listBranches(filters.search, filters.city);
+    console.log('Branches fetched:', branches.length);
+    response.json({ branches });
+  } catch (error) {
+    console.error('Error in listBranchesController:', error);
+    throw error;
+  }
 };
 
 export const searchBranchesController: RequestHandler = async (request, response) => {
@@ -89,17 +98,45 @@ export const createAmenityController: RequestHandler = async (request, response)
 };
 
 export const addBranchImageController: RequestHandler = async (request, response) => {
-  response.status(201).json({
-    image: await addBranchImage(getRouteParam(request, 'branchId'), authenticated(request), request.body),
-  });
-};
-
-export const deleteBranchImageController: RequestHandler = async (request, response) => {
-  await deleteBranchImage(getRouteParam(request, 'branchId'), getRouteParam(request, 'imageId'), authenticated(request));
-  response.status(204).end();
+  const branchId = getRouteParam(request, 'branchId');
+  const user = authenticated(request);
+  
+  // Handle file upload
+  if (request.file) {
+    const imageUrl = `/uploads/branches/${request.file.filename}`;
+    const altText = request.body.altText || request.file.originalname;
+    const displayOrder = request.body.displayOrder ? parseInt(request.body.displayOrder) : 0;
+    const image = await addBranchImage(branchId, user, { imageUrl, altText, displayOrder });
+    response.status(201).json({ image });
+    return;
+  }
+  
+  // Handle multiple file uploads
+  if (request.files && Array.isArray(request.files)) {
+    const images = await Promise.all(
+      request.files.map(async (file: Express.Multer.File, index: number) => {
+        const imageUrl = `/uploads/branches/${file.filename}`;
+        const altText = file.originalname;
+        const displayOrder = index;
+        return await addBranchImage(branchId, user, { imageUrl, altText, displayOrder });
+      })
+    );
+    response.status(201).json({ images });
+    return;
+  }
+  
+  // Handle URL input (existing functionality)
+  const { imageUrl, altText, displayOrder } = request.body;
+  const image = await addBranchImage(branchId, user, { imageUrl, altText, displayOrder });
+  response.status(201).json({ image });
 };
 
 export const setBranchAmenitiesController: RequestHandler = async (request, response) => {
   await setBranchAmenities(getRouteParam(request, 'branchId'), authenticated(request), request.body.amenityIds);
+  response.status(204).end();
+};
+
+export const deleteBranchImageController: RequestHandler = async (request, response) => {
+  await deleteBranchImage(getRouteParam(request, 'branchId'), getRouteParam(request, 'imageId'), authenticated(request));
   response.status(204).end();
 };

@@ -5,6 +5,8 @@ import {
   getRoomById as getRoomByIdService,
   listRooms,
   updateRoom as updateRoomService,
+  addRoomImage as addRoomImageService,
+  deleteRoomImage as deleteRoomImageService,
 } from '../services/room.service.js';
 import { listActiveReservations } from '../repositories/room.repository.js';
 import { AppError, getRouteParam } from '../utils/errors.js';
@@ -99,6 +101,45 @@ export const checkAvailabilityController: RequestHandler = async (request, respo
 
 export const deleteRoomController: RequestHandler = async (request, response) => {
   await updateRoomService(getRouteParam(request, 'roomId'), authenticated(request), { status: 'inactive' });
+  response.status(204).end();
+};
+
+export const addRoomImageController: RequestHandler = async (request, response) => {
+  const roomId = getRouteParam(request, 'roomId');
+  const user = authenticated(request);
+  
+  // Handle file upload
+  if (request.file) {
+    const imageUrl = `/uploads/rooms/${request.file.filename}`;
+    const altText = request.body.altText || request.file.originalname;
+    const displayOrder = request.body.displayOrder ? parseInt(request.body.displayOrder) : 0;
+    const image = await addRoomImageService(roomId, user, { imageUrl, altText, displayOrder });
+    response.status(201).json({ image });
+    return;
+  }
+  
+  // Handle multiple file uploads
+  if (request.files && Array.isArray(request.files)) {
+    const images = await Promise.all(
+      request.files.map(async (file: Express.Multer.File, index: number) => {
+        const imageUrl = `/uploads/rooms/${file.filename}`;
+        const altText = file.originalname;
+        const displayOrder = index;
+        return await addRoomImageService(roomId, user, { imageUrl, altText, displayOrder });
+      })
+    );
+    response.status(201).json({ images });
+    return;
+  }
+  
+  // Handle URL input (existing functionality)
+  const { imageUrl, altText, displayOrder } = request.body;
+  const image = await addRoomImageService(roomId, user, { imageUrl, altText, displayOrder });
+  response.status(201).json({ image });
+};
+
+export const deleteRoomImageController: RequestHandler = async (request, response) => {
+  await deleteRoomImageService(getRouteParam(request, 'roomId'), getRouteParam(request, 'imageId'), authenticated(request));
   response.status(204).end();
 };
 

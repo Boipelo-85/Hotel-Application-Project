@@ -6,12 +6,15 @@ import {
   findBranchManager,
   findRoomById,
   findRoomForUpdate,
+  findRoomImages,
+  findRoomAmenities,
   hasBookingsExceedingCapacity,
   hasFutureReservations,
   insertRoom,
   listRooms as selectRooms,
   updateRoomRecord,
 } from '../repositories/room.repository.js';
+import { insertRoomImage, removeRoomImage, listRoomImages } from '../repositories/room-image.repository.js';
 
 export interface RoomInput {
   roomType?: string;
@@ -43,8 +46,19 @@ async function assertCanManageBranch(
 export async function listRooms(branchId?: string): Promise<unknown[]> {
   const result = await selectRooms(branchId);
   return result.rows.filter(
-    (room) => room.status === 'active' && room.availability && room.publication_status === 'published',
-  ).map(({ availability: _availability, publication_status: _publicationStatus, ...room }) => room);
+    (room: any) => room.status === 'active' && room.availability && room.publication_status === 'published',
+  ).map(({ availability: _availability, publication_status: _publicationStatus, ...room }: any) => {
+    // Transform image fields to match frontend expectations
+    return {
+      ...room,
+      images: room.image_url ? [{
+        id: `${room.id}_img`,
+        image_url: room.image_url,
+        alt_text: room.image_alt_text,
+        display_order: 0
+      }] : []
+    };
+  });
 }
 
 export async function getRoomById(roomId: string): Promise<unknown> {
@@ -58,8 +72,28 @@ export async function getRoomById(roomId: string): Promise<unknown> {
   ) {
     throw new AppError(404, 'Room not found', 'NOT_FOUND');
   }
-  const { availability: _availability, publication_status: _publicationStatus, ...publicRoom } = room;
-  return publicRoom;
+  
+  const [imagesResult, amenitiesResult] = await Promise.all([
+    findRoomImages(roomId),
+    findRoomAmenities(roomId),
+  ]);
+  
+  const { availability: _availability, publication_status: _publication_status, ...publicRoom } = room;
+  
+  // Group amenities by category
+  const amenitiesByCategory = amenitiesResult.rows.reduce((acc, amenity) => {
+    if (!acc[amenity.category]) {
+      acc[amenity.category] = [];
+    }
+    acc[amenity.category].push(amenity.amenity_name);
+    return acc;
+  }, {} as Record<string, string[]>);
+  
+  return {
+    ...publicRoom,
+    images: imagesResult.rows,
+    amenities: amenitiesByCategory,
+  };
 }
 
 export async function createRoom(
@@ -109,5 +143,51 @@ export async function updateRoom(
       currency: input.currency?.toUpperCase(),
     });
     return updated.rows[0];
+  });
+}
+
+export async function deleteRoom(
+  roomId: string,
+  user: Pick<AuthenticatedUser, 'id' | 'role'>,
+): Promise<void> {
+  await inTransaction(async (client) => {
+    const room = await findRoomForUpdate(client, roomId);
+    if (!room.rows[0]) throw new AppError(404, 'Room not found', 'NOT_FOUND');
+    await assertCanManageBranch(room.rows[0].branch_id, user, client);
+    await hasBookingsExceedingCapacity(client, roomId, 100);
+    await hasFutureReservations(client, roomId);
+    await updateRoomRecord(client, roomId, { status: 'inactive' });
+  });
+}
+
+export async function addRoomImage(
+  roomId: string,
+  user: Pick<AuthenticatedUser, 'id' | 'role'>,
+  input: { imageUrl: string; altText?: string; displayOrder?: number },
+): Promise<unknown> {
+  return inTransaction(async (client) => {
+    const room = await findRoomForUpdate(client, roomId);
+    if (!room.rows[0]) throw new AppError(404, 'Room not found', 'NOT_FOUND');
+    await assertCanManageBranch(room.rows[0].branch_id, user, client);
+    const result = await insertRoomImage(client, roomId, {
+      imageUrl: input.imageUrl,
+      altText: input.altText ?? null,
+      displayOrder: input.displayOrder ?? 0,
+    });
+    return result.rows[0];
+  });
+}
+
+export async function deleteRoomImage(
+  roomId: string,
+  imageId: string,
+  user: Pick<AuthenticatedUser, 'id' | 'role'>,
+): Promise<void> {
+  await inTransaction(async (client) => {
+    const room = await findRoomForUpdate(client, roomId);
+    if (!room.rows[0]) throw new AppError(404, 'Room not found', 'NOT_FOUND');
+    await assertCanManageBranch(room.rows[0].branch_id, user, client);
+    const result = await removeRoomImage(client, roomId, imageId);
+    if (!result.rowCount) throw new AppError(404, 'Room image not found', 'NOT_FOUND');
   });
 }

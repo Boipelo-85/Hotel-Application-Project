@@ -184,10 +184,14 @@ export async function findRoomById(roomId: string) {
     status: 'active' | 'inactive';
     availability: boolean;
     publication_status: string;
+    size_sqm: number | null;
+    bed_types: string | null;
+    rating: number | null;
+    review_count: number | null;
   }>(
     `SELECT r.id, r.branch_id, r.room_type, r.description, r.capacity, r.quantity,
             r.price, r.currency, r.status, r.availability,
-            h.publication_status
+            h.publication_status, r.size_sqm, r.bed_types, r.rating, r.review_count
      FROM rooms r JOIN branches h ON h.id = r.branch_id
      WHERE r.id = $1`,
     [roomId],
@@ -195,7 +199,7 @@ export async function findRoomById(roomId: string) {
 }
 
 export async function listRooms(branchId?: string) {
-  return query<{
+  const roomsResult = await query<{
     id: string;
     branch_id: string;
     room_type: string;
@@ -207,14 +211,89 @@ export async function listRooms(branchId?: string) {
     status: 'active' | 'inactive';
     availability: boolean;
     publication_status: string;
+    size_sqm: number | null;
+    bed_types: string | null;
+    rating: number | null;
+    review_count: number | null;
+    image_url: string | null;
+    image_alt_text: string | null;
   }>(
     `SELECT r.id, r.branch_id, r.room_type, r.description, r.capacity,
             r.quantity, r.price, r.currency, r.status, r.availability,
-            h.publication_status
+            h.publication_status,
+            (SELECT ri.image_url FROM room_images ri WHERE ri.room_id = r.id ORDER BY ri.display_order LIMIT 1) as image_url,
+            (SELECT ri.alt_text FROM room_images ri WHERE ri.room_id = r.id ORDER BY ri.display_order LIMIT 1) as image_alt_text
      FROM rooms r
      JOIN branches h ON h.id = r.branch_id
      WHERE ($1::BIGINT IS NULL OR r.branch_id = $1)
      ORDER BY r.price`,
     [branchId ?? null],
+  );
+
+  const rooms = roomsResult.rows;
+  
+  // Fetch amenities for all rooms
+  const roomIds = rooms.map((r: any) => r.id);
+  const amenitiesResult = await query<{
+    room_id: string;
+    amenity_name: string;
+    category: string;
+  }>(
+    `SELECT room_id, amenity_name, category
+     FROM room_amenities
+     WHERE room_id = ANY($1)
+     ORDER BY category, amenity_name`,
+    [roomIds],
+  );
+
+  // Group amenities by room
+  const amenitiesByRoom = amenitiesResult.rows.reduce((acc: any, amenity: any) => {
+    if (!acc[amenity.room_id]) {
+      acc[amenity.room_id] = [];
+    }
+    acc[amenity.room_id].push({
+      amenity_name: amenity.amenity_name,
+      category: amenity.category,
+    });
+    return acc;
+  }, {} as Record<string, Array<{ amenity_name: string; category: string }>>);
+
+  // Merge amenities into rooms
+  return {
+    rows: rooms.map((room: any) => ({
+      ...room,
+      amenities: amenitiesByRoom[room.id] || [],
+    })),
+  } as any;
+}
+
+export async function findRoomImages(roomId: string) {
+  return query<{
+    id: string;
+    room_id: string;
+    image_url: string;
+    alt_text: string | null;
+    display_order: number;
+  }>(
+    `SELECT id, room_id, image_url, alt_text, display_order
+     FROM room_images
+     WHERE room_id = $1
+     ORDER BY display_order`,
+    [roomId],
+  );
+}
+
+export async function findRoomAmenities(roomId: string) {
+  return query<{
+    id: string;
+    room_id: string;
+    amenity_name: string;
+    category: string;
+  }>(
+    `SELECT id, room_id, amenity_name, category
+     FROM room_amenities
+     WHERE room_id = $1
+     ORDER BY category, amenity_name`,
+    [roomId],
   );
 }

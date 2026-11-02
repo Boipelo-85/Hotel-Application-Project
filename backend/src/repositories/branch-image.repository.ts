@@ -1,4 +1,10 @@
 import type { PoolClient } from 'pg';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export async function insertBranchImage(
   client: PoolClient,
@@ -13,5 +19,26 @@ export async function insertBranchImage(
 }
 
 export async function removeBranchImage(client: PoolClient, branchId: string, imageId: string) {
+  // First get the image URL to delete the file
+  const result = await client.query(
+    'SELECT image_url FROM branch_images WHERE id = $1 AND branch_id = $2',
+    [imageId, branchId]
+  );
+  
+  if (result.rows[0]) {
+    const imageUrl = result.rows[0].image_url;
+    // Delete the file from uploads folder
+    if (imageUrl.startsWith('/uploads/')) {
+      const filePath = path.join(__dirname, '../../..', imageUrl);
+      try {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch (error) {
+        console.error('Failed to delete image file:', error);
+      }
+    }
+  }
+  
   return client.query('DELETE FROM branch_images WHERE id = $1 AND branch_id = $2', [imageId, branchId]);
 }

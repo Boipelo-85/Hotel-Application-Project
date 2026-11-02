@@ -8,13 +8,6 @@ export async function listBranches(search: string | null, city: string | null = 
     `SELECT h.id, h.brand_id, h.name, h.city, h.province, h.address, h.star_rating, h.description, h.policies,
        h.price_per_night, h.currency, h.contact_email, h.contact_phone,
        h.latitude, h.longitude, h.created_at, h.updated_at,
-       COALESCE((SELECT jsonb_agg(jsonb_build_object(
-         'id', i.id, 'url', i.image_url, 'altText', i.alt_text, 'displayOrder', i.display_order
-       ) ORDER BY i.display_order) FROM branch_images i WHERE i.branch_id = h.id), '[]'::JSONB) AS images,
-       COALESCE((SELECT jsonb_agg(jsonb_build_object('id', a.id, 'name', a.name, 'category', a.category)
-       ORDER BY a.name) FROM branch_amenities ha JOIN amenities a ON a.id = ha.amenity_id
-       WHERE ha.branch_id = h.id), '[]'::JSONB) AS amenities,
-       (SELECT ROUND(AVG(rv.rating), 1) FROM reviews rv WHERE rv.branch_id = h.id AND rv.deleted_at IS NULL) AS average_rating,
        brand.name AS brand_name
      FROM branches h
      JOIN hotel_brand brand ON brand.id = h.brand_id
@@ -140,6 +133,7 @@ export async function findBranch(branchId: string, includeUnpublished: boolean) 
        ORDER BY a.name) FROM branch_amenities ha JOIN amenities a ON a.id = ha.amenity_id
        WHERE ha.branch_id = h.id), '[]'::JSONB) AS amenities,
        (SELECT ROUND(AVG(rv.rating), 1) FROM reviews rv WHERE rv.branch_id = h.id AND rv.deleted_at IS NULL) AS average_rating,
+       (SELECT COUNT(*) FROM reviews rv WHERE rv.branch_id = h.id AND rv.deleted_at IS NULL) AS review_count,
        brand.name AS brand_name
      FROM branches h
      JOIN hotel_brand brand ON brand.id = h.brand_id

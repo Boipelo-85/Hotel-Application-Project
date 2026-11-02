@@ -2,6 +2,8 @@ import type { RequestHandler } from 'express';
 
 export const requestLoggerMiddleware: RequestHandler = (request, response, next) => {
   const startedAt = process.hrtime.bigint();
+  console.info(`${request.method} ${request.path} - ${new Date().toISOString()}`);
+  console.info('Query:', request.query);
 
   response.once('finish', () => {
     const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
