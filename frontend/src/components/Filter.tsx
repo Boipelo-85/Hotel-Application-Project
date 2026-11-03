@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 export interface FilterOptions {
   minPrice?: number;
@@ -10,13 +10,28 @@ export interface FilterOptions {
 interface FilterProps {
   onFilterChange: (filters: FilterOptions) => void;
   availableAmenities?: Array<{ id: string; name: string; category?: string }>;
+  initialFilters?: FilterOptions;
 }
 
-const Filter: React.FC<FilterProps> = ({ onFilterChange, availableAmenities = [] }) => {
-  const [minPrice, setMinPrice] = useState<string>('');
-  const [maxPrice, setMaxPrice] = useState<string>('');
-  const [minStarRating, setMinStarRating] = useState<string>('');
-  const [selectedAmenities, setSelectedAmenities] = useState<Set<string>>(new Set());
+const Filter: React.FC<FilterProps> = ({ onFilterChange, availableAmenities = [], initialFilters = {} }) => {
+  const [minPrice, setMinPrice] = useState<string>(String(initialFilters.minPrice ?? ''));
+  const [maxPrice, setMaxPrice] = useState<string>(String(initialFilters.maxPrice ?? ''));
+  const [minStarRating, setMinStarRating] = useState<string>(String(initialFilters.minStarRating ?? ''));
+  const [selectedAmenities, setSelectedAmenities] = useState<Set<string>>(
+    new Set(initialFilters.amenities ?? []),
+  );
+
+  useEffect(() => {
+    setMinPrice(String(initialFilters.minPrice ?? ''));
+    setMaxPrice(String(initialFilters.maxPrice ?? ''));
+    setMinStarRating(String(initialFilters.minStarRating ?? ''));
+    setSelectedAmenities(new Set(initialFilters.amenities ?? []));
+  }, [
+    initialFilters.minPrice,
+    initialFilters.maxPrice,
+    initialFilters.minStarRating,
+    initialFilters.amenities?.join(','),
+  ]);
 
   const handleAmenityToggle = (amenityId: string) => {
     const newSelected = new Set(selectedAmenities);

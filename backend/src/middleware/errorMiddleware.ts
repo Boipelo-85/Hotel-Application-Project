@@ -1,4 +1,5 @@
 import type { ErrorRequestHandler } from 'express';
+import multer from 'multer';
 import { ZodError } from 'zod';
 import { AppError } from '../utils/errors.js';
 
@@ -12,6 +13,27 @@ export const errorMiddleware: ErrorRequestHandler = (error, _request, response, 
       error: 'VALIDATION_ERROR',
       message: 'Request validation failed',
       details: error.issues.map((issue) => ({ field: issue.path.join('.'), message: issue.message })),
+    });
+    return;
+  }
+  if (error instanceof multer.MulterError) {
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      response.status(413).json({
+        error: 'FILE_TOO_LARGE',
+        message: 'Image files must be 10 MB or smaller',
+      });
+      return;
+    }
+    response.status(400).json({
+      error: 'INVALID_UPLOAD',
+      message: 'The image upload is invalid or exceeds the upload limits',
+    });
+    return;
+  }
+  if (error instanceof Error && error.message === 'Only image files are allowed (jpeg, jpg, png, gif, webp)') {
+    response.status(400).json({
+      error: 'INVALID_IMAGE_TYPE',
+      message: 'Choose a JPEG, PNG, GIF, or WebP image',
     });
     return;
   }

@@ -93,6 +93,47 @@ export const getRecentBookingsController: RequestHandler = async (request, respo
   response.json({ bookings: result.rows });
 };
 
+export const getAdminBookingsController: RequestHandler = async (request, response) => {
+  const filters = request.validatedQuery as {
+    branchId?: string;
+    status?: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+    limit: number;
+  };
+  const result = await query(`
+    SELECT
+      b.id,
+      b.booking_reference,
+      b.user_id,
+      b.room_id,
+      b.check_in,
+      b.check_out,
+      b.guests,
+      b.quantity,
+      b.price_per_night_snapshot,
+      b.total_amount,
+      b.currency,
+      b.status,
+      b.expires_at,
+      b.created_at,
+      u.name AS user_name,
+      u.email AS user_email,
+      u.phone AS user_phone,
+      h.id AS branch_id,
+      h.name AS branch_name,
+      r.room_type
+    FROM bookings b
+    LEFT JOIN users u ON u.id = b.user_id
+    JOIN rooms r ON r.id = b.room_id
+    JOIN branches h ON h.id = r.branch_id
+    WHERE ($1::BIGINT IS NULL OR h.id = $1)
+      AND ($2::TEXT IS NULL OR b.status = $2)
+    ORDER BY b.created_at DESC
+    LIMIT $3
+  `, [filters.branchId ?? null, filters.status ?? null, filters.limit]);
+
+  response.json({ bookings: result.rows });
+};
+
 export const getBranchStatsController: RequestHandler = async (request, response) => {
   const result = await query(`
     SELECT

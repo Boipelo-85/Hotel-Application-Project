@@ -19,6 +19,8 @@ const testConfig = testDatabaseUrl
       NODE_ENV: 'test',
       DATABASE_URL: testDatabaseUrl,
       OTP_PEPPER: 'test-only-secret-value-that-is-at-least-32-chars',
+      JWT_SECRET: 'test-only-jwt-secret-value-that-is-at-least-32-chars',
+      JWT_REFRESH_SECRET: 'test-only-refresh-secret-value-that-is-at-least-32-chars',
     })
   : undefined;
 

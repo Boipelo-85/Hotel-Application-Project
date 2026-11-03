@@ -10,6 +10,8 @@ test('serves health checks and rejects cross-origin state-changing requests', as
     NODE_ENV: 'test',
     DATABASE_URL: 'postgresql://hotel_app:unused@localhost:5432/hotel_app',
     OTP_PEPPER: 'test-only-secret-value-that-is-at-least-32-chars',
+    JWT_SECRET: 'test-only-jwt-secret-value-that-is-at-least-32-chars',
+    JWT_REFRESH_SECRET: 'test-only-refresh-secret-value-that-is-at-least-32-chars',
     APP_ORIGIN: 'http://localhost:5173',
   }));
   const server = app.listen(0);

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { requestCode, verifyCode, clearError } from '../redux/authSlice';
+import { loginWithEmailPassword, clearError } from '../redux/authSlice';
 import type { AppDispatch, RootState } from '../redux/store';
 import { BsArrowLeft } from 'react-icons/bs';
 
@@ -18,11 +18,9 @@ const Login: React.FC = () => {
   const { loading, error, isAuthenticated } = useSelector((state: RootState) => state.auth);
   const from = (location.state as { from?: string } | null)?.from || '/';
 
-  const [step, setStep] = useState<'email' | 'code'>('email');
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
-  const [code, setCode] = useState('');
-  const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -30,7 +28,7 @@ const Login: React.FC = () => {
     }
   }, [isAuthenticated, navigate, from]);
 
-  const handleRequestCode = async (event: React.FormEvent) => {
+  const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
     const trimmedEmail = email.trim();
     if (!isValidEmail(trimmedEmail)) {
@@ -38,115 +36,87 @@ const Login: React.FC = () => {
       return;
     }
 
-    setEmailError('');
-    const result = await dispatch(requestCode(trimmedEmail));
-    if (requestCode.fulfilled.match(result)) {
-      setStep('code');
+    if (!password) {
+      setEmailError('Enter your password.');
+      return;
     }
-  };
 
-  //verify code section(SMT backend)
-  const handleVerifyCode = async (event: React.FormEvent) => {
-    event.preventDefault();
-    await dispatch(verifyCode({ email, code, name: name || undefined }));
+    setEmailError('');
+    await dispatch(loginWithEmailPassword({ email: trimmedEmail, password }));
   };
 
   return (
-    <div className="login-page">
-       <Link to="/" className="back-button">
-        <BsArrowLeft style={{fontWeight:'bold'}}/>
-      </Link>
-      <h2 className="login-title">Sign In</h2>
-      <p className="login-intro">
-        New accounts are created when you verify an email code. 
-      </p>
+    <section className="register-page login-card">
+      <header className="register-page__header">
+        <h1 className="register-page__title">Sign in to your account</h1>
+        <p className="register-page__intro">
+          Welcome back. Sign in to manage your bookings.
+        </p>
+      </header>
 
-      <div className="login-social-actions">
-        <button
-          className="login-button login-button--google"
-          type="button"
-          onClick={() => {
-            window.location.href = '/api/v1/auth/google';
-          }}
-        >
-          Sign in with Google
-        </button>
-      </div>
+      <button
+        className="login-card__google"
+        type="button"
+        onClick={() => {
+          window.location.href = '/api/v1/auth/google';
+        }}
+      >
+        Continue with Google
+      </button>
 
-      <div className="login-divider">or</div>
+      <div className="login-card__divider"><span>or sign in with email</span></div>
 
-      {step === 'email' ? (
-        <form onSubmit={(event) => void handleRequestCode(event)}>
-          <div className="login-field">
-            <label className="login-label">Email</label>
-            <input
-              className="login-input"
-              type="email"
-              value={email}
-              onChange={(event) => {
-                setEmail(event.target.value);
-                setEmailError('');
-              }}
-              maxLength={254}
-              required
-            />
-          </div>
-          <button
-            className="login-button login-button--submit"
-            type="submit"
-            disabled={loading}
-          >
-            {loading ? 'Sending...' : 'Send Code'}
-          </button>
-        </form>
-      ) : (
-        <form onSubmit={(event) => void handleVerifyCode(event)}>
-          <div className="login-field">
-            <label className="login-label">Name (for new users)</label>
-            <input className="login-input" type="text" value={name} onChange={(event) => setName(event.target.value)} />
-          </div>
-          <div className="login-field">
-            <label className="login-label">Verification Code</label>
-            <input
-              className="login-input login-input--code"
-              type="text"
-              value={code}
-              onChange={(event) => setCode(event.target.value)}
-              required
-              maxLength={6}
-              placeholder="123456"
-            />
-          </div>
-          <button
-            className="login-button login-button--submit"
-            type="submit"
-            disabled={loading}
-          >
-            {loading ? 'Verifying...' : 'Verify Code'}
-          </button>
-          <button
-            className="login-button login-button--back"
-            type="button"
-            onClick={() => {
-              setStep('email');
+      <form className="login-form" onSubmit={(event) => void handleLogin(event)}>
+        <div className="login-form__fields">
+          <input
+            aria-label="Email"
+            autoComplete="email"
+            className="register-form__input"
+            maxLength={254}
+            onChange={(event) => {
+              setEmail(event.target.value);
+              setEmailError('');
               dispatch(clearError());
             }}
-          >
-            Back
-          </button>
-        </form>
-      )}
-
-      {(emailError || error) && (
-        <div className="login-error">
-          {emailError || error}
+            placeholder="Email *"
+            required
+            type="email"
+            value={email}
+          />
+          <input
+            aria-label="Password"
+            autoComplete="current-password"
+            className="register-form__input"
+            onChange={(event) => {
+              setPassword(event.target.value);
+              setEmailError('');
+              dispatch(clearError());
+            }}
+            placeholder="Password *"
+            required
+            type="password"
+            value={password}
+          />
         </div>
-      )}
-    
-      <p className="login-register-link">
-        <Link to="/register" className='reg-word'>How registration works</Link>
+
+        {(emailError || error) && (
+          <p className="register-form__error" role="alert">
+            {emailError || error}
+          </p>
+        )}
+
+        <button className="register-form__submit" disabled={loading} type="submit">
+          {loading ? 'Signing in...' : 'Sign in'}
+        </button>
+      </form>
+
+      <p className="register-page__sign-in">
+        Don&apos;t have an account? <Link to="/register">Create account</Link>
       </p>
-    </div>
+      <Link to="/" className="login-card__home">
+        <BsArrowLeft aria-hidden="true" /> Back to home
+      </Link>
+    </section>
   );
 };
 

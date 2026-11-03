@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { parseApiError, readJson } from '../../services/api';
 import Loading from '../../components/Loading';
@@ -17,7 +17,7 @@ interface Room {
   price_per_night?: string;
   currency: string;
   description?: string;
-  images?: Array<{ id: string; url: string; altText?: string }>;
+  images?: Array<{ id: string; image_url: string; alt_text?: string | null }>;
 }
 
 const fieldStyle: React.CSSProperties = {
@@ -40,25 +40,47 @@ const ManageRooms: React.FC = () => {
   const [description, setDescription] = useState('');
   const [roomImageFile, setRoomImageFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [roomToDelete, setRoomToDelete] = useState<Room | null>(null);
+  const [editingRoom, setEditingRoom] = useState(false);
+  const [editForm, setEditForm] = useState({
+    roomType: '',
+    capacity: '',
+    quantity: '',
+    price: '',
+    description: '',
+  });
+  const roomImageInput = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!success) return;
+    const timeout = window.setTimeout(() => setSuccess(null), 5000);
+    return () => window.clearTimeout(timeout);
+  }, [success]);
 
   useEffect(() => {
     const loadBranches = async () => {
-      const response = await fetch('/api/v1/branches/managed', { credentials: 'include' });
-      if (!response.ok) {
-        setError(await parseApiError(response));
+      try {
+        const response = await fetch('/api/v1/branches/managed', { credentials: 'include' });
+        if (!response.ok) {
+          setError(await parseApiError(response));
+          return;
+        }
+        const data = await readJson<{ branches: ManagedBranch[] }>(response);
+        const list = data?.branches || [];
+        setBranches(list);
+        if (!branchId && list[0]) {
+          setBranchId(String(list[0].id));
+          setSearchParams({ branchId: String(list[0].id) });
+        }
+      } catch (loadError) {
+        setError(loadError instanceof Error ? loadError.message : 'Failed to load branches');
+      } finally {
         setLoading(false);
-        return;
       }
-      const data = await readJson<{ branches: ManagedBranch[] }>(response);
-      const list = data?.branches || [];
-      setBranches(list);
-      if (!branchId && list[0]) {
-        setBranchId(String(list[0].id));
-        setSearchParams({ branchId: String(list[0].id) });
-      }
-      setLoading(false);
     };
     void loadBranches();
   }, [branchId, setSearchParams]);
@@ -66,13 +88,17 @@ const ManageRooms: React.FC = () => {
   useEffect(() => {
     if (!branchId) return;
     const loadRooms = async () => {
-      const response = await fetch(`/api/v1/branches/${branchId}/rooms`);
-      if (!response.ok) {
-        setError(await parseApiError(response));
-        return;
+      try {
+        const response = await fetch(`/api/v1/branches/${branchId}/rooms`);
+        if (!response.ok) {
+          setError(await parseApiError(response));
+          return;
+        }
+        const data = await readJson<{ rooms: Room[] }>(response);
+        setRooms(data?.rooms || []);
+      } catch (loadError) {
+        setError(loadError instanceof Error ? loadError.message : 'Failed to load rooms');
       }
-      const data = await readJson<{ rooms: Room[] }>(response);
-      setRooms(data?.rooms || []);
     };
     void loadRooms();
   }, [branchId]);
@@ -80,49 +106,177 @@ const ManageRooms: React.FC = () => {
   const handleCreate = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
-    const response = await fetch(`/api/v1/admin/branches/${branchId}/rooms`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        roomType,
-        capacity: Number(capacity),
-        quantity: Number(quantity),
-        price: Number(price),
-        description,
-      }),
-    });
-    if (!response.ok) {
-      setError(await parseApiError(response));
-      return;
-    }
+    setSuccess(null);
+    setSaving(true);
+    let createdRoom: Room | null = null;
+    let followUpError: string | null = null;
 
-    const data = await response.json();
-    const roomId = data.room.id;
-
-    if (roomId && roomImageFile) {
-      const formData = new FormData();
-      formData.append('image', roomImageFile);
-      formData.append('altText', `${roomType} room image`);
-      formData.append('displayOrder', '0');
-
-      const imageResponse = await fetch(`/api/v1/admin/rooms/${roomId}/upload-image`, {
+    try {
+      const response = await fetch(`/api/v1/admin/branches/${branchId}/rooms`, {
         method: 'POST',
         credentials: 'include',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomType,
+          capacity: Number(capacity),
+          quantity: Number(quantity),
+          price: Number(price),
+          description,
+        }),
       });
-
-      if (!imageResponse.ok) {
-        setError('Room created but image upload failed: ' + await parseApiError(imageResponse));
+      if (!response.ok) {
+        setError(await parseApiError(response));
         return;
       }
-    }
 
-    const refresh = await fetch(`/api/v1/branches/${branchId}/rooms`);
-    const refreshData = await readJson<{ rooms: Room[] }>(refresh);
-    setRooms(refreshData?.rooms || []);
-    setDescription('');
-    setRoomImageFile(null);
+      const data = await readJson<{ room: Room }>(response);
+      if (!data?.room?.id) {
+        throw new Error('The server did not return the created room');
+      }
+      const newRoom = data.room;
+      createdRoom = newRoom;
+      setRooms((currentRooms) => [newRoom, ...currentRooms.filter((room) => room.id !== newRoom.id)]);
+
+      if (roomImageFile) {
+        const formData = new FormData();
+        formData.append('image', roomImageFile);
+        formData.append('altText', `${roomType} room image`);
+        formData.append('displayOrder', '0');
+
+        try {
+          const imageResponse = await fetch(`/api/v1/admin/rooms/${createdRoom.id}/upload-image`, {
+            method: 'POST',
+            credentials: 'include',
+            body: formData,
+          });
+          if (!imageResponse.ok) {
+            followUpError = `Room was added, but its image could not be uploaded: ${await parseApiError(imageResponse)}`;
+          }
+        } catch (uploadError) {
+          followUpError = `Room was added, but its image could not be uploaded: ${
+            uploadError instanceof Error ? uploadError.message : 'Upload failed'
+          }`;
+        }
+      }
+
+      try {
+        const refresh = await fetch(`/api/v1/branches/${branchId}/rooms`);
+        if (!refresh.ok) {
+          followUpError ??= `Room was added, but the room list could not be refreshed: ${await parseApiError(refresh)}`;
+        } else {
+          const refreshData = await readJson<{ rooms: Room[] }>(refresh);
+          setRooms(refreshData?.rooms || []);
+        }
+      } catch (refreshError) {
+        followUpError ??= `Room was added, but the room list could not be refreshed: ${
+          refreshError instanceof Error ? refreshError.message : 'Refresh failed'
+        }`;
+      }
+
+      setSuccess(`${createdRoom.room_type} room added successfully.`);
+      if (followUpError) setError(followUpError);
+      setDescription('');
+      setRoomImageFile(null);
+      if (roomImageInput.current) roomImageInput.current.value = '';
+    } catch (createError) {
+      setError(
+        createdRoom
+          ? `${createdRoom.room_type} room was added, but a follow-up step failed: ${
+              createError instanceof Error ? createError.message : 'Please refresh the room list'
+            }`
+          : createError instanceof Error
+            ? createError.message
+            : 'Failed to add room',
+      );
+      if (createdRoom) setSuccess(`${createdRoom.room_type} room added successfully.`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const startEditingRoom = (room: Room) => {
+    setSelectedRoom(room);
+    setEditingRoom(true);
+    setEditForm({
+      roomType: room.room_type,
+      capacity: String(room.capacity),
+      quantity: String(room.quantity ?? 1),
+      price: String(room.price ?? room.price_per_night ?? 0),
+      description: room.description ?? '',
+    });
+    setError(null);
+  };
+
+  const handleUpdateRoom = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!selectedRoom) return;
+
+    setSaving(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/v1/admin/rooms/${selectedRoom.id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomType: editForm.roomType,
+          capacity: Number(editForm.capacity),
+          quantity: Number(editForm.quantity),
+          price: Number(editForm.price),
+          description: editForm.description,
+        }),
+      });
+      if (!response.ok) {
+        setError(await parseApiError(response));
+        return;
+      }
+
+      const data = await readJson<{ room: Room }>(response);
+      if (!data?.room) throw new Error('The server did not return the updated room');
+      const updatedRoom = { ...selectedRoom, ...data.room };
+      setRooms((currentRooms) =>
+        currentRooms.map((room) => room.id === updatedRoom.id ? updatedRoom : room),
+      );
+      setSelectedRoom(null);
+      setEditingRoom(false);
+      setSuccess(`${updatedRoom.room_type} room updated successfully.`);
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : 'Failed to update room');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteRoom = async () => {
+    if (!roomToDelete) return;
+    const room = roomToDelete;
+    setSaving(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/v1/admin/rooms/${room.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        setError(await parseApiError(response));
+        return;
+      }
+
+      setRooms((currentRooms) => currentRooms.filter((currentRoom) => currentRoom.id !== room.id));
+      setSelectedRoom(null);
+      setRoomToDelete(null);
+      setEditingRoom(false);
+      setSuccess(`${room.room_type} room removed successfully.`);
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : 'Failed to remove room');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const closeRoomModal = () => {
+    setSelectedRoom(null);
+    setEditingRoom(false);
   };
 
   if (loading) return <Loading message="Loading rooms..." />;
@@ -191,6 +345,26 @@ const ManageRooms: React.FC = () => {
         </select>
       </label>
       {error && <p style={{ color: 'red', backgroundColor: '#fee', padding: '0.75rem', borderRadius: '0.25rem' }}>{error}</p>}
+      {success && (
+        <p
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'fixed',
+            top: '1rem',
+            right: '1rem',
+            zIndex: 1100,
+            margin: 0,
+            padding: '1rem 1.25rem',
+            borderRadius: '0.5rem',
+            backgroundColor: '#065f46',
+            color: 'white',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+          }}
+        >
+          {success}
+        </p>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem', marginTop: '2rem' }}>
         {rooms.map((room) => (
@@ -204,8 +378,8 @@ const ManageRooms: React.FC = () => {
             <div style={roomImageStyle}>
               {room.images && room.images.length > 0 ? (
                 <img
-                  src={room.images[0].url}
-                  alt={room.images[0].altText || room.room_type}
+                  src={room.images[0].image_url}
+                  alt={room.images[0].alt_text || room.room_type}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               ) : (
@@ -226,6 +400,29 @@ const ManageRooms: React.FC = () => {
                 {room.currency} {room.price || room.price_per_night}
                 <span style={{ fontSize: '0.8rem', fontWeight: 'normal', color: '#6b7280' }}> / night</span>
               </p>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    startEditingRoom(room);
+                  }}
+                  style={{ flex: 1, padding: '0.5rem', border: '1px solid #2563eb', borderRadius: '0.25rem', color: '#2563eb', background: 'white', cursor: 'pointer' }}
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setRoomToDelete(room);
+                  }}
+                  style={{ flex: 1, padding: '0.5rem', border: '1px solid #dc2626', borderRadius: '0.25rem', color: '#dc2626', background: 'white', cursor: saving ? 'not-allowed' : 'pointer' }}
+                >
+                  Remove
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -245,6 +442,7 @@ const ManageRooms: React.FC = () => {
           <label>Description<textarea value={description} onChange={(event) => setDescription(event.target.value)} style={fieldStyle} rows={3} placeholder="Room amenities, appliances, and features..." /></label>
           <label>Room Image
             <input
+              ref={roomImageInput}
               type="file"
               accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
               onChange={(event) => {
@@ -254,17 +452,18 @@ const ManageRooms: React.FC = () => {
               style={fieldStyle}
             />
           </label>
-          <button type="submit" style={{ padding: '0.75rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '0.25rem', cursor: 'pointer' }}>
-            Add room
+          <button type="submit" disabled={saving || !branchId} style={{ padding: '0.75rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '0.25rem', cursor: saving || !branchId ? 'not-allowed' : 'pointer', opacity: saving || !branchId ? 0.7 : 1 }}>
+            {saving ? 'Adding room...' : 'Add room'}
           </button>
         </form>
       </div>
 
       {selectedRoom && (
-        <div style={modalStyle} onClick={() => setSelectedRoom(null)}>
+        <div style={modalStyle} onClick={closeRoomModal}>
           <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
             <button
-              onClick={() => setSelectedRoom(null)}
+              type="button"
+              onClick={closeRoomModal}
               style={{
                 position: 'absolute',
                 top: '1rem',
@@ -278,28 +477,116 @@ const ManageRooms: React.FC = () => {
             >
               Close
             </button>
-            <h2 style={{ marginTop: 0 }}>{selectedRoom.room_type}</h2>
-            {selectedRoom.images && selectedRoom.images.length > 0 && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-                {selectedRoom.images.map((image) => (
-                  <img
-                    key={image.id}
-                    src={image.url}
-                    alt={image.altText || selectedRoom.room_type}
-                    style={{ width: '100%', borderRadius: '0.5rem' }}
-                  />
-                ))}
-              </div>
+            {error && (
+              <p role="alert" style={{ color: '#991b1b', backgroundColor: '#fee2e2', padding: '0.75rem', borderRadius: '0.25rem', marginTop: '2.5rem' }}>
+                {error}
+              </p>
             )}
-            <p><strong>Capacity:</strong> {selectedRoom.capacity} guests</p>
-            <p><strong>Quantity:</strong> {selectedRoom.quantity || 1}</p>
-            <p><strong>Price:</strong> {selectedRoom.currency} {selectedRoom.price || selectedRoom.price_per_night} / night</p>
-            {selectedRoom.description && (
-              <div style={{ marginTop: '1rem' }}>
-                <strong>Description:</strong>
-                <p style={{ marginTop: '0.5rem', lineHeight: '1.6' }}>{selectedRoom.description}</p>
-              </div>
+            {editingRoom ? (
+              <>
+                <h2 style={{ marginTop: 0 }}>Edit {selectedRoom.room_type}</h2>
+                <form onSubmit={(event) => void handleUpdateRoom(event)} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.5rem' }}>
+                  <label>Type<input required maxLength={120} value={editForm.roomType} onChange={(event) => setEditForm({ ...editForm, roomType: event.target.value })} style={fieldStyle} /></label>
+                  <label>Capacity<input required type="number" min={1} max={100} value={editForm.capacity} onChange={(event) => setEditForm({ ...editForm, capacity: event.target.value })} style={fieldStyle} /></label>
+                  <label>Quantity<input required type="number" min={1} max={1000} value={editForm.quantity} onChange={(event) => setEditForm({ ...editForm, quantity: event.target.value })} style={fieldStyle} /></label>
+                  <label>Price per night<input required type="number" min={0} max={1000000} step="0.01" value={editForm.price} onChange={(event) => setEditForm({ ...editForm, price: event.target.value })} style={fieldStyle} /></label>
+                  <label>Description<textarea maxLength={5000} value={editForm.description} onChange={(event) => setEditForm({ ...editForm, description: event.target.value })} style={fieldStyle} rows={3} /></label>
+                  <button type="submit" disabled={saving} style={{ padding: '0.75rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '0.25rem', cursor: saving ? 'not-allowed' : 'pointer' }}>
+                    {saving ? 'Saving...' : 'Save changes'}
+                  </button>
+                  <button type="button" disabled={saving} onClick={() => setEditingRoom(false)} style={{ padding: '0.75rem', backgroundColor: '#f3f4f6', color: '#1f2937', border: 'none', borderRadius: '0.25rem', cursor: 'pointer' }}>
+                    Cancel
+                  </button>
+                </form>
+              </>
+            ) : (
+              <>
+                <h2 style={{ marginTop: 0 }}>{selectedRoom.room_type}</h2>
+                {selectedRoom.images && selectedRoom.images.length > 0 && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+                    {selectedRoom.images.map((image) => (
+                      <img
+                        key={image.id}
+                        src={image.image_url}
+                        alt={image.alt_text || selectedRoom.room_type}
+                        style={{ width: '100%', borderRadius: '0.5rem' }}
+                      />
+                    ))}
+                  </div>
+                )}
+                <p><strong>Capacity:</strong> {selectedRoom.capacity} guests</p>
+                <p><strong>Quantity:</strong> {selectedRoom.quantity || 1}</p>
+                <p><strong>Price:</strong> {selectedRoom.currency} {selectedRoom.price || selectedRoom.price_per_night} / night</p>
+                {selectedRoom.description && (
+                  <div style={{ marginTop: '1rem' }}>
+                    <strong>Description:</strong>
+                    <p style={{ marginTop: '0.5rem', lineHeight: '1.6' }}>{selectedRoom.description}</p>
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
+                  <button type="button" onClick={() => startEditingRoom(selectedRoom)} style={{ flex: 1, padding: '0.75rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '0.25rem', cursor: 'pointer' }}>
+                    Edit room
+                  </button>
+                  <button type="button" disabled={saving} onClick={() => setRoomToDelete(selectedRoom)} style={{ flex: 1, padding: '0.75rem', backgroundColor: '#111827', color: 'white', border: '1px solid #111827', borderRadius: '0.25rem', cursor: saving ? 'not-allowed' : 'pointer' }}>
+                    Remove room
+                  </button>
+                </div>
+              </>
             )}
+          </div>
+        </div>
+      )}
+      {roomToDelete && (
+        <div
+          style={{ ...modalStyle, zIndex: 1200, backgroundColor: 'rgba(0, 0, 0, 0.65)' }}
+          onClick={() => {
+            if (!saving) setRoomToDelete(null);
+          }}
+        >
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-room-title"
+            aria-describedby="delete-room-description"
+            style={{
+              ...modalContentStyle,
+              width: 'min(100% - 2rem, 440px)',
+              color: '#111827',
+              border: '1px solid #111827',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.35)',
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="delete-room-title" style={{ marginTop: 0 }}>Delete room?</h2>
+            <p id="delete-room-description" style={{ lineHeight: 1.6 }}>
+              Are you sure you want to delete this room?
+            </p>
+            <p style={{ color: '#4b5563' }}>
+              <strong>{roomToDelete.room_type}</strong> will no longer be available for booking.
+            </p>
+            {error && (
+              <p role="alert" style={{ color: '#111827', border: '1px solid #9ca3af', padding: '0.75rem', borderRadius: '0.25rem' }}>
+                {error}
+              </p>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => setRoomToDelete(null)}
+                style={{ padding: '0.65rem 1rem', color: '#111827', backgroundColor: 'white', border: '1px solid #111827', borderRadius: '0.25rem', cursor: saving ? 'not-allowed' : 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => void handleDeleteRoom()}
+                style={{ padding: '0.65rem 1rem', color: 'white', backgroundColor: '#111827', border: '1px solid #111827', borderRadius: '0.25rem', cursor: saving ? 'not-allowed' : 'pointer' }}
+              >
+                {saving ? 'Deleting...' : 'Yes, delete room'}
+              </button>
+            </div>
           </div>
         </div>
       )}

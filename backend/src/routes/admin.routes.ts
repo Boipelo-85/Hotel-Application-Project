@@ -9,6 +9,7 @@ import { uploadBranchImage, uploadRoomImage, uploadMultipleBranchImages, uploadM
 import {
   adminLoginController,
   getDashboardStatsController,
+  getAdminBookingsController,
   getRecentBookingsController,
   getBranchStatsController,
   getUserStatsController,
@@ -65,6 +66,16 @@ export function adminRoutes(config: AppConfig, cookieName: string): Router {
   // Dashboard Stats
   router.get('/dashboard/stats', getDashboardStatsController);
   router.get('/dashboard/recent-bookings', validateQuery(z.object({ limit: z.string().optional() })), getRecentBookingsController);
+  router.get(
+    '/bookings',
+    requireAdmin,
+    validateQuery(z.object({
+      branchId: id.optional(),
+      status: z.enum(['pending', 'confirmed', 'cancelled', 'completed']).optional(),
+      limit: z.coerce.number().int().min(1).max(500).default(200),
+    }).strict()),
+    getAdminBookingsController,
+  );
 
   // Reports
   router.get('/reports/branches', getBranchStatsController);

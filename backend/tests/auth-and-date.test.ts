@@ -37,6 +37,8 @@ test('loads the example environment with SMTP intentionally unconfigured', () =>
     PORT: '3000',
     DATABASE_URL: 'postgresql://hotel_app:replace-me@localhost:5432/hotel_app',
     OTP_PEPPER: 'replace-with-a-random-secret-at-least-32-characters-long',
+    JWT_SECRET: 'replace-with-a-random-secret-at-least-32-characters-long',
+    JWT_REFRESH_SECRET: 'replace-with-a-different-random-secret-at-least-32-characters-long',
     APP_ORIGIN: 'http://localhost:5173',
     SESSION_TTL_HOURS: '168',
     OTP_TTL_MINUTES: '10',

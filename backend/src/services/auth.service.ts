@@ -44,16 +44,34 @@ export async function requestVerificationCode(
   ip: string,
 ): Promise<void> {
   const email = normalizeEmail(emailInput);
-  await consumeRateLimit(config, `otp:email:${email}`, 3, 15 * 60);
-  await consumeRateLimit(config, `otp:request-ip:${ip}`, 8, 15 * 60);
+  console.log(`[auth.service] Requesting verification code for: ${email}`);
+  
+  try {
+    await consumeRateLimit(config, `otp:email:${email}`, 3, 15 * 60);
+    console.log(`[auth.service] Rate limit check passed for email: ${email}`);
+  } catch (error: any) {
+    console.error(`[auth.service] Rate limit exceeded for email ${email}:`, error.message);
+    throw error;
+  }
+  
+  try {
+    await consumeRateLimit(config, `otp:request-ip:${ip}`, 8, 15 * 60);
+    console.log(`[auth.service] Rate limit check passed for IP: ${ip}`);
+  } catch (error: any) {
+    console.error(`[auth.service] Rate limit exceeded for IP ${ip}:`, error.message);
+    throw error;
+  }
 
   const code = randomInt(100_000, 1_000_000).toString();
   const codeHash = hashCode(config, email, code);
+  console.log(`[auth.service] Generated code for ${email}, saving to database`);
   await saveAuthCode(email, codeHash, config.OTP_TTL_MINUTES);
 
   try {
     await sendVerificationCode(config, email, code);
+    console.log(`[auth.service] Verification code sent successfully for ${email}`);
   } catch (error) {
+    console.error(`[auth.service] Failed to send verification code for ${email}:`, error);
     await deleteAuthCode(email, codeHash);
     throw error;
   }

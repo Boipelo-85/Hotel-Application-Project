@@ -1,5 +1,8 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
+
+dotenv.config({ path: fileURLToPath(new URL('../../.env', import.meta.url)) });
 
 const optionalString = z.preprocess(
   (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
@@ -15,6 +18,8 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   DATABASE_URL: z.string().min(1),
   OTP_PEPPER: z.string().min(32),
+  JWT_SECRET: z.string().min(32),
+  JWT_REFRESH_SECRET: z.string().min(32),
   APP_ORIGIN: z.string().url().default('http://localhost:5173').transform((value) => new URL(value).origin),
   SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(8760).default(720),
   OTP_TTL_MINUTES: z.coerce.number().int().min(1).max(30).default(10),

@@ -3,19 +3,22 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as FacebookStrategy } from 'passport-facebook';
 import type { AppConfig } from './env.js';
 import { inTransaction } from '../config/database.js';
-import { upsertVerifiedUser } from '../repositories/user.repository.js';
-import { hashSessionToken } from '../utils/session.js';
-import { createSession as persistSession } from '../repositories/session.repository.js';
+import { findUserByOAuth, findUserByEmail, createUserWithOAuth, linkOAuthToUser } from '../repositories/user.repository.js';
+import { createRefreshToken } from '../repositories/refresh-token.repository.js';
+import { generateAccessToken, generateRefreshToken } from '../utils/jwt.js';
+import type { AuthenticatedUser } from '../types/models.js';
 
 export function configurePassport(config: AppConfig): void {
   // Google OAuth Strategy
   if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {
+    const callbackURL = config.GOOGLE_CALLBACK_URL || `${config.APP_ORIGIN}/api/v1/auth/google/callback`;
+    console.log(`Google OAuth configured with callback URL: ${callbackURL}`);
     passport.use(
       new GoogleStrategy(
         {
           clientID: config.GOOGLE_CLIENT_ID,
           clientSecret: config.GOOGLE_CLIENT_SECRET,
-          callbackURL: config.GOOGLE_CALLBACK_URL || `${config.APP_ORIGIN}/api/v1/auth/google/callback`,
+          callbackURL,
         },
         async (_accessToken: string, _refreshToken: string, profile: any, done: (err: any, result?: any) => void) => {
           try {
@@ -24,22 +27,59 @@ export function configurePassport(config: AppConfig): void {
               return done(new Error('No email in Google profile'));
             }
 
+            const googleId = profile.id;
+            const normalizedEmail = email.toLowerCase();
+
             const result = await inTransaction(async (client) => {
-              const userResult = await upsertVerifiedUser(
+              // Check if user already exists with this Google account
+              const existingOAuthUser = await findUserByOAuth(client, 'google', googleId);
+              if (existingOAuthUser.rows.length > 0) {
+                const user = existingOAuthUser.rows[0];
+                if (!user.is_active) {
+                  throw new Error('Account has been deactivated');
+                }
+                return { user, isNew: false };
+              }
+
+              // Check if user exists with this email (password account)
+              const existingEmailUser = await findUserByEmail(client, normalizedEmail);
+              if (existingEmailUser.rows.length > 0) {
+                const user = existingEmailUser.rows[0];
+                if (!user.is_active) {
+                  throw new Error('Account has been deactivated');
+                }
+                // Link Google account to existing user
+                await linkOAuthToUser(client, user.id, 'google', googleId);
+                return { user, isNew: false };
+              }
+
+              // Create new user with Google OAuth
+              const newUserResult = await createUserWithOAuth(
                 client,
-                email.toLowerCase(),
-                profile.displayName || email.split('@')[0],
-                true
+                profile.displayName || normalizedEmail.split('@')[0],
+                normalizedEmail,
+                'google',
+                googleId,
               );
-              const user = userResult.rows[0];
-
-              const token = Buffer.from(Math.random().toString()).toString('base64').substring(0, 32);
-              await persistSession(client, hashSessionToken(token), user.id, config.SESSION_TTL_HOURS);
-
-              return { user, token };
+              const user = newUserResult.rows[0];
+              return { user, isNew: true };
             });
 
-            done(null, result);
+            // Generate JWT tokens
+            const accessToken = generateAccessToken(
+              { userId: result.user.id, email: result.user.email, role: result.user.role },
+              config,
+            );
+            const refreshToken = generateRefreshToken(result.user.id, config);
+
+            // Store refresh token in database
+            await inTransaction(async (client) => {
+              const expiresAt = new Date();
+              expiresAt.setDate(expiresAt.getDate() + 7);
+              await createRefreshToken(client, result.user.id, refreshToken, expiresAt);
+            });
+
+            done(null, { user: result.user, accessToken, refreshToken, isNew: result.isNew });
           } catch (error) {
             done(error);
           }
@@ -65,22 +105,59 @@ export function configurePassport(config: AppConfig): void {
               return done(new Error('No email in Facebook profile'));
             }
 
+            const facebookId = profile.id;
+            const normalizedEmail = email.toLowerCase();
+
             const result = await inTransaction(async (client) => {
-              const userResult = await upsertVerifiedUser(
+              // Check if user already exists with this Facebook account
+              const existingOAuthUser = await findUserByOAuth(client, 'facebook', facebookId);
+              if (existingOAuthUser.rows.length > 0) {
+                const user = existingOAuthUser.rows[0];
+                if (!user.is_active) {
+                  throw new Error('Account has been deactivated');
+                }
+                return { user, isNew: false };
+              }
+
+              // Check if user exists with this email (password account)
+              const existingEmailUser = await findUserByEmail(client, normalizedEmail);
+              if (existingEmailUser.rows.length > 0) {
+                const user = existingEmailUser.rows[0];
+                if (!user.is_active) {
+                  throw new Error('Account has been deactivated');
+                }
+                // Link Facebook account to existing user
+                await linkOAuthToUser(client, user.id, 'facebook', facebookId);
+                return { user, isNew: false };
+              }
+
+              // Create new user with Facebook OAuth
+              const newUserResult = await createUserWithOAuth(
                 client,
-                email.toLowerCase(),
-                profile.displayName || email.split('@')[0],
-                true
+                profile.displayName || normalizedEmail.split('@')[0],
+                normalizedEmail,
+                'facebook',
+                facebookId,
               );
-              const user = userResult.rows[0];
-
-              const token = Buffer.from(Math.random().toString()).toString('base64').substring(0, 32);
-              await persistSession(client, hashSessionToken(token), user.id, config.SESSION_TTL_HOURS);
-
-              return { user, token };
+              const user = newUserResult.rows[0];
+              return { user, isNew: true };
             });
 
-            done(null, result);
+            // Generate JWT tokens
+            const accessToken = generateAccessToken(
+              { userId: result.user.id, email: result.user.email, role: result.user.role },
+              config,
+            );
+            const refreshToken = generateRefreshToken(result.user.id, config);
+
+            // Store refresh token in database
+            await inTransaction(async (client) => {
+              const expiresAt = new Date();
+              expiresAt.setDate(expiresAt.getDate() + 7);
+              await createRefreshToken(client, result.user.id, refreshToken, expiresAt);
+            });
+
+            done(null, { user: result.user, accessToken, refreshToken, isNew: result.isNew });
           } catch (error) {
             done(error);
           }

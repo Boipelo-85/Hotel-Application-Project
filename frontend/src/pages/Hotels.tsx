@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { fetchBranches, searchAvailability } from '../redux/hotelSlice';
 import { fetchFavourites } from '../redux/favouriteSlice';
 import type { AppDispatch, RootState } from '../redux/store';
@@ -13,9 +13,14 @@ import Loading from '../components/Loading';
 
 const Hotels: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { branches, searchResults, loading, error } = useSelector((state: RootState) => state.hotels);
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const resultsPath = `${location.pathname}${location.search}`;
+  const scrollStorageKey = `hotel-results-scroll:${resultsPath}`;
+  const restoringScroll = useRef(false);
+  const [loadedDataKey, setLoadedDataKey] = useState<string | null>(null);
 
   const destination = searchParams.get('destination') || '';
   const checkIn = searchParams.get('checkIn') || '';
@@ -26,24 +31,107 @@ const Hotels: React.FC = () => {
   const adults = searchParams.get('adults') || guests;
   const children = searchParams.get('children') || '0';
   const isSearch = Boolean(destination && checkIn && checkOut);
+  const resultsDataKey = isSearch
+    ? `search:${destination}:${checkIn}:${checkOut}:${rooms}:${guests}`
+    : 'branches';
 
-  const [filters, setFilters] = useState<FilterOptions>({});
+  const readFilters = (): FilterOptions => {
+    const minPrice = Number(searchParams.get('minPrice'));
+    const maxPrice = Number(searchParams.get('maxPrice'));
+    const minStarRating = Number(searchParams.get('minStarRating'));
+    const amenities = searchParams.getAll('amenity');
+    return {
+      ...(Number.isFinite(minPrice) && searchParams.has('minPrice') ? { minPrice } : {}),
+      ...(Number.isFinite(maxPrice) && searchParams.has('maxPrice') ? { maxPrice } : {}),
+      ...(Number.isFinite(minStarRating) && searchParams.has('minStarRating') ? { minStarRating } : {}),
+      ...(amenities.length ? { amenities } : {}),
+    };
+  };
+  const [filters, setFilters] = useState<FilterOptions>(readFilters);
   const [showFullMap, setShowFullMap] = useState(false);
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isSearch) {
-      void dispatch(searchAvailability({ destination, checkIn, checkOut, rooms, guests }));
-    } else {
-      void dispatch(fetchBranches());
-    }
-  }, [dispatch, isSearch, destination, checkIn, checkOut, rooms, guests]);
+    let active = true;
+    const request = isSearch
+      ? dispatch(searchAvailability({ destination, checkIn, checkOut, rooms, guests }))
+      : dispatch(fetchBranches());
+    void request.finally(() => {
+      if (active) setLoadedDataKey(resultsDataKey);
+    });
+    return () => {
+      active = false;
+    };
+  }, [dispatch, isSearch, destination, checkIn, checkOut, rooms, guests, resultsDataKey]);
+
+  useEffect(() => {
+    const minPrice = Number(searchParams.get('minPrice'));
+    const maxPrice = Number(searchParams.get('maxPrice'));
+    const minStarRating = Number(searchParams.get('minStarRating'));
+    const amenities = searchParams.getAll('amenity');
+    setFilters({
+      ...(Number.isFinite(minPrice) && searchParams.has('minPrice') ? { minPrice } : {}),
+      ...(Number.isFinite(maxPrice) && searchParams.has('maxPrice') ? { maxPrice } : {}),
+      ...(Number.isFinite(minStarRating) && searchParams.has('minStarRating') ? { minStarRating } : {}),
+      ...(amenities.length ? { amenities } : {}),
+    });
+  }, [searchParams]);
+
+  useEffect(() => {
+    const savedPosition = sessionStorage.getItem(scrollStorageKey);
+    restoringScroll.current = savedPosition !== null;
+    if (loadedDataKey !== resultsDataKey || savedPosition === null) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      window.scrollTo(0, Number(savedPosition));
+      restoringScroll.current = false;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [loadedDataKey, resultsDataKey, resultsPath, scrollStorageKey]);
+
+  useEffect(() => {
+    const saveScrollPosition = () => {
+      if (!restoringScroll.current) {
+        sessionStorage.setItem(scrollStorageKey, String(window.scrollY));
+      }
+    };
+    window.addEventListener('scroll', saveScrollPosition, { passive: true });
+    saveScrollPosition();
+    return () => {
+      saveScrollPosition();
+      window.removeEventListener('scroll', saveScrollPosition);
+    };
+  }, [scrollStorageKey]);
+
+  const handleFilterChange = (nextFilters: FilterOptions) => {
+    setFilters(nextFilters);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('minPrice');
+    nextParams.delete('maxPrice');
+    nextParams.delete('minStarRating');
+    nextParams.delete('amenity');
+    if (nextFilters.minPrice !== undefined) nextParams.set('minPrice', String(nextFilters.minPrice));
+    if (nextFilters.maxPrice !== undefined) nextParams.set('maxPrice', String(nextFilters.maxPrice));
+    if (nextFilters.minStarRating !== undefined) nextParams.set('minStarRating', String(nextFilters.minStarRating));
+    nextFilters.amenities?.forEach((amenity) => nextParams.append('amenity', amenity));
+    setSearchParams(nextParams, { replace: true });
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
       void dispatch(fetchFavourites());
     }
   }, [dispatch, isAuthenticated]);
+
+  const hotelDetailsPath = (branchId: string) => {
+    const detailsParams = new URLSearchParams();
+    ['checkIn', 'checkOut', 'guests', 'rooms'].forEach((key) => {
+      const value = searchParams.get(key);
+      if (value) detailsParams.set(key, value);
+    });
+    detailsParams.set('returnTo', resultsPath);
+    return `/hotels/${branchId}?${detailsParams.toString()}`;
+  };
 
   // Filter branches based on selected filters
   const filteredBranches = useMemo(() => {
@@ -122,7 +210,8 @@ const Hotels: React.FC = () => {
             hoveredCardId={hoveredCardId}
           />
           <Filter
-            onFilterChange={setFilters}
+            onFilterChange={handleFilterChange}
+            initialFilters={filters}
             availableAmenities={allAmenities}
           />
         </aside>
@@ -151,7 +240,7 @@ const Hotels: React.FC = () => {
                     subtitle={`${result.roomType} · ${result.availableRooms} room(s) · sleeps ${result.capacity}`}
                     imageUrl={result.branch.images?.[0]?.url}
                     imageAlt={result.branch.images?.[0]?.altText || `${result.branch.name} accommodation`}
-                    to={`/hotels/${result.branch.id}?checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}&rooms=${rooms}`}
+                    to={hotelDetailsPath(result.branch.id)}
                     onMouseEnter={() => setHoveredCardId(result.branch.id)}
                     onMouseLeave={() => setHoveredCardId(null)}
                   />
@@ -169,6 +258,7 @@ const Hotels: React.FC = () => {
                     currency={branch.currency}
                     imageUrl={branch.images[0]?.url}
                     imageAlt={branch.images[0]?.altText || `${branch.name} accommodation`}
+                    to={hotelDetailsPath(branch.id)}
                     onMouseEnter={() => setHoveredCardId(branch.id)}
                     onMouseLeave={() => setHoveredCardId(null)}
                   />

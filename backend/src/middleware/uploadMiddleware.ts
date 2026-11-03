@@ -10,6 +10,7 @@ const __dirname = path.dirname(__filename);
 const uploadDir = path.join(__dirname, '../../uploads');
 const branchesDir = path.join(uploadDir, 'branches');
 const roomsDir = path.join(uploadDir, 'rooms');
+const maxImageSize = 10 * 1024 * 1024;
 
 [uploadDir, branchesDir, roomsDir].forEach((dir) => {
   if (!fs.existsSync(dir)) {
@@ -55,24 +56,24 @@ const imageFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterC
 // Multer instances
 export const uploadBranchImage = multer({
   storage: branchStorage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: maxImageSize },
   fileFilter: imageFilter,
 }).single('image');
 
 export const uploadRoomImage = multer({
   storage: roomStorage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: maxImageSize },
   fileFilter: imageFilter,
 }).single('image');
 
 export const uploadMultipleBranchImages = multer({
   storage: branchStorage,
-  limits: { fileSize: 5 * 1024 * 1024, files: 10 }, // 5MB per image, max 10 images
+  limits: { fileSize: maxImageSize, files: 10 },
   fileFilter: imageFilter,
 }).array('images', 10);
 
 export const uploadMultipleRoomImages = multer({
   storage: roomStorage,
-  limits: { fileSize: 5 * 1024 * 1024, files: 10 }, // 5MB per image, max 10 images
+  limits: { fileSize: maxImageSize, files: 10 },
   fileFilter: imageFilter,
 }).array('images', 10);

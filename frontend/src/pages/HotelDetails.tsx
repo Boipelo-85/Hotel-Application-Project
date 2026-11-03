@@ -32,6 +32,11 @@ const HotelDetails: React.FC = () => {
   const checkOut = searchParams.get('checkOut') || localCheckOut;
   const guests = searchParams.get('guests') || localGuests;
   const quantity = searchParams.get('rooms') || '1';
+  const requestedReturnTo = searchParams.get('returnTo');
+  const backToResults = requestedReturnTo &&
+    (requestedReturnTo === '/hotels' || requestedReturnTo.startsWith('/hotels?'))
+    ? requestedReturnTo
+    : '/hotels';
 
   useEffect(() => {
     if (!branchId) return;
@@ -50,10 +55,13 @@ const HotelDetails: React.FC = () => {
   }, [dispatch, branchId, checkIn, checkOut, guests]);
 
   const handleDateChange = () => {
-    const newParams: Record<string, string> = {};
-    if (localCheckIn) newParams.checkIn = localCheckIn;
-    if (localCheckOut) newParams.checkOut = localCheckOut;
-    if (localGuests) newParams.guests = localGuests;
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('checkIn');
+    newParams.delete('checkOut');
+    newParams.delete('guests');
+    if (localCheckIn) newParams.set('checkIn', localCheckIn);
+    if (localCheckOut) newParams.set('checkOut', localCheckOut);
+    if (localGuests) newParams.set('guests', localGuests);
     setSearchParams(newParams);
   };
 
@@ -65,7 +73,7 @@ const HotelDetails: React.FC = () => {
     <div style={{ padding: '2rem', maxWidth: '960px', margin: '0 auto' }}>
       <p>
         <Link 
-          to={searchParams.toString() ? `/hotels?${searchParams.toString()}` : '/hotels'}
+          to={backToResults}
           style={{ color: '#3b82f6', textDecoration: 'none', fontFamily: "'Courier New', Courier, monospace" }}
         >
           ← Back to results
@@ -113,20 +121,6 @@ const HotelDetails: React.FC = () => {
         </ul>
       ) : (
         <p>Facilities have not been listed yet.</p>
-      )}
-
-      <h2 style={{ marginTop: '2rem' }}>Policies</h2>
-      {Object.keys(currentBranch.policies).length > 0 ? (
-        <dl style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem 1.5rem' }}>
-          {Object.entries(currentBranch.policies).map(([name, value]) => (
-            <div key={name}>
-              <dt style={{ fontWeight: 600, textTransform: 'capitalize' }}>{name.replace(/([A-Z])/g, ' $1').replace(/[_-]/g, ' ')}</dt>
-              <dd style={{ margin: '0.25rem 0 0', color: '#4b5563' }}>{value}</dd>
-            </div>
-          ))}
-        </dl>
-      ) : (
-        <p>Policies have not been listed yet. Contact the branch for details.</p>
       )}
 
       <h2 style={{ marginTop: '2rem' }}>Location</h2>

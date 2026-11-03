@@ -7,8 +7,16 @@ import { getUserProfile } from '../services/user.service.js';
 
 export function requestCodeController(config: AppConfig): RequestHandler {
   return async (request, response) => {
-    await requestVerificationCode(config, request.body.email, request.ip ?? 'unknown');
-    response.status(202).json({ message: 'If the address can receive a code, one has been sent.' });
+    const email = request.body.email;
+    console.log(`Request code for email: ${email}, IP: ${request.ip ?? 'unknown'}`);
+    try {
+      await requestVerificationCode(config, email, request.ip ?? 'unknown');
+      console.log(`Code request successful for email: ${email}`);
+      response.status(202).json({ message: 'If the address can receive a code, one has been sent.' });
+    } catch (error: any) {
+      console.error(`Request code failed for email ${email}:`, error);
+      response.status(500).json({ error: error.message || 'Failed to send code' });
+    }
   };
 }
 

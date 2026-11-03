@@ -319,6 +319,19 @@ a {
   background-color: #3b82f6;
 }
 
+.login-button--secondary {
+  width: 100%;
+  background-color: transparent;
+  border: 1px solid #3b82f6;
+  color: #3b82f6;
+  margin-top: 1rem;
+}
+
+.login-button--secondary:hover {
+  background-color: #3b82f6;
+  color: white;
+}
+
 .login-button:disabled {
   cursor: not-allowed;
 }
@@ -355,6 +368,176 @@ a {
 
 .login-register-link a {
   text-decoration: none;
+}
+
+.login-links {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.login-link {
+  color: #3b82f6;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.login-link:hover {
+  text-decoration: underline;
+}
+
+.register-page {
+  width: min(100% - 2rem, 760px);
+  margin: 2rem auto;
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 12px 32px rgb(15 23 42 / 7%);
+}
+
+.register-page__header {
+  margin-bottom: 1.75rem;
+}
+
+.register-page__title {
+  margin: 0 0 0.5rem;
+  color: #172554;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+}
+
+.register-page__intro {
+  margin: 0;
+  color: #64748b;
+}
+
+.register-form__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.register-form__input {
+  width: 100%;
+  min-width: 0;
+  min-height: 3.25rem;
+  padding: 0.75rem 1.25rem;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #fff;
+  color: #111827;
+  font-size: 0.95rem;
+}
+
+.register-form__input::placeholder {
+  color: #7b8493;
+  opacity: 1;
+}
+
+.register-form__input:focus {
+  border-color: #3156a5;
+  outline: 2px solid rgb(49 86 165 / 16%);
+}
+
+.register-form__error {
+  margin: 1rem 0 0;
+  color: #b91c1c;
+}
+
+.register-form__submit {
+  width: 100%;
+  min-height: 3rem;
+  margin-top: 1.25rem;
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: #3156a5;
+  color: #fff;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.register-form__submit:hover:not(:disabled) {
+  background: #244586;
+}
+
+.register-form__submit:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.register-page__sign-in {
+  margin: 1.25rem 0 0;
+  color: #475569;
+  text-align: center;
+}
+
+.register-page__sign-in a {
+  color: #3156a5;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.register-page__sign-in a:hover {
+  text-decoration: underline;
+}
+
+.login-card__google {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #fff;
+  color: #172554;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.login-card__google:hover {
+  background: #f8fafc;
+}
+
+.login-card__divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.login-card__divider::before,
+.login-card__divider::after {
+  height: 1px;
+  flex: 1;
+  background: #e5e7eb;
+  content: '';
+}
+
+.login-form__fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.login-card__home {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+  color: #64748b;
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
+.login-card__home:hover {
+  color: #3156a5;
 }
 
 /* Footer section */

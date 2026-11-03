@@ -9,6 +9,27 @@ export async function findUserById(client: PoolClient, userId: string) {
   );
 }
 
+export async function findUserByEmail(client: PoolClient, email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  return client.query<
+    AuthenticatedUser & { is_active: boolean; password_hash: Buffer | null; oauth_provider: string | null; oauth_id: string | null }
+  >(
+    `SELECT id, name, email, role, email_verified, phone, is_active, password_hash, oauth_provider, oauth_id, created_at, updated_at
+     FROM users
+     WHERE LOWER(BTRIM(email)) = $1`,
+    [normalizedEmail],
+  );
+}
+
+export async function findUserByOAuth(client: PoolClient, provider: string, oauthId: string) {
+  return client.query<AuthenticatedUser & { is_active: boolean }>(
+    `SELECT id, name, email, role, email_verified, phone, is_active, created_at, updated_at
+     FROM users
+     WHERE oauth_provider = $1 AND oauth_id = $2`,
+    [provider, oauthId],
+  );
+}
+
 export async function deactivateUser(client: PoolClient, userId: string) {
   return client.query(
     `UPDATE users SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP
@@ -33,6 +54,53 @@ export async function upsertVerifiedUser(
            updated_at = CURRENT_TIMESTAMP
      RETURNING id, name, email, role, email_verified, phone, is_active, created_at, updated_at`,
     [name, email, updateName],
+  );
+}
+
+export async function createUser(
+  client: PoolClient,
+  name: string,
+  email: string,
+  passwordHash: Buffer,
+  phone: string | null,
+) {
+  const normalizedEmail = email.trim().toLowerCase();
+  return client.query<AuthenticatedUser & { is_active: boolean }>(
+    `INSERT INTO users (name, email, password_hash, phone, role, email_verified)
+     VALUES ($1, $2, $3, $4, 'customer', TRUE)
+     RETURNING id, name, email, role, email_verified, phone, is_active, created_at, updated_at`,
+    [name, normalizedEmail, passwordHash, phone],
+  );
+}
+
+export async function createUserWithOAuth(
+  client: PoolClient,
+  name: string,
+  email: string,
+  provider: string,
+  oauthId: string,
+) {
+  const normalizedEmail = email.trim().toLowerCase();
+  return client.query<AuthenticatedUser & { is_active: boolean }>(
+    `INSERT INTO users (name, email, oauth_provider, oauth_id, role, email_verified)
+     VALUES ($1, $2, $3, $4, 'customer', TRUE)
+     RETURNING id, name, email, role, email_verified, phone, is_active, created_at, updated_at`,
+    [name, normalizedEmail, provider, oauthId],
+  );
+}
+
+export async function linkOAuthToUser(
+  client: PoolClient,
+  userId: string,
+  provider: string,
+  oauthId: string,
+) {
+  return client.query<AuthenticatedUser & { is_active: boolean }>(
+    `UPDATE users
+     SET oauth_provider = $2, oauth_id = $3, updated_at = CURRENT_TIMESTAMP
+     WHERE id = $1
+     RETURNING id, name, email, role, email_verified, phone, is_active, created_at, updated_at`,
+    [userId, provider, oauthId],
   );
 }
 

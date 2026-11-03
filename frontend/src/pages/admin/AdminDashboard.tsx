@@ -65,8 +65,8 @@ const AdminDashboard: React.FC = () => {
           <Stat label="Users" value={dashboardStats.total_users} />
           <Stat label="Published branches" value={dashboardStats.total_branches} />
           <Stat label="Active rooms" value={dashboardStats.total_rooms} />
-          <Stat label="Confirmed bookings" value={dashboardStats.active_bookings} />
-          <Stat label="Pending bookings" value={dashboardStats.pending_bookings} />
+          <Stat label="Confirmed bookings" value={dashboardStats.active_bookings} to="/admin/bookings?status=confirmed" />
+          <Stat label="Pending bookings" value={dashboardStats.pending_bookings} to="/admin/bookings?status=pending" />
           <Stat label="30-day revenue" value={dashboardStats.monthly_revenue} />
         </div>
       )}
@@ -86,12 +86,26 @@ const AdminDashboard: React.FC = () => {
   );
 };
 
-function Stat({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div style={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '0.5rem', padding: '1rem' }}>
+function Stat({ label, value, to }: { label: string; value: string | number; to?: string }) {
+  const style: React.CSSProperties = {
+    display: 'block',
+    backgroundColor: 'white',
+    border: '1px solid #e5e7eb',
+    borderRadius: '0.5rem',
+    padding: '1rem',
+    color: 'inherit',
+    textDecoration: 'none',
+  };
+  const content = (
+    <>
       <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>{label}</div>
       <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{value}</div>
-    </div>
+    </>
+  );
+  return to ? (
+    <Link to={to} aria-label={`View ${label.toLowerCase()}`} style={style}>{content}</Link>
+  ) : (
+    <div style={style}>{content}</div>
   );
 }
 

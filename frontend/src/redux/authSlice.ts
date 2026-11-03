@@ -25,18 +25,22 @@ const initialState: AuthState = {
 // Async thunks
 export const requestCode = createAsyncThunk(
   'auth/requestCode',
-  async (email: string) => {
-    const response = await fetch('/api/v1/auth/request-code', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email }),
-    });
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.message || 'Failed to request code');
+  async (email: string, { rejectWithValue }) => {
+    try {
+      const response = await fetch('/api/v1/auth/request-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        return rejectWithValue(data.message || data.error || `Failed to request code (Status: ${response.status})`);
+      }
+      return await response.json();
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Network error occurred');
     }
-    return await response.json();
   }
 );
 
@@ -80,6 +84,62 @@ export const logout = createAsyncThunk('auth/logout', async () => {
   }
 });
 
+export const loginWithEmailPassword = createAsyncThunk(
+  'auth/loginWithEmailPassword',
+  async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
+    try {
+      const response = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        return rejectWithValue(data.message || data.error || 'Invalid credentials');
+      }
+      const data = await response.json();
+      return data.user;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Network error occurred');
+    }
+  }
+);
+
+export const registerAccount = createAsyncThunk(
+  'auth/registerAccount',
+  async (
+    input: {
+      name: string;
+      email: string;
+      phone?: string;
+      password: string;
+      confirmPassword: string;
+    },
+    { rejectWithValue },
+  ) => {
+    try {
+      const response = await fetch('/api/v1/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(input),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        return rejectWithValue(
+          data.error?.message || data.message || 'Unable to create your account.',
+        );
+      }
+      return data.user as User;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : 'Network error occurred',
+      );
+    }
+  },
+);
+
 export const loginAdmin = createAsyncThunk(
   'auth/loginAdmin',
   async ({ email, password }: { email: string; password: string }) => {
@@ -118,7 +178,7 @@ const authSlice = createSlice({
       })
       .addCase(requestCode.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Failed to request code';
+        state.error = action.payload as string || action.error.message || 'Failed to request code';
       })
       // Verify Code
       .addCase(verifyCode.pending, (state) => {
@@ -147,6 +207,33 @@ const authSlice = createSlice({
         state.loading = false;
         state.user = null;
         state.isAuthenticated = false;
+      })
+      // Email/Password Login
+      .addCase(loginWithEmailPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loginWithEmailPassword.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+        state.isAuthenticated = true;
+      })
+      .addCase(loginWithEmailPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string || action.error.message || 'Login failed';
+      })
+      .addCase(registerAccount.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(registerAccount.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+        state.isAuthenticated = true;
+      })
+      .addCase(registerAccount.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string || action.error.message || 'Registration failed';
       })
       // Admin Login
       .addCase(loginAdmin.pending, (state) => {

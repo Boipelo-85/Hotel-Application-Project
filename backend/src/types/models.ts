@@ -49,6 +49,9 @@ export interface BookingRow {
   // Optional fields from JOIN queries
   branch_name?: string;
   room_type?: string;
+  user_name?: string | null;
+  user_email?: string | null;
+  user_phone?: string | null;
 }
 
 //Hotel types
