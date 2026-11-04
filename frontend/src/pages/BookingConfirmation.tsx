@@ -39,9 +39,23 @@ const BookingConfirmation: React.FC = () => {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '640px', margin: '0 auto' }}>
-      <h1>{bookingId ? 'Booking' : 'Reservation received'} {booking.booking_reference}</h1>
-      {!bookingId && <p>Keep this reference for your records.</p>}
+      <h1>
+        {booking.status === 'confirmed'
+          ? 'Booking confirmed!'
+          : bookingId
+            ? 'Booking details'
+            : 'Reservation request received'}
+      </h1>
+      <p>Booking reference: <strong>{booking.booking_reference}</strong></p>
+      {!bookingId && (
+        <>
+          <p>Keep this reference and the email you used to find this reservation later.</p>
+          {booking.guest_email && <p>Traveler email: {booking.guest_email}</p>}
+        </>
+      )}
       <p>Status: {booking.status}</p>
+      {booking.branch_name && <p>Branch: {booking.branch_name}</p>}
+      {booking.room_type && <p>Room: {booking.room_type}</p>}
       <p>
         {new Date(booking.check_in).toLocaleDateString()} → {new Date(booking.check_out).toLocaleDateString()}
       </p>
@@ -49,8 +63,9 @@ const BookingConfirmation: React.FC = () => {
       <p>
         Total: {booking.currency} {booking.total_amount}
       </p>
+      {booking.status === 'confirmed' && <p>Your stay is reserved.</p>}
       {booking.status === 'pending' && (
-        <p>This hold expires if payment is not completed in time.</p>
+        <p>This reservation is not confirmed yet and the hold expires if payment is not completed in time.</p>
       )}
       <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
         {bookingId && booking.status === 'pending' && (
@@ -67,7 +82,16 @@ const BookingConfirmation: React.FC = () => {
             Continue to payment
           </Link>
         )}
-        {bookingId ? <Link to="/bookings">My bookings</Link> : <Link to="/hotels">Browse branches</Link>}
+        {bookingId && booking.status === 'confirmed' ? (
+          <>
+            <Link to="/bookings">View my bookings</Link>
+            <Link to="/">Back to home</Link>
+          </>
+        ) : bookingId ? (
+          <Link to="/bookings">My bookings</Link>
+        ) : (
+          <><Link to="/booking-lookup">Find this booking later</Link><Link to="/hotels">Browse branches</Link></>
+        )}
       </div>
     </div>
   );

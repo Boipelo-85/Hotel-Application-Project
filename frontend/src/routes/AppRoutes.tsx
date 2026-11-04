@@ -8,7 +8,9 @@ import Hotels from '../pages/Hotels';
 import HotelDetails from '../pages/HotelDetails';
 import Booking from '../pages/Booking';
 import BookingConfirmation from '../pages/BookingConfirmation';
+import BookingLookup from '../pages/BookingLookup';
 import Payment from '../pages/Payment';
+import ReviewBooking from '../pages/ReviewBooking';
 import MyBookings from '../pages/MyBookings';
 import Profile from '../pages/Profile';
 import Favourites from '../pages/Favourites';
@@ -37,6 +39,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/branches/:branchId" element={<HotelDetails />} />
       <Route path="/book" element={<Booking />} />
       <Route path="/booking-confirmation" element={<BookingConfirmation />} />
+      <Route path="/booking-lookup" element={<BookingLookup />} />
       <Route
         path="/bookings"
         element={
@@ -58,6 +61,14 @@ const AppRoutes: React.FC = () => {
         element={
           <ProtectedRoute>
             <Payment />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/bookings/:bookingId/payment/review"
+        element={
+          <ProtectedRoute>
+            <ReviewBooking />
           </ProtectedRoute>
         }
       />

@@ -1,16 +1,24 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
+export type PaymentMethod = 'card' | 'eft';
+
 interface Payment {
   id: string;
-  booking_id: string;
-  provider: string;
-  provider_transaction_reference: string | null;
-  checkout_url: string | null;
+  booking_id?: string;
+  bookingId?: string;
+  provider?: string;
+  provider_transaction_reference?: string | null;
+  checkout_url?: string | null;
   amount: string;
   currency: string;
   status: 'pending' | 'successful' | 'failed' | 'refunded';
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface PaymentCheckout {
+  payment: Payment;
+  checkoutUrl: string;
 }
 
 interface PaymentState {
@@ -29,7 +37,7 @@ const initialState: PaymentState = {
 
 export const initiatePayment = createAsyncThunk(
   'payments/initiatePayment',
-  async (bookingId: string) => {
+  async ({ bookingId, paymentMethod }: { bookingId: string; paymentMethod: PaymentMethod }) => {
     const response = await fetch('/api/v1/payments', {
       method: 'POST',
       headers: {
@@ -37,14 +45,14 @@ export const initiatePayment = createAsyncThunk(
         'Idempotency-Key': `checkout-${bookingId}-${Date.now()}`,
       },
       credentials: 'include',
-      body: JSON.stringify({ bookingId }),
+      body: JSON.stringify({ bookingId, paymentMethod }),
     });
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
       throw new Error(data.message || 'Failed to initiate payment');
     }
-    const data = await response.json();
-    return data.payment;
+    const data = await response.json() as PaymentCheckout;
+    return data;
   }
 );
 
@@ -96,8 +104,8 @@ const paymentSlice = createSlice({
       })
       .addCase(initiatePayment.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentPayment = action.payload;
-        state.payments.unshift(action.payload);
+        state.currentPayment = action.payload.payment;
+        state.payments.unshift(action.payload.payment);
       })
       .addCase(initiatePayment.rejected, (state, action) => {
         state.loading = false;

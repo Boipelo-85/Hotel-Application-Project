@@ -4,6 +4,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string | null;
   role: 'customer' | 'branch_manager' | 'admin';
   email_verified: boolean;
 }
@@ -228,6 +229,7 @@ const authSlice = createSlice({
       })
       .addCase(registerAccount.fulfilled, (state, action) => {
         state.loading = false;
+        state.error = null;
         state.user = action.payload;
         state.isAuthenticated = true;
       })
@@ -251,6 +253,8 @@ const authSlice = createSlice({
       })
       // Logout
       .addCase(logout.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
         state.user = null;
         state.isAuthenticated = false;
       });

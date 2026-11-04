@@ -35,9 +35,10 @@ interface RoomDetailsModalProps {
   roomId: string | null;
   onClose: () => void;
   onBook: (room: Room) => void;
+  canBook?: boolean;
 }
 
-const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({ roomId, onClose, onBook }) => {
+const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({ roomId, onClose, onBook, canBook = true }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [room, setRoom] = useState<Room | null>(null);
   const [loading, setLoading] = useState(false);
@@ -424,21 +425,23 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({ roomId, onClose, on
           {/* Sticky Book Button */}
           <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
             <button
+              type="button"
               onClick={() => onBook(room)}
+              disabled={!canBook}
               style={{
                 width: '100%',
                 padding: '0.75rem',
-                backgroundColor: '#3b82f6',
+                backgroundColor: canBook ? '#3b82f6' : '#9ca3af',
                 color: 'white',
                 border: 'none',
                 borderRadius: '0.5rem',
-                cursor: 'pointer',
+                cursor: canBook ? 'pointer' : 'not-allowed',
                 fontSize: '1rem',
                 fontWeight: '600',
                 fontFamily: "'Courier New', Courier, monospace",
               }}
             >
-              Book now · {room.currency} {room.price}/night
+              {canBook ? `Book now · ${room.currency} ${room.price}/night` : 'Unavailable for these dates'}
             </button>
           </div>
         </div>

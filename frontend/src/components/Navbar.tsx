@@ -56,12 +56,10 @@ const Navbar: React.FC = () => {
             </>
           ) : (
             !isAuthPage && (
-              <Link
-                to="/login"
-                className="navbar__sign-in"
-              >
-                Sign In
-              </Link>
+              <>
+                <Link to="/booking-lookup" className="navbar__link">Find booking</Link>
+                <Link to="/login" className="navbar__sign-in">Sign In</Link>
+              </>
             )
           )}
         </div>

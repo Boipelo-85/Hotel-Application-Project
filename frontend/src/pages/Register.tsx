@@ -1,13 +1,18 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearError, registerAccount } from '../redux/authSlice';
 import type { AppDispatch, RootState } from '../redux/store';
+import { safeReturnPath } from '../utils/navigation';
 
 const Register: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { loading, error } = useSelector((state: RootState) => state.auth);
+  const location = useLocation();
+  const from = safeReturnPath(
+    (location.state as { from?: unknown } | null)?.from ?? sessionStorage.getItem('auth:returnTo'),
+  );
+  const { loading, error, isAuthenticated } = useSelector((state: RootState) => state.auth);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -15,6 +20,13 @@ const Register: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [formError, setFormError] = useState('');
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      sessionStorage.removeItem('auth:returnTo');
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, from]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -40,7 +52,8 @@ const Register: React.FC = () => {
     }));
 
     if (registerAccount.fulfilled.match(result)) {
-      navigate('/', { replace: true });
+      sessionStorage.removeItem('auth:returnTo');
+      navigate(from, { replace: true });
     }
   };
 
@@ -154,8 +167,8 @@ const Register: React.FC = () => {
         </button>
       </form>
 
-      <p className="register-page__sign-in">
-        Already have an account? <Link to="/login">Sign in</Link>
+        <p className="register-page__sign-in">
+          Already have an account? <Link to="/login" state={{ from }}>Sign in</Link>
       </p>
     </section>
   );

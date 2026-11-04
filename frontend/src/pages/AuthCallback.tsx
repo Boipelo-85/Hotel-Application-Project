@@ -4,6 +4,7 @@ import { useDispatch } from 'react-redux';
 import { getCurrentUser } from '../redux/authSlice';
 import type { AppDispatch } from '../redux/store';
 import Loading from '../components/Loading';
+import { safeReturnPath } from '../utils/navigation';
 
 const AuthCallback: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -20,7 +21,9 @@ const AuthCallback: React.FC = () => {
       // OAuth was successful, fetch current user to update Redux state
       void dispatch(getCurrentUser()).then((result) => {
         if (getCurrentUser.fulfilled.match(result)) {
-          navigate('/', { replace: true });
+          const returnTo = safeReturnPath(sessionStorage.getItem('auth:returnTo'));
+          sessionStorage.removeItem('auth:returnTo');
+          navigate(returnTo, { replace: true });
         } else {
           setMessage('Sign-in did not complete. Redirecting...');
           setTimeout(() => navigate('/login', { replace: true }), 2000);
@@ -34,7 +37,9 @@ const AuthCallback: React.FC = () => {
       // Regular auth check (for other scenarios)
       void dispatch(getCurrentUser()).then((result) => {
         if (getCurrentUser.fulfilled.match(result)) {
-          navigate('/', { replace: true });
+          const returnTo = safeReturnPath(sessionStorage.getItem('auth:returnTo'));
+          sessionStorage.removeItem('auth:returnTo');
+          navigate(returnTo, { replace: true });
         } else {
           setMessage('Sign-in did not complete. Redirecting...');
           navigate('/login', { replace: true });

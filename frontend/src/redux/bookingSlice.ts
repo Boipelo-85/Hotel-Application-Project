@@ -18,6 +18,12 @@ export interface Booking {
   updated_at: string;
   branch_name?: string;
   room_type?: string;
+  guest_name?: string | null;
+  guest_email?: string | null;
+  guest_phone?: string | null;
+  guest_country?: string | null;
+  guest_address?: string | null;
+  special_requests?: string | null;
 }
 
 interface BookingState {
@@ -70,6 +76,12 @@ export const createBooking = createAsyncThunk(
     checkOut: string;
     guests: number;
     quantity: number;
+    guestName?: string;
+    guestEmail?: string;
+    guestPhone?: string;
+    guestCountry?: string;
+    guestAddress?: string;
+    specialRequests?: string;
   }) => {
     const response = await fetch('/api/v1/bookings', {
       method: 'POST',
@@ -99,6 +111,30 @@ export const cancelBooking = createAsyncThunk(
     const data = await response.json();
     return data.booking;
   }
+);
+
+export const modifyBooking = createAsyncThunk(
+  'bookings/modifyBooking',
+  async ({
+    bookingId,
+    changes,
+  }: {
+    bookingId: string;
+    changes: { checkIn: string; checkOut: string; guests: number; quantity: number };
+  }) => {
+    const response = await fetch(`/api/v1/bookings/${bookingId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(changes),
+    });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.message || data.error || 'Failed to update booking');
+    }
+    const data = await response.json();
+    return data.booking;
+  },
 );
 
 const bookingSlice = createSlice({
@@ -169,6 +205,24 @@ const bookingSlice = createSlice({
       .addCase(cancelBooking.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to cancel booking';
+      })
+      .addCase(modifyBooking.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(modifyBooking.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.bookings.findIndex((booking) => booking.id === action.payload.id);
+        if (index !== -1) {
+          state.bookings[index] = { ...state.bookings[index], ...action.payload };
+        }
+        if (state.currentBooking?.id === action.payload.id) {
+          state.currentBooking = { ...state.currentBooking, ...action.payload };
+        }
+      })
+      .addCase(modifyBooking.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Failed to update booking';
       });
   },
 });
