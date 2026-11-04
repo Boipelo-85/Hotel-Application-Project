@@ -21,7 +21,11 @@ export const createCheckoutController: RequestHandler = async (request, response
   if (typeof bookingId !== 'string' || !/^\d+$/.test(bookingId)) {
     throw new AppError(400, 'A valid bookingId is required', 'INVALID_DATA');
   }
-  const result = await createCheckout(request.auth.userId, bookingId, idempotencyKey);
+  const paymentMethod = request.body.paymentMethod;
+  if (paymentMethod !== 'card' && paymentMethod !== 'eft') {
+    throw new AppError(400, 'A valid payment method is required', 'INVALID_DATA');
+  }
+  const result = await createCheckout(request.auth.userId, bookingId, idempotencyKey, paymentMethod);
   response.status(200).json({
     payment: {
       id: result.payment.id,

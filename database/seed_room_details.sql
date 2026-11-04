@@ -26,6 +26,21 @@ INSERT INTO room_images (room_id, image_url, alt_text, display_order) VALUES
     (3, 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=800', 'VIP lounge area', 3)
 ON CONFLICT DO NOTHING;
 
+-- Insert room images for the second Standard room (id=6)
+INSERT INTO room_images (room_id, image_url, alt_text, display_order)
+SELECT 6, image_url, alt_text, display_order
+FROM (VALUES
+    ('https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800', 'Standard room with a comfortable bed', 0),
+    ('https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800', 'Bright hotel room with a seating area', 1),
+    ('https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800', 'Modern room with private bathroom', 2),
+    ('https://images.unsplash.com/photo-1590490359683-658d3d23f972?w=800', 'Guest room with balcony views', 3)
+) AS room_image(image_url, alt_text, display_order)
+WHERE EXISTS (SELECT 1 FROM rooms WHERE id = 6)
+  AND NOT EXISTS (
+    SELECT 1 FROM room_images
+    WHERE room_id = 6 AND room_images.image_url = room_image.image_url
+  );
+
 -- Insert room amenities for Deluxe Double Room (id=1)
 INSERT INTO room_amenities (room_id, amenity_name, category) VALUES
     (1, 'Free toiletries', 'bathroom'),

@@ -4,13 +4,18 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS oauth_provider TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS oauth_id TEXT;
 
 -- Add unique constraint for OAuth accounts
-ALTER TABLE users ADD CONSTRAINT users_oauth_unique UNIQUE (oauth_provider, oauth_id);
-
--- Ensure every user has either password OR OAuth
-ALTER TABLE users ADD CONSTRAINT users_auth_method CHECK (
-  (password_hash IS NOT NULL) OR 
-  (oauth_provider IS NOT NULL AND oauth_id IS NOT NULL)
-);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'users_oauth_unique'
+      AND conrelid = 'users'::regclass
+  ) THEN
+    ALTER TABLE users
+      ADD CONSTRAINT users_oauth_unique UNIQUE (oauth_provider, oauth_id);
+  END IF;
+END $$;
 
 -- Create refresh_tokens table
 CREATE TABLE IF NOT EXISTS refresh_tokens (

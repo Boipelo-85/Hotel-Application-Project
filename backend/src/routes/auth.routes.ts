@@ -79,19 +79,23 @@ export function authRoutes(config: AppConfig, cookieName: string): Router {
   // Refresh Token
   router.post(
     '/refresh',
+    sameOrigin,
     refreshController(config, cookieName),
   );
 
   // Logout (JWT)
   router.post(
     '/logout',
+    sameOrigin,
+    createAuthMiddleware(cookieName, config),
     logoutController(config, cookieName),
   );
 
   // Logout All Sessions
   router.post(
     '/logout-all',
-    createAuthMiddleware(cookieName),
+    sameOrigin,
+    createAuthMiddleware(cookieName, config),
     logoutAllController(config, cookieName),
   );
 
@@ -120,10 +124,10 @@ export function authRoutes(config: AppConfig, cookieName: string): Router {
   router.get('/facebook/callback', ...facebookCallbackController(config, cookieName));
 
   // Legacy OTP logout
-  router.post('/otp-logout', sameOrigin, createAuthMiddleware(cookieName), otpLogoutController(config, cookieName));
+  router.post('/otp-logout', sameOrigin, createAuthMiddleware(cookieName, config), otpLogoutController(config, cookieName));
   
   // Get current user
-  router.get('/me', createAuthMiddleware(cookieName), currentUserController);
+  router.get('/me', createAuthMiddleware(cookieName, config), currentUserController);
   
   return router;
 }

@@ -3,6 +3,7 @@ import {
   cancelBooking as cancelBookingService,
   createBooking as createBookingService,
   getBooking as getBookingService,
+  lookupGuestBooking as lookupGuestBookingService,
   listBookings,
   listBranchBookings,
   modifyBooking,
@@ -18,6 +19,11 @@ function authenticated(request: Parameters<RequestHandler>[0]) {
 export const createBookingController: RequestHandler = async (request, response) => {
   const userId = request.auth?.userId ?? null;
   response.status(201).json({ booking: await createBookingService(userId, request.body) });
+};
+
+export const lookupGuestBookingController: RequestHandler = async (request, response) => {
+  const { reference, email } = request.body as { reference: string; email: string };
+  response.json({ booking: await lookupGuestBookingService(reference, email) });
 };
 
 export const listBookingsController: RequestHandler = async (request, response) => {

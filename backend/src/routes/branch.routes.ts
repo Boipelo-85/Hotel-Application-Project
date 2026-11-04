@@ -54,7 +54,7 @@ const branchSearchSchema = z.object({
 }).strict();
 export function branchRoutes(_config: AppConfig, cookieName: string): Router {
   const router = Router();
-  const auth = createAuthMiddleware(cookieName);
+  const auth = createAuthMiddleware(cookieName, _config);
 
   // Public routes
   router.get('/', validateQuery(branchSearchSchema), getBranches);

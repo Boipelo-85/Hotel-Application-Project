@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { after, test } from 'node:test';
 import { closeDatabase, initializeDatabase, query } from '../src/config/database.js';
 import { loadConfig } from '../src/config/env.js';
-import { createBooking } from '../src/services/booking.service.js';
+import { createBooking, lookupGuestBooking } from '../src/services/booking.service.js';
 import {
   assignBranchManager,
   listBranches,
@@ -130,6 +130,41 @@ function dates(offset: number): {
     checkOut: end.toISOString().slice(0, 10),
   };
 }
+
+test(
+  'allows guest reservations to be retrieved only with their reference and email',
+  { skip: !testConfig },
+  async () => {
+    const fixture = await createFixture();
+
+    try {
+      const booking = await createBooking(null, {
+        roomId: fixture.roomId,
+        ...dates(5),
+        guests: 1,
+        quantity: 1,
+        guestName: 'Guest Tester',
+        guestEmail: 'Guest.Tester@example.test',
+      });
+
+      assert.equal(booking.guest_email, 'guest.tester@example.test');
+      assert.equal(booking.branch_name, 'Availability test branch');
+      assert.equal(booking.room_type, 'Test room');
+
+      const found = await lookupGuestBooking(booking.booking_reference, 'GUEST.TESTER@example.test');
+      assert.equal(found.id, booking.id);
+
+      await assert.rejects(
+        lookupGuestBooking(booking.booking_reference, 'someone.else@example.test'),
+        (error: unknown) =>
+          error instanceof AppError &&
+          error.statusCode === 404,
+      );
+    } finally {
+      await cleanupFixture(fixture);
+    }
+  },
+);
 
 test(
   'blocks overlapping stays but allows same-day checkout and check-in',

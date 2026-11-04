@@ -65,6 +65,17 @@ test('serves health checks and rejects cross-origin state-changing requests', as
     assert.equal(invalidSearch.status, 400);
     assert.equal((await invalidSearch.json()).error, 'VALIDATION_ERROR');
 
+    const invalidGuestBookingLookup = await fetch(`${baseUrl}/api/v1/bookings/lookup`, {
+      method: 'POST',
+      headers: {
+        Origin: 'http://localhost:5173',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ reference: '', email: 'not-an-email' }),
+    });
+    assert.equal(invalidGuestBookingLookup.status, 400);
+    assert.equal((await invalidGuestBookingLookup.json()).error, 'VALIDATION_ERROR');
+
     const missingRoute = await fetch(`${baseUrl}/api/v1/does-not-exist?private=value`);
     assert.equal(missingRoute.status, 404);
     assert.deepEqual(await missingRoute.json(), {

@@ -12,7 +12,7 @@ const profileSchema = z.object({
 
 export function userRoutes(config: AppConfig, cookieName: string): Router {
   const router = Router();
-  const auth = createAuthMiddleware(cookieName);
+  const auth = createAuthMiddleware(cookieName, config);
   router.use(auth);
   router.get('/profile', getProfile);
   router.patch('/profile', validateBody(profileSchema), updateProfile);

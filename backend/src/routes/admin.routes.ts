@@ -45,7 +45,7 @@ const id = z.string().regex(/^\d+$/);
 // Admin Dashboard Routes
 export function adminRoutes(config: AppConfig, cookieName: string): Router {
   const router = Router();
-  const auth = createAuthMiddleware(cookieName);
+  const auth = createAuthMiddleware(cookieName, config);
 
   // Admin Login (public route with rate limiting)
   const loginSchema = z.object({

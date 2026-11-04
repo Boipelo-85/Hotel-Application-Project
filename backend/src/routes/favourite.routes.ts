@@ -14,7 +14,7 @@ const createFavouriteSchema = z.object({ branchId: z.string().regex(/^\d+$/) }).
 
 export function favouriteRoutes(_config: AppConfig, cookieName: string): Router {
   const router = Router();
-  const auth = createAuthMiddleware(cookieName);
+  const auth = createAuthMiddleware(cookieName, _config);
   router.use(auth);
   router.get('/', getFavourites);
   router.post('/', validateBody(createFavouriteSchema), addFavourite);

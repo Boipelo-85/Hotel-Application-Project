@@ -10,7 +10,7 @@ import {
 
 export function notificationRoutes(_config: AppConfig, cookieName: string): Router {
   const router = Router();
-  const auth = createAuthMiddleware(cookieName);
+  const auth = createAuthMiddleware(cookieName, _config);
   router.use(auth);
   router.get('/', getNotifications);
   router.patch(

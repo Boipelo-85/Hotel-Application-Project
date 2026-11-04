@@ -5,6 +5,7 @@ export interface PaymentRecord {
   id: string;
   booking_id: string;
   provider: string;
+  payment_method: 'card' | 'eft';
   provider_transaction_reference: string | null;
   checkout_url: string | null;
   refund_idempotency_key: string | null;
@@ -62,14 +63,15 @@ export async function insertPayment(
   provider: string,
   amount: string,
   currency: string,
+  paymentMethod: 'card' | 'eft',
   idempotencyKey: string,
 ) {
   return client.query<PaymentRecord>(
-    `INSERT INTO payments (booking_id, provider, amount, currency, status, idempotency_key)
-     VALUES ($1, $2, $3, $4, 'pending', $5)
+    `INSERT INTO payments (booking_id, provider, amount, currency, payment_method, status, idempotency_key)
+     VALUES ($1, $2, $3, $4, $5, 'pending', $6)
      ON CONFLICT (idempotency_key) DO UPDATE SET idempotency_key = EXCLUDED.idempotency_key
      RETURNING *`,
-    [bookingId, provider, amount, currency, idempotencyKey],
+    [bookingId, provider, amount, currency, paymentMethod, idempotencyKey],
   );
 }
 

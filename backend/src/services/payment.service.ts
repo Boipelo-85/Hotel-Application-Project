@@ -24,6 +24,7 @@ interface PaymentRow {
   id: string;
   booking_id: string;
   provider: string;
+  payment_method: 'card' | 'eft';
   provider_transaction_reference: string | null;
   checkout_url: string | null;
   refund_idempotency_key: string | null;
@@ -50,6 +51,7 @@ async function getOrCreatePendingCheckout(
   bookingId: string,
   idempotencyKey: string,
   providerName: string,
+  paymentMethod: 'card' | 'eft',
 ): Promise<PendingCheckout> {
   return inTransaction(async (client) => {
     const bookingResult = await findBookingForCheckout(client, bookingId);
@@ -66,11 +68,14 @@ async function getOrCreatePendingCheckout(
       if (existingPayment.rows[0].provider !== providerName) {
         throw new AppError(409, 'A payment is already in progress with a different provider', 'PAYMENT_PROVIDER_CONFLICT');
       }
+      if (existingPayment.rows[0].payment_method !== paymentMethod) {
+        throw new AppError(409, 'A checkout is already in progress with a different payment method', 'PAYMENT_METHOD_CONFLICT');
+      }
       return { payment: existingPayment.rows[0], bookingReference: booking.booking_reference, existing: true };
     }
 
     const paymentResult = await insertPayment(
-      client, bookingId, providerName, booking.total_amount, booking.currency, idempotencyKey,
+      client, bookingId, providerName, booking.total_amount, booking.currency, paymentMethod, idempotencyKey,
     );
     const payment = paymentResult.rows[0];
     if (payment.booking_id !== bookingId) {
@@ -84,6 +89,7 @@ export async function createCheckout(
   userId: string,
   bookingId: string,
   idempotencyKeyInput: string,
+  paymentMethod: 'card' | 'eft',
 ): Promise<{ payment: PaymentRow; checkoutUrl: string }> {
   const provider = getPaymentProvider();
   if (!provider) {
@@ -95,6 +101,7 @@ export async function createCheckout(
     bookingId,
     idempotencyKey,
     provider.name,
+    paymentMethod,
   );
   if (payment.status === 'successful') {
     throw new AppError(409, 'This booking has already been paid', 'ALREADY_PAID');
@@ -111,6 +118,7 @@ export async function createCheckout(
     bookingReference,
     amount: payment.amount,
     currency: payment.currency,
+    paymentMethod,
   });
   let checkoutUrl: URL;
   try {

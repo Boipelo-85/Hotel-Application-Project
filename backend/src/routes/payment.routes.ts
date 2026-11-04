@@ -7,12 +7,15 @@ import { getPayment, handleWebhook, initiatePayment } from '../controllers/payme
 
 export function paymentRoutes(_config: AppConfig, cookieName: string): Router {
   const router = Router();
-  const auth = createAuthMiddleware(cookieName);
+  const auth = createAuthMiddleware(cookieName, _config);
   router.post('/webhook', handleWebhook);
   router.use(auth);
   router.post(
     '/',
-    validateBody(z.object({ bookingId: z.string().regex(/^\d+$/) }).strict()),
+    validateBody(z.object({
+      bookingId: z.string().regex(/^\d+$/),
+      paymentMethod: z.enum(['card', 'eft']),
+    }).strict()),
     initiatePayment,
   );
   router.get(
@@ -23,6 +26,7 @@ export function paymentRoutes(_config: AppConfig, cookieName: string): Router {
   router.post(
     '/bookings/:bookingId/checkout',
     validateParams(z.object({ bookingId: z.string().regex(/^\d+$/) })),
+    validateBody(z.object({ paymentMethod: z.enum(['card', 'eft']) }).strict()),
     initiatePayment,
   );
   return router;

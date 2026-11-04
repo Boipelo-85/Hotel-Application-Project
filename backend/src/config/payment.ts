@@ -3,6 +3,7 @@ export interface CheckoutRequest {
   bookingReference: string;
   amount: string;
   currency: string;
+  paymentMethod: 'card' | 'eft';
 }
 
 export interface CheckoutSession {

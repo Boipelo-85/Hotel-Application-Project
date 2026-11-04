@@ -27,6 +27,12 @@ export interface BookingRow {
 
   user_id: string | null;
   room_id: string;
+  guest_name?: string | null;
+  guest_email?: string | null;
+  guest_phone?: string | null;
+  guest_country?: string | null;
+  guest_address?: string | null;
+  special_requests?: string | null;
 
   check_in: string;
   check_out: string;

@@ -29,6 +29,7 @@ export const getBranchRoomsController: RequestHandler = async (request, response
     checkIn?: string;
     checkOut?: string;
     guests?: number;
+    quantity: number;
   };
 
   const rooms = await listRooms(branchId);
@@ -54,8 +55,8 @@ export const getBranchRoomsController: RequestHandler = async (request, response
           quantity_available: available,
           price_per_night: pricePerNight,
           total_price: totalPrice,
-          is_available: available > 0,
-          can_accommodate_guests: query.guests ? room.capacity >= query.guests : true,
+          is_available: available >= query.quantity,
+          can_accommodate_guests: query.guests ? room.capacity * query.quantity >= query.guests : true,
         };
       })
     );

@@ -2,8 +2,9 @@ import { query } from '../config/database.js';
 import type { PoolClient } from 'pg';
 import type { BookingRow } from '../types/models.js';
 
-export async function findBookingById(bookingId: string) {
-  return query<BookingRow & { manager_user_id: string | null }>(
+export async function findBookingById(bookingId: string, client?: PoolClient) {
+  const execute = client ? client.query.bind(client) : query;
+  return execute<BookingRow & { manager_user_id: string | null }>(
     `SELECT b.*, h.name AS branch_name, r.room_type,
            h.manager_user_id
     FROM bookings b
@@ -19,6 +20,12 @@ export async function createBookingRecord(
   input: {
     reference: string;
     userId: string | null;
+    guestName?: string;
+    guestEmail?: string;
+    guestPhone?: string;
+    guestCountry?: string;
+    guestAddress?: string;
+    specialRequests?: string;
     roomId: string;
     checkIn: string;
     checkOut: string;
@@ -29,13 +36,41 @@ export async function createBookingRecord(
   return client.query<BookingRow>(
     `INSERT INTO bookings (
        booking_reference, user_id, room_id, check_in, check_out, guests, quantity,
-       price_per_night_snapshot, total_amount, currency, status, expires_at
+       price_per_night_snapshot, total_amount, currency, status, expires_at,
+       guest_name, guest_email, guest_phone, guest_country, guest_address, special_requests
      )
      SELECT $1, $2, r.id, $4::DATE, $5::DATE, $6, $7::INTEGER, r.price,
             r.price * $7::INTEGER * ($5::DATE - $4::DATE), r.currency,
-            'pending', CURRENT_TIMESTAMP + INTERVAL '15 minutes'
+            'pending', CURRENT_TIMESTAMP + INTERVAL '15 minutes', $8, $9, $10, $11, $12, $13
      FROM rooms r WHERE r.id = $3 RETURNING *`,
-    [input.reference, input.userId, input.roomId, input.checkIn, input.checkOut, input.guests, input.quantity],
+    [
+      input.reference,
+      input.userId,
+      input.roomId,
+      input.checkIn,
+      input.checkOut,
+      input.guests,
+      input.quantity,
+      input.guestName ?? null,
+      input.guestEmail ?? null,
+      input.guestPhone ?? null,
+      input.guestCountry ?? null,
+      input.guestAddress ?? null,
+      input.specialRequests ?? null,
+    ],
+  );
+}
+
+export async function findGuestBooking(reference: string, email: string) {
+  return query<BookingRow>(
+    `SELECT b.*, h.name AS branch_name, r.room_type
+     FROM bookings b
+     JOIN rooms r ON r.id = b.room_id
+     JOIN branches h ON h.id = r.branch_id
+     WHERE UPPER(b.booking_reference) = UPPER($1)
+       AND LOWER(BTRIM(b.guest_email)) = LOWER(BTRIM($2))
+       AND b.user_id IS NULL`,
+    [reference, email],
   );
 }
 

@@ -2,10 +2,12 @@ import { Router } from 'express';
 import { z } from 'zod';
 import type { AppConfig } from '../config/env.js';
 import { createAuthMiddleware, createOptionalAuthMiddleware } from '../middleware/authMiddleware.js';
+import { createRateLimitMiddleware } from '../middleware/rateLimitMiddleware.js';
 import { validateBody, validateParams } from '../middleware/validationMiddleware.js';
 import {
   cancelBookingController,
   createBooking,
+  lookupGuestBookingController,
   deleteBookingController,
   getBooking,
   getBookings,
@@ -19,6 +21,16 @@ const createBookingSchema = z.object({
   checkOut: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   guests: z.number().int().min(1).max(1000),
   quantity: z.number().int().min(1).max(1000).default(1),
+  guestName: z.string().trim().min(2).max(120).optional(),
+  guestEmail: z.string().trim().email().max(320).optional(),
+  guestPhone: z.string().trim().max(50).optional(),
+  guestCountry: z.string().trim().min(1).max(100).optional(),
+  guestAddress: z.string().trim().min(1).max(250).optional(),
+  specialRequests: z.string().trim().max(1000).optional(),
+}).strict();
+const guestBookingLookupSchema = z.object({
+  reference: z.string().trim().min(1).max(40),
+  email: z.string().trim().email().max(320),
 }).strict();
 const bookingChangesSchema = z.object({
   checkIn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -29,9 +41,15 @@ const bookingChangesSchema = z.object({
 
 export function bookingRoutes(config: AppConfig, cookieName: string): Router {
   const router = Router();
-  const auth = createAuthMiddleware(cookieName);
+  const auth = createAuthMiddleware(cookieName, config);
 
-  router.post('/', createOptionalAuthMiddleware(cookieName), validateBody(createBookingSchema), createBooking);
+  router.post(
+    '/lookup',
+    validateBody(guestBookingLookupSchema),
+    createRateLimitMiddleware(config, 'booking:guest-lookup', 10, 15 * 60),
+    lookupGuestBookingController,
+  );
+  router.post('/', createOptionalAuthMiddleware(cookieName, config), validateBody(createBookingSchema), createBooking);
 
   // Require auth for all other booking operations
   router.use(auth);

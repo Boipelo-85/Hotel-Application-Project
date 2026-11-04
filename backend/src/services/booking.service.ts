@@ -6,6 +6,7 @@ import { countNights, getRoomInventory } from './availability.service.js';
 import {
   createBookingRecord,
   findBookingById,
+  findGuestBooking as selectGuestBooking,
   findBookingForUpdate,
   findBranchManager,
   findBranchManagerAccess,
@@ -26,6 +27,12 @@ export interface BookingInput {
   checkOut: string;
   guests: number;
   quantity: number;
+  guestName?: string;
+  guestEmail?: string;
+  guestPhone?: string;
+  guestCountry?: string;
+  guestAddress?: string;
+  specialRequests?: string;
 }
 
 export interface BookingChanges {
@@ -33,6 +40,20 @@ export interface BookingChanges {
   checkOut?: string;
   guests?: number;
   quantity?: number;
+}
+
+function isMissingGuestBookingSchema(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const databaseError = error as Error & { code?: string };
+  return databaseError.code === '42703' &&
+    /column .*guest_(?:name|email|phone).* does not exist/i.test(error.message);
+}
+
+function isMissingTravelerDetailsSchema(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const databaseError = error as Error & { code?: string };
+  return databaseError.code === '42703' &&
+    /column .*?(?:guest_(?:country|address)|special_requests).* does not exist/i.test(error.message);
 }
 
 export async function createBooking(userId: string | null, input: BookingInput): Promise<BookingRow> {
@@ -43,6 +64,11 @@ export async function createBooking(userId: string | null, input: BookingInput):
   }
   if (new Date(`${input.checkIn}T00:00:00.000Z`) < new Date(new Date().toISOString().slice(0, 10))) {
     throw new AppError(400, 'Check-in date cannot be in the past', 'INVALID_DATES');
+  }
+  const guestName = input.guestName?.trim();
+  const guestEmail = input.guestEmail?.trim().toLowerCase();
+  if (!userId && (!guestName || !guestEmail)) {
+    throw new AppError(400, 'Guest name and email are required', 'INVALID_DATA');
   }
 
   return inTransaction(async (client) => {
@@ -61,15 +87,40 @@ export async function createBooking(userId: string | null, input: BookingInput):
     }
 
     const reference = `HB-${randomBytes(8).toString('hex').toUpperCase()}`;
-    const bookingResult = await createBookingRecord(client, {
-      reference,
-      userId,
-      roomId: input.roomId,
-      checkIn: input.checkIn,
-      checkOut: input.checkOut,
-      guests: input.guests,
-      quantity: input.quantity,
-    });
+    let bookingResult;
+    try {
+      bookingResult = await createBookingRecord(client, {
+        reference,
+        userId,
+        guestName,
+        guestEmail,
+        guestPhone: input.guestPhone?.trim() || undefined,
+        guestCountry: input.guestCountry?.trim() || undefined,
+        guestAddress: input.guestAddress?.trim() || undefined,
+        specialRequests: input.specialRequests?.trim() || undefined,
+        roomId: input.roomId,
+        checkIn: input.checkIn,
+        checkOut: input.checkOut,
+        guests: input.guests,
+        quantity: input.quantity,
+      });
+    } catch (error) {
+      if (isMissingTravelerDetailsSchema(error)) {
+        throw new AppError(
+          503,
+          'Traveler details are not configured in the database. A database administrator must apply database/migrations/010_booking_traveler_details.sql.',
+          'TRAVELER_DETAILS_NOT_CONFIGURED',
+        );
+      }
+      if (isMissingGuestBookingSchema(error)) {
+        throw new AppError(
+          503,
+          'Guest booking is not configured in the database. A database administrator must apply database/migrations/009_guest_booking_contact.sql.',
+          'GUEST_BOOKING_NOT_CONFIGURED',
+        );
+      }
+      throw error;
+    }
     const booking = bookingResult.rows[0];
     if (userId) {
       await insertBookingNotification(client, userId, 'booking_pending',
@@ -82,8 +133,19 @@ export async function createBooking(userId: string | null, input: BookingInput):
         'A new reservation is awaiting payment.',
         { bookingId: booking.id, bookingReference: reference });
     }
-    return booking;
+    const detailedBooking = await findBookingById(booking.id, client);
+    const savedBooking = detailedBooking.rows[0];
+    if (!savedBooking) return booking;
+    const { manager_user_id: _managerUserId, ...publicBooking } = savedBooking;
+    return publicBooking;
   });
+}
+
+export async function lookupGuestBooking(reference: string, email: string): Promise<BookingRow> {
+  const result = await selectGuestBooking(reference.trim(), email.trim());
+  const booking = result.rows[0];
+  if (!booking) throw new AppError(404, 'Booking not found. Check the reference and email address.', 'NOT_FOUND');
+  return booking;
 }
 
 export async function listBookings(user: Pick<AuthenticatedUser, 'id' | 'role'>): Promise<BookingRow[]> {
