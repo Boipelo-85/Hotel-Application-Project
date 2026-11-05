@@ -12,12 +12,11 @@ export async function addFavourite(userId: string, branchId: string) {
     throw new AppError(404, 'Branch not found', 'NOT_FOUND');
   }
   const result = await favouriteRepository.addFavourite(userId, branchId);
-  if (result.rowCount) return { favourite: result.rows[0], created: true };
-  const existing = await favouriteRepository.getFavourite(userId, branchId);
-  if (!existing.rows[0] || existing.rows[0].publication_status !== 'published') {
+  const favourite = await favouriteRepository.getFavourite(userId, branchId);
+  if (!favourite.rows[0] || favourite.rows[0].publication_status !== 'published') {
     throw new AppError(404, 'Branch not found', 'NOT_FOUND');
   }
-  return { favourite: existing.rows[0], created: false };
+  return { favourite: favourite.rows[0], created: result.rowCount !== 0 };
 }
 
 export async function removeFavourite(userId: string, branchId: string): Promise<void> {

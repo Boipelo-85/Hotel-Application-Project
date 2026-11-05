@@ -4,6 +4,7 @@ export interface CheckoutRequest {
   amount: string;
   currency: string;
   paymentMethod: 'card' | 'eft';
+  customerEmail?: string;
 }
 
 export interface CheckoutSession {
@@ -28,7 +29,8 @@ export interface PaymentProvider {
     amount: string;
     currency: string;
   }): Promise<void>;
-  verifyWebhook(rawBody: Buffer, signature: string | undefined): Promise<VerifiedPaymentEvent>;
+  verifyWebhook(rawBody: Buffer, signature: string | undefined): Promise<VerifiedPaymentEvent | null>;
+  verifyTransaction?(transactionReference: string): Promise<VerifiedPaymentEvent | null>;
 }
 
 let activeProvider: PaymentProvider | undefined;

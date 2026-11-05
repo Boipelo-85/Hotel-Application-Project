@@ -6,6 +6,8 @@ import { createApp } from './app.js';
 import { pruneExpiredData } from './services/maintenance.service.js';
 import { checkDatabaseConnection } from './repositories/database-health.repository.js';
 import { seedAdminUser } from './services/admin.service.js';
+import { installPaymentProvider } from './config/payment.js';
+import { createPaystackProvider } from './services/paystack.provider.js';
 
 //Initialze the maintenance time variable
 
@@ -36,6 +38,16 @@ async function start(): Promise<Server> {
   }, MAINTENANCE_INTERVAL_MS);
 
   maintenanceTimer.unref();
+  if (config.PAYSTACK_SECRET_KEY) {
+    installPaymentProvider(createPaystackProvider({
+      secretKey: config.PAYSTACK_SECRET_KEY,
+      callbackUrl: config.PAYSTACK_CALLBACK_URL ?? `${config.APP_ORIGIN}/payment/callback`,
+    }));
+    const mode = config.PAYSTACK_SECRET_KEY.startsWith('sk_live_') ? 'live' : 'test';
+    console.info(`Paystack payment provider enabled (${mode} mode)`);
+  } else {
+    console.warn('PAYSTACK_SECRET_KEY is not set; payments are disabled');
+  }
   const app = createApp(config);
   const server = createServer(app);
   await new Promise<void>((resolve, reject) => {

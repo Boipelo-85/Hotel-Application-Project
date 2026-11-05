@@ -21,6 +21,13 @@ interface PaymentCheckout {
   checkoutUrl: string;
 }
 
+export interface PaymentVerification {
+  status: 'pending' | 'successful' | 'failed' | 'refunded';
+  bookingId: string;
+  paymentId: string;
+  bookingStatus: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+}
+
 interface PaymentState {
   payments: Payment[];
   currentPayment: Payment | null;
@@ -54,6 +61,20 @@ export const initiatePayment = createAsyncThunk(
     const data = await response.json() as PaymentCheckout;
     return data;
   }
+);
+
+export const verifyPayment = createAsyncThunk(
+  'payments/verifyPayment',
+  async (reference: string): Promise<PaymentVerification> => {
+    const response = await fetch(`/api/v1/payments/verify/${encodeURIComponent(reference)}`, {
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.message || 'Could not verify the payment');
+    }
+    return await response.json() as PaymentVerification;
+  },
 );
 
 export const fetchPaymentById = createAsyncThunk(

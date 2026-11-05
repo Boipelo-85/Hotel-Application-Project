@@ -1,15 +1,48 @@
 import { query } from '../config/database.js';
 
+const favouriteSelect = `
+  SELECT f.id, f.user_id, f.branch_id, f.created_at, h.publication_status,
+         jsonb_build_object(
+           'id', h.id::TEXT,
+           'name', h.name,
+           'city', h.city,
+           'province', h.province,
+           'address', h.address,
+           'star_rating', h.star_rating,
+           'price_per_night', h.price_per_night,
+           'currency', h.currency,
+           'image_url', (
+             SELECT i.image_url
+             FROM branch_images i
+             WHERE i.branch_id = h.id
+             ORDER BY i.display_order, i.id
+             LIMIT 1
+           )
+         ) AS branch
+  FROM favourites f
+  JOIN branches h ON h.id = f.branch_id
+`;
+
 export async function listUserFavourites(userId: string) {
-  return query(
-    `SELECT h.*, brand.name AS brand_name,
-       f.created_at AS favourited_at,
-       COALESCE((SELECT jsonb_agg(jsonb_build_object(
-         'id', i.id, 'url', i.image_url, 'altText', i.alt_text, 'displayOrder', i.display_order
-       ) ORDER BY i.display_order) FROM branch_images i WHERE i.branch_id = h.id), '[]'::JSONB) AS images
-     FROM favourites f
-     JOIN branches h ON h.id = f.branch_id
-     JOIN hotel_brand brand ON brand.id = h.brand_id
+  return query<{
+    id: string;
+    user_id: string;
+    branch_id: string;
+    created_at: Date;
+    publication_status: string;
+    branch: {
+      id: string;
+      name: string;
+      city: string;
+      province: string;
+      address: string;
+      star_rating: number | null;
+      price_per_night: string;
+      currency: string;
+      image_url: string | null;
+    };
+  }>(
+    `${favouriteSelect}
      WHERE f.user_id = $1
      ORDER BY f.created_at DESC`,
     [userId],
@@ -34,9 +67,25 @@ export async function findBranchById(branchId: string) {
 }
 
 export async function getFavourite(userId: string, branchId: string) {
-  return query(
-    `SELECT f.id, f.user_id, f.branch_id, f.created_at, h.publication_status
-     FROM favourites f JOIN branches h ON h.id = f.branch_id
+  return query<{
+    id: string;
+    user_id: string;
+    branch_id: string;
+    created_at: Date;
+    publication_status: string;
+    branch: {
+      id: string;
+      name: string;
+      city: string;
+      province: string;
+      address: string;
+      star_rating: number | null;
+      price_per_night: string;
+      currency: string;
+      image_url: string | null;
+    };
+  }>(
+    `${favouriteSelect}
      WHERE f.user_id = $1 AND f.branch_id = $2`,
     [userId, branchId],
   );

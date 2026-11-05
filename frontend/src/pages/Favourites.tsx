@@ -34,6 +34,7 @@ const Favourites: React.FC = () => {
                 starRating={favourite.branch?.star_rating}
                 price={favourite.branch?.price_per_night}
                 currency={favourite.branch?.currency}
+                imageUrl={favourite.branch?.image_url ?? undefined}
               />
               <button
                 type="button"

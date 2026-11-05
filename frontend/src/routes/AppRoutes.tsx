@@ -11,6 +11,7 @@ import BookingConfirmation from '../pages/BookingConfirmation';
 import BookingLookup from '../pages/BookingLookup';
 import Payment from '../pages/Payment';
 import ReviewBooking from '../pages/ReviewBooking';
+import PaymentCallback from '../pages/PaymentCallback';
 import MyBookings from '../pages/MyBookings';
 import Profile from '../pages/Profile';
 import Favourites from '../pages/Favourites';
@@ -69,6 +70,14 @@ const AppRoutes: React.FC = () => {
         element={
           <ProtectedRoute>
             <ReviewBooking />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payment/callback"
+        element={
+          <ProtectedRoute>
+            <PaymentCallback />
           </ProtectedRoute>
         }
       />

@@ -14,6 +14,7 @@ interface Favourite {
     star_rating: number | null;
     price_per_night: string;
     currency: string;
+    image_url: string | null;
   };
 }
 
@@ -118,7 +119,14 @@ const favouriteSlice = createSlice({
       })
       .addCase(addFavourite.fulfilled, (state, action) => {
         state.loading = false;
-        state.favourites.push(action.payload);
+        const index = state.favourites.findIndex(
+          (favourite) => favourite.branch_id === action.payload.branch_id,
+        );
+        if (index === -1) {
+          state.favourites.push(action.payload);
+        } else {
+          state.favourites[index] = action.payload;
+        }
       })
       .addCase(addFavourite.rejected, (state, action) => {
         state.loading = false;

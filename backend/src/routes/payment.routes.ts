@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { AppConfig } from '../config/env.js';
 import { createAuthMiddleware } from '../middleware/authMiddleware.js';
 import { validateBody, validateParams } from '../middleware/validationMiddleware.js';
-import { getPayment, handleWebhook, initiatePayment } from '../controllers/payment.controller.js';
+import { getPayment, handleWebhook, initiatePayment, verifyPayment } from '../controllers/payment.controller.js';
 
 export function paymentRoutes(_config: AppConfig, cookieName: string): Router {
   const router = Router();
@@ -17,6 +17,11 @@ export function paymentRoutes(_config: AppConfig, cookieName: string): Router {
       paymentMethod: z.enum(['card', 'eft']),
     }).strict()),
     initiatePayment,
+  );
+  router.get(
+    '/verify/:reference',
+    validateParams(z.object({ reference: z.string().regex(/^[A-Za-z0-9.=-]{1,100}$/) })),
+    verifyPayment,
   );
   router.get(
     '/:paymentId',

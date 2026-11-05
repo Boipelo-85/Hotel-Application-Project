@@ -12,6 +12,10 @@ const optionalEmail = z.preprocess(
   (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
   z.string().email().optional(),
 );
+const optionalPaystackSecretKey = z.preprocess(
+  (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+  z.string().regex(/^sk_(?:test|live)_.+$/, 'must be a Paystack test or live secret key').optional(),
+);
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -38,6 +42,11 @@ const envSchema = z.object({
   FACEBOOK_CLIENT_ID: optionalString,
   FACEBOOK_CLIENT_SECRET: optionalString,
   FACEBOOK_CALLBACK_URL: z.string().url().optional(),
+  PAYSTACK_SECRET_KEY: optionalPaystackSecretKey,
+  PAYSTACK_CALLBACK_URL: z.preprocess(
+    (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+    z.string().url().optional(),
+  ),
 });
 
 export type AppConfig = z.infer<typeof envSchema>;

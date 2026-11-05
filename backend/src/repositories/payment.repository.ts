@@ -33,6 +33,16 @@ export async function findPaymentById(paymentId: string) {
   );
 }
 
+export async function findPaymentByReferenceForUser(provider: string, reference: string, userId: string) {
+  return query<{ id: string; booking_id: string; status: string; booking_status: string }>(
+    `SELECT p.id, p.booking_id, p.status, b.status AS booking_status
+     FROM payments p
+     JOIN bookings b ON b.id = p.booking_id
+     WHERE p.provider = $1 AND p.provider_transaction_reference = $2 AND b.user_id = $3`,
+    [provider, reference, userId],
+  );
+}
+
 export async function findBookingForCheckout(client: PoolClient, bookingId: string) {
   return client.query<{
     id: string;

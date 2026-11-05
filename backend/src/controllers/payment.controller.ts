@@ -5,6 +5,7 @@ import {
   createCheckout,
   getPayment as getPaymentService,
   requestBookingRefund,
+  verifyPaymentReference,
 } from '../services/payment.service.js';
 import { AppError, getRouteParam } from '../utils/errors.js';
 
@@ -25,7 +26,13 @@ export const createCheckoutController: RequestHandler = async (request, response
   if (paymentMethod !== 'card' && paymentMethod !== 'eft') {
     throw new AppError(400, 'A valid payment method is required', 'INVALID_DATA');
   }
-  const result = await createCheckout(request.auth.userId, bookingId, idempotencyKey, paymentMethod);
+  const result = await createCheckout(
+    request.auth.userId,
+    bookingId,
+    idempotencyKey,
+    paymentMethod,
+    request.auth.email,
+  );
   response.status(200).json({
     payment: {
       id: result.payment.id,
@@ -41,6 +48,11 @@ export const createCheckoutController: RequestHandler = async (request, response
 export const getPaymentController: RequestHandler = async (request, response) => {
   if (!request.auth) throw new AppError(401, 'Authentication required', 'UNAUTHENTICATED');
   response.json({ payment: await getPaymentService(getRouteParam(request, 'paymentId'), request.auth.userId) });
+};
+
+export const verifyPaymentController: RequestHandler = async (request, response) => {
+  if (!request.auth) throw new AppError(401, 'Authentication required', 'UNAUTHENTICATED');
+  response.json(await verifyPaymentReference(getRouteParam(request, 'reference'), request.auth.userId));
 };
 
 export const refundBookingController: RequestHandler = async (request, response) => {
@@ -60,10 +72,12 @@ export const paymentWebhookController: RequestHandler = async (request, response
   if (!Buffer.isBuffer(request.body)) {
     throw new AppError(400, 'Webhook must contain the raw request body', 'INVALID_WEBHOOK_BODY');
   }
-  await handleProviderWebhookService(request.body, request.get('payment-signature'));
+  const signature = request.get('x-paystack-signature') ?? request.get('payment-signature');
+  await handleProviderWebhookService(request.body, signature);
   response.status(200).json({ received: true });
 };
 
 export const initiatePayment = createCheckoutController;
 export const handleWebhook = paymentWebhookController;
 export const getPayment = getPaymentController;
+export const verifyPayment = verifyPaymentController;

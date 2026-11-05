@@ -3,6 +3,7 @@ import { getPaymentProvider, type VerifiedPaymentEvent } from '../config/payment
 import { AppError } from '../utils/errors.js';
 import {
   findPaymentById,
+  findPaymentByReferenceForUser,
   findBookingForCheckout,
   findActivePaymentForBooking,
   insertPayment,
@@ -41,9 +42,13 @@ interface PendingCheckout {
 }
 
 function toMinorUnits(value: string): bigint {
-  const match = /^(\d+)(?:\.(\d{1,2}))?$/.exec(value);
+  const match = /^(\d+)(?:\.(\d{1,3}))?$/.exec(value);
   if (!match) throw new AppError(400, 'Invalid payment amount', 'INVALID_AMOUNT');
-  return BigInt(match[1]) * 100n + BigInt((match[2] ?? '').padEnd(2, '0') || '0');
+  const fraction = match[2] ?? '';
+  if (fraction.length > 2 && /[^0]/.test(fraction.slice(2))) {
+    throw new AppError(400, 'Payment amount precision is invalid', 'INVALID_AMOUNT');
+  }
+  return BigInt(match[1]) * 100n + BigInt(fraction.slice(0, 2).padEnd(2, '0') || '0');
 }
 
 async function getOrCreatePendingCheckout(
@@ -90,6 +95,7 @@ export async function createCheckout(
   bookingId: string,
   idempotencyKeyInput: string,
   paymentMethod: 'card' | 'eft',
+  customerEmail?: string,
 ): Promise<{ payment: PaymentRow; checkoutUrl: string }> {
   const provider = getPaymentProvider();
   if (!provider) {
@@ -119,6 +125,7 @@ export async function createCheckout(
     amount: payment.amount,
     currency: payment.currency,
     paymentMethod,
+    customerEmail,
   });
   let checkoutUrl: URL;
   try {
@@ -238,7 +245,40 @@ export async function handleProviderWebhook(
     throw new AppError(503, 'Payment provider is not configured', 'PAYMENTS_UNAVAILABLE');
   }
   const event = await provider.verifyWebhook(rawBody, signature);
+  if (!event) return;
   await processVerifiedPaymentEvent(provider.name, event);
+}
+
+export async function verifyPaymentReference(
+  reference: string,
+  userId: string,
+): Promise<{
+  status: string;
+  bookingId: string;
+  paymentId: string;
+  bookingStatus: string;
+}> {
+  const provider = getPaymentProvider();
+  if (!provider?.verifyTransaction) {
+    throw new AppError(503, 'Payment provider is not configured', 'PAYMENTS_UNAVAILABLE');
+  }
+  const found = await findPaymentByReferenceForUser(provider.name, reference, userId);
+  const payment = found.rows[0];
+  if (!payment) throw new AppError(404, 'Payment not found', 'PAYMENT_NOT_FOUND');
+
+  if (payment.status !== 'successful' && payment.status !== 'refunded') {
+    const event = await provider.verifyTransaction(reference);
+    if (event) await processVerifiedPaymentEvent(provider.name, event);
+  }
+
+  const latest = (await findPaymentByReferenceForUser(provider.name, reference, userId)).rows[0];
+  if (!latest) throw new AppError(404, 'Payment not found', 'PAYMENT_NOT_FOUND');
+  return {
+    status: latest.status,
+    bookingId: latest.booking_id,
+    paymentId: latest.id,
+    bookingStatus: latest.booking_status,
+  };
 }
 
 export async function requestBookingRefund(
