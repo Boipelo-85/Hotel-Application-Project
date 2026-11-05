@@ -4,7 +4,8 @@ import type { AppConfig } from '../config/env.js';
 import { inTransaction } from '../config/database.js';
 import { AppError } from '../utils/errors.js';
 import { findRefreshToken, revokeRefreshToken, revokeAllUserTokens, createRefreshToken } from '../repositories/refresh-token.repository.js';
-import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
+import { issueAccessToken } from './access-token.service.js';
+import { generateRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
 import { findUserProfile } from '../repositories/user.repository.js';
 import type { AuthenticatedUser } from '../types/models.js';
 
@@ -42,8 +43,8 @@ export async function refreshSession(
     await revokeRefreshToken(client, refreshToken);
 
     // Generate new tokens
-    const newAccessToken = generateAccessToken(
-      { userId: user.id, email: user.email, role: user.role },
+    const newAccessToken = await issueAccessToken(client,
+{ userId: user.id, email: user.email, role: user.role },
       config,
     );
     const newRefreshToken = generateRefreshToken(user.id, config);

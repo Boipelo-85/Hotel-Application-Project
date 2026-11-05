@@ -26,7 +26,6 @@ export async function findSessionUser(tokenHash: Buffer) {
      JOIN users u ON u.id = s.user_id
      WHERE s.token_hash = $1
        AND s.expires_at > CURRENT_TIMESTAMP
-       AND u.email_verified = TRUE
        AND u.is_active = TRUE`,
     [tokenHash],
   );

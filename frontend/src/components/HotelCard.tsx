@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import FavouriteButton from './FavouriteButton';
 import ShareButton from './ShareButton';
 
@@ -36,6 +36,7 @@ const HotelCard: React.FC<HotelCardProps> = ({
   onMouseEnter,
   onMouseLeave,
 }) => {
+  const location = useLocation();
   return (
     <article
       data-property-id={id}
@@ -48,7 +49,7 @@ const HotelCard: React.FC<HotelCardProps> = ({
         backgroundColor: 'white',
       }}
     >
-      <Link to={to || `/hotels/${id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+      <Link state={{ returnTo: `${location.pathname}${location.search}` }} to={to || `/hotels/${id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
         {imageUrl ? (
           <img
             src={imageUrl}

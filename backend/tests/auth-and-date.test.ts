@@ -6,6 +6,7 @@ import { countNights } from '../src/services/availability.service.js';
 import { createBooking } from '../src/services/booking.service.js';
 import { loadConfig } from '../src/config/env.js';
 import { AppError } from '../src/utils/errors.js';
+import { initializeDatabase, closeDatabase } from '../src/config/database.js';
 import { generateAccessToken } from '../src/utils/jwt.js';
 
 const authConfig = loadConfig({
@@ -37,7 +38,9 @@ test('allows booking requests without a session cookie', () => {
   assert.equal(nextCalled, true);
 });
 
-test('authenticates JWT access cookies for protected routes', async () => {
+test('authenticates stored JWT access cookies for protected routes', async context => {
+  const pool = initializeDatabase(authConfig); context.after(closeDatabase);
+  context.mock.method(pool, 'query', async () => ({ rows: [{ id: '42', email: 'traveler@example.test', role: 'customer' }] }));
   const token = generateAccessToken(
     { userId: '42', email: 'traveler@example.test', role: 'customer' },
     authConfig,
@@ -57,7 +60,9 @@ test('authenticates JWT access cookies for protected routes', async () => {
   });
 });
 
-test('recognizes JWT access cookies on optional-auth booking routes', async () => {
+test('recognizes stored JWT access cookies on optional-auth booking routes', async context => {
+  const pool = initializeDatabase(authConfig); context.after(closeDatabase);
+  context.mock.method(pool, 'query', async () => ({ rows: [{ id: '42', email: 'traveler@example.test', role: 'customer' }] }));
   const token = generateAccessToken(
     { userId: '42', email: 'traveler@example.test', role: 'customer' },
     authConfig,

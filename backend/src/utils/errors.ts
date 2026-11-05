@@ -1,6 +1,9 @@
 import type { Request } from 'express';
 
 export type ErrorCode =
+  | 'GUEST_ACCESS_REQUIRED'
+  | 'INVALID_IMAGE_TYPE'
+  | 'INVALID_IMAGE_CONTENT'
   | 'ACCOUNT_DEACTIVATED'
   | 'ALREADY_PAID'
   | 'BOOKING_EXPIRED'

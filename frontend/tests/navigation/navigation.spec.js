@@ -168,6 +168,27 @@ test('search fields follow history and Back to results keeps the search', async 
   await expect(page).toHaveURL(results);
 });
 
+test('Back to results returns featured accommodation to its originating page after refresh', async ({ page }) => {
+  await mockApi(page);
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.locator('.homes-guests-love__card-link').first().click();
+  await expect(page).toHaveURL(/\/branches\/1$/);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  const back = page.getByRole('link', { name: /Back to results/ });
+  await expect(back).toHaveAttribute('href', '/');
+  await back.click();
+  await expect(page).toHaveURL('http://127.0.0.1:4173/');
+  await expect(page.getByRole('heading', { name: 'Welcome to Grand-Rest Hotel' })).toBeVisible();
+});
+
+test('Back to results has a working fallback for directly opened accommodation', async ({ page }) => {
+  await mockApi(page);
+  await page.goto('/branches/1?returnTo=https://example.com', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('link', { name: /Back to results/ }).click();
+  await expect(page).toHaveURL('http://127.0.0.1:4173/hotels');
+  await expect(page.getByRole('heading', { name: 'Our Branches', exact: true })).toBeVisible();
+});
+
 test('OAuth callback restores its saved destination', async ({ page }) => {
   await mockApi(page);
   await page.addInitScript(() => sessionStorage.setItem('auth:returnTo', '/bookings/1'));

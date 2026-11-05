@@ -18,6 +18,7 @@ export interface Booking {
   updated_at: string;
   branch_name?: string;
   room_type?: string;
+  refund_pending?: boolean;
   guest_name?: string | null;
   guest_email?: string | null;
   guest_phone?: string | null;

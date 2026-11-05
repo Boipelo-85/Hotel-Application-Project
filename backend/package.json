@@ -9,7 +9,9 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx --test tests/*.test.ts"
+    "test": "tsx --test tests/*.test.ts",
+    "db": "tsx src/scripts/runMigration.ts",
+    "test:integration": "tsx src/scripts/testIntegration.ts"
   },
   "dependencies": {
     "@types/multer": "^2.3.0",
@@ -26,6 +28,7 @@
     "passport-facebook": "^3.0.0",
     "passport-google-oauth20": "^2.0.0",
     "pg": "^8.16.3",
+    "sharp": "^0.35.5",
     "zod": "^4.1.12"
   },
   "devDependencies": {

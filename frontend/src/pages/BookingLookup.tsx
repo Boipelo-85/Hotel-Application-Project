@@ -59,8 +59,9 @@ const BookingLookup: React.FC = () => {
           <p>Guests: {booking.guests} · Rooms: {booking.quantity}</p>
           <p>Total: {booking.currency} {booking.total_amount}</p>
           <p>Status: {booking.status}</p>
+          <Link to={`/guest-bookings/${booking.id}`}>Manage booking, pay or cancel</Link>
           {booking.status === 'pending' && (
-            <p role="status">This reservation is pending. Payment is not available until a payment provider is configured.</p>
+            <p role="status">This reservation is pending. Continue to manage payment or cancel your booking.</p>
           )}
         </section>
       )}

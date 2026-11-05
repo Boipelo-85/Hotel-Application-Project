@@ -1,34 +1,37 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Navigate, Routes, Route } from 'react-router-dom';
-import Home from '../pages/Home';
-import Login from '../pages/Login';
-import Register from '../pages/Register';
-import AuthCallback from '../pages/AuthCallback';
-import Hotels from '../pages/Hotels';
-import HotelDetails from '../pages/HotelDetails';
-import Booking from '../pages/Booking';
-import BookingConfirmation from '../pages/BookingConfirmation';
-import BookingLookup from '../pages/BookingLookup';
-import Payment from '../pages/Payment';
-import ReviewBooking from '../pages/ReviewBooking';
-import PaymentCallback from '../pages/PaymentCallback';
-import MyBookings from '../pages/MyBookings';
-import Profile from '../pages/Profile';
-import Favourites from '../pages/Favourites';
-import Notifications from '../pages/Notifications';
-import NotFound from '../pages/NotFound';
-import AdminDashboard from '../pages/admin/AdminDashboard';
-import ManageHotels from '../pages/admin/ManageHotels';
-import AddHotel from '../pages/admin/AddHotel';
-import EditHotel from '../pages/admin/EditHotel';
-import ManageRooms from '../pages/admin/ManageRooms';
-import ManageBookings from '../pages/admin/ManageBookings';
+const Home = lazy(() => import('../pages/Home'));
+const Login = lazy(() => import('../pages/Login'));
+const Register = lazy(() => import('../pages/Register'));
+const AuthCallback = lazy(() => import('../pages/AuthCallback'));
+const Hotels = lazy(() => import('../pages/Hotels'));
+const HotelDetails = lazy(() => import('../pages/HotelDetails'));
+const Booking = lazy(() => import('../pages/Booking'));
+const BookingConfirmation = lazy(() => import('../pages/BookingConfirmation'));
+const BookingLookup = lazy(() => import('../pages/BookingLookup'));
+const Payment = lazy(() => import('../pages/Payment'));
+const ReviewBooking = lazy(() => import('../pages/ReviewBooking'));
+const PaymentCallback = lazy(() => import('../pages/PaymentCallback'));
+const MyBookings = lazy(() => import('../pages/MyBookings'));
+const Profile = lazy(() => import('../pages/Profile'));
+const Favourites = lazy(() => import('../pages/Favourites'));
+const Notifications = lazy(() => import('../pages/Notifications'));
+const NotFound = lazy(() => import('../pages/NotFound'));
+const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard'));
+const ManageHotels = lazy(() => import('../pages/admin/ManageHotels'));
+const AddHotel = lazy(() => import('../pages/admin/AddHotel'));
+const EditHotel = lazy(() => import('../pages/admin/EditHotel'));
+const ManageRooms = lazy(() => import('../pages/admin/ManageRooms'));
+const ManageBookings = lazy(() => import('../pages/admin/ManageBookings'));
 import ProtectedRoute from '../components/ProtectedRoute';
 import AdminRoute from '../components/AdminRoute';
 
+const GuestBooking = lazy(() => import('../pages/GuestBooking'));
+
 const AppRoutes: React.FC = () => {
   return (
-    <Routes>
+    <Suspense fallback={<p role="status">Loading page...</p>}><Routes>
+      <Route path="/guest-bookings/:bookingId" element={<GuestBooking />} />
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
@@ -75,9 +78,7 @@ const AppRoutes: React.FC = () => {
       <Route
         path="/payment/callback"
         element={
-          <ProtectedRoute>
-            <PaymentCallback />
-          </ProtectedRoute>
+          <PaymentCallback />
         }
       />
       <Route
@@ -153,7 +154,7 @@ const AppRoutes: React.FC = () => {
         }
       />
       <Route path="*" element={<NotFound />} />
-    </Routes>
+    </Routes></Suspense>
   );
 };
 

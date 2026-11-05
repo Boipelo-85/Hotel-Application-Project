@@ -9,6 +9,7 @@ export interface PaymentRecord {
   provider_transaction_reference: string | null;
   checkout_url: string | null;
   refund_idempotency_key: string | null;
+  refund_requested_at: Date | null;
   amount: string;
   currency: string;
   status: 'pending' | 'successful' | 'failed' | 'refunded';
@@ -33,13 +34,13 @@ export async function findPaymentById(paymentId: string) {
   );
 }
 
-export async function findPaymentByReferenceForUser(provider: string, reference: string, userId: string) {
+export async function findPaymentByReferenceForUser(provider: string, reference: string, userId: string | null, guestBookingId?: string) {
   return query<{ id: string; booking_id: string; status: string; booking_status: string }>(
     `SELECT p.id, p.booking_id, p.status, b.status AS booking_status
      FROM payments p
      JOIN bookings b ON b.id = p.booking_id
-     WHERE p.provider = $1 AND p.provider_transaction_reference = $2 AND b.user_id = $3`,
-    [provider, reference, userId],
+     WHERE p.provider = $1 AND p.provider_transaction_reference = $2 AND (($3::BIGINT IS NOT NULL AND b.user_id = $3) OR ($3::BIGINT IS NULL AND b.user_id IS NULL AND b.id = $4::BIGINT))`,
+    [provider, reference, userId, guestBookingId ?? null],
   );
 }
 
@@ -47,7 +48,7 @@ export async function findBookingForCheckout(client: PoolClient, bookingId: stri
   return client.query<{
     id: string;
     booking_reference: string;
-    user_id: string;
+    user_id: string | null;
     total_amount: string;
     currency: string;
     status: string;
@@ -119,7 +120,7 @@ export async function findPaymentByProviderReference(
 }
 
 export async function findBookingPaymentState(client: PoolClient, bookingId: string) {
-  return client.query<{ status: string; expires_at: Date | null; user_id: string }>(
+  return client.query<{ status: string; expires_at: Date | null; user_id: string | null }>(
     'SELECT status, expires_at, user_id FROM bookings WHERE id = $1 FOR UPDATE',
     [bookingId],
   );
@@ -166,11 +167,12 @@ export async function saveBookingStatus(
 
 export async function insertPaymentNotification(
   client: PoolClient,
-  userId: string,
+  userId: string | null,
   type: string,
   message: string,
   data: Record<string, string>,
 ) {
+  if (!userId) return;
   return client.query(
     `INSERT INTO notifications (user_id, type, message, data)
      VALUES ($1, $2, $3, $4::JSONB)`,
@@ -179,7 +181,7 @@ export async function insertPaymentNotification(
 }
 
 export async function findBookingByIdForUpdate(client: PoolClient, bookingId: string) {
-  return client.query('SELECT id FROM bookings WHERE id = $1 FOR UPDATE', [bookingId]);
+  return client.query<{ id: string; user_id: string | null; status: string; check_in: string }>('SELECT id, user_id, status, check_in FROM bookings WHERE id = $1 FOR UPDATE', [bookingId]);
 }
 
 export async function findLatestBookingPayment(client: PoolClient, bookingId: string) {
@@ -196,7 +198,7 @@ export async function saveRefundIdempotencyKey(
   key: string,
 ) {
   return client.query<PaymentRecord>(
-    `UPDATE payments SET refund_idempotency_key = COALESCE(refund_idempotency_key, $2),
+    `UPDATE payments SET refund_idempotency_key = COALESCE(refund_idempotency_key, $2), refund_requested_at = CURRENT_TIMESTAMP,
        updated_at = CURRENT_TIMESTAMP
      WHERE id = $1 RETURNING *`,
     [paymentId, key],

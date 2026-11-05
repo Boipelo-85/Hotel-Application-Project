@@ -29,6 +29,8 @@ const Booking: React.FC = () => {
   const [quantity, setQuantity] = useState(searchParams.get('quantity') || '1');
   const [firstName, setFirstName] = useState(() => user?.name.trim().split(/\s+/)[0] || '');
   const [lastName, setLastName] = useState(() => user?.name.trim().split(/\s+/).slice(1).join(' ') || '');
+  const [guestMode, setGuestMode] = useState(false);
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState(user?.phone || '');
   const [country, setCountry] = useState('');
   const [address, setAddress] = useState('');
@@ -73,7 +75,7 @@ const Booking: React.FC = () => {
         guests: Number(guests),
         quantity: Number(quantity),
         guestName: `${firstName.trim()} ${lastName.trim()}`,
-        guestEmail: user?.email,
+        guestEmail: user?.email ?? email.trim(),
         guestPhone: phone.trim(),
         guestCountry: country.trim(),
         guestAddress: address.trim(),
@@ -83,7 +85,7 @@ const Booking: React.FC = () => {
     if (createBooking.fulfilled.match(result)) {
       const booking = result.payload;
       if (booking?.id) {
-        navigate(`/bookings/${booking.id}/payment`);
+        navigate(booking.user_id === null ? `/guest-bookings/${booking.id}` : `/bookings/${booking.id}/payment`);
       }
     }
   };
@@ -98,7 +100,7 @@ const Booking: React.FC = () => {
 
   if (authLoading && !isAuthenticated) return <Loading message="Checking your session..." />;
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !guestMode) {
     return (
       <div style={{ padding: '2rem', maxWidth: '520px', margin: '0 auto' }}>
         <h1>Choose how to continue</h1>
@@ -107,8 +109,9 @@ const Booking: React.FC = () => {
             {room.room_type} · {room.currency} {room.price || room.price_per_night}/night
           </p>
         )}
-        <p>Sign in or create an account to continue with your booking.</p>
+        <p>Sign in, create an account, or continue as a guest.</p>
         <div style={{ display: 'grid', gap: '0.75rem' }}>
+          <button type="button" onClick={() => setGuestMode(true)}>Continue as guest</button>
           <button
             type="button"
             onClick={() => {
@@ -169,7 +172,8 @@ const Booking: React.FC = () => {
         onQuantityChange={setQuantity}
         firstName={firstName}
         lastName={lastName}
-        email={user?.email ?? ''}
+        email={user?.email ?? email}
+        onEmailChange={user ? undefined : setEmail}
         phone={phone}
         country={country}
         address={address}

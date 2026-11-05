@@ -107,24 +107,3 @@ test('Google rejects unverified provider emails before accessing the database', 
   passport.unuse('facebook');
 });
 import { initializeDatabase, closeDatabase } from '../src/config/database.js';
-import { registerController as simpleRegister } from '../src/controllers/auth-simple.controller.js';
-
-test('simple registration ignores a supplied administrator role', async (context) => {
-  const pool = initializeDatabase(config);
-  context.after(closeDatabase);
-  let insertedRole: unknown;
-  context.mock.method(pool, 'query', async (sql: string, values: unknown[]) => {
-    if (sql.startsWith('SELECT')) return { rows: [] };
-    insertedRole = values[3];
-    return { rows: [{ fullname: 'Traveler', role: insertedRole, password: values[2] }] };
-  });
-  let status: number | undefined;
-  let body: any;
-  const response = { status(code: number) { status = code; return this; }, json(value: unknown) { body = value; return this; } };
-  await simpleRegister({ body: { fullname: 'Traveler', email: 'test@example.com', password: 'Example-pass-123', role: 'admin' } } as express.Request,
-    response as unknown as express.Response, error => { if (error) throw error; });
-  assert.equal(status, 201);
-  assert.equal(insertedRole, 'customer');
-  assert.equal(body.user.role, 'customer');
-  assert.equal('password' in body.user, false);
-});

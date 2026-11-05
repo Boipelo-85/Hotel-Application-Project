@@ -1,4 +1,33 @@
 import React, { useState, useEffect } from 'react';
+import bed_1 from '../assets/hotelPictures/bed_1.jpg';
+import bed_2 from '../assets/hotelPictures/bed_2.jpg';
+import bed_3 from '../assets/hotelPictures/bed_3.jpg';
+import bed_4 from '../assets/hotelPictures/bed_4.jpg';
+import est_2 from '../assets/hotelPictures/est_2.jpg';
+import est_3 from '../assets/hotelPictures/est_3.jpg';
+import est_4 from '../assets/hotelPictures/est_4.jpg';
+import feature_1 from '../assets/hotelPictures/feature_1.jpg';
+import feature_2 from '../assets/hotelPictures/feature_2.jpg';
+import feature_3 from '../assets/hotelPictures/feature_3.jpg';
+import feature_4 from '../assets/hotelPictures/feature_4.jpg';
+import bath_2 from '../assets/hotelPictures/bath_2.jpg';
+import bath_3 from '../assets/hotelPictures/bath_3.jpg';
+
+const samplePhotos = [
+  [bed_1, 'Bedroom 1'],
+  [bed_2, 'Bedroom 2'],
+  [bed_3, 'Bedroom 3'],
+  [bed_4, 'Bedroom 4'],
+  [est_2, 'Room interior 2'],
+  [est_3, 'Room interior 3'],
+  [est_4, 'Room interior 4'],
+  [feature_1, 'Room feature 1'],
+  [feature_2, 'Room feature 2'],
+  [feature_3, 'Room feature 3'],
+  [feature_4, 'Room feature 4'],
+  [bath_2, 'Bathroom 2'],
+  [bath_3, 'Bathroom 3'],
+].map(([url, label]) => ({ url, label: `Example photo: ${label}` }));
 
 interface RoomImage {
   id: string;
@@ -141,19 +170,27 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({ roomId, onClose, on
   );
   if (!room) return null;
 
+  const photos = [
+    ...(room.images ?? []).filter(image => image.image_url).map(image => ({
+      url: image.image_url,
+      label: image.alt_text || room.room_type,
+    })),
+    ...samplePhotos,
+  ];
+
   const handlePrevImage = () => {
-    setCurrentImageIndex((prev) => (prev === 0 ? room.images.length - 1 : prev - 1));
+    setCurrentImageIndex((prev) => (prev + photos.length - 1) % photos.length);
   };
 
   const handleNextImage = () => {
-    setCurrentImageIndex((prev) => (prev === room.images.length - 1 ? 0 : prev + 1));
+    setCurrentImageIndex((prev) => (prev + 1) % photos.length);
   };
 
   const handleImageClick = (index: number) => {
     setCurrentImageIndex(index);
   };
 
-  const currentImage = room.images[currentImageIndex];
+  const currentImage = photos[currentImageIndex] ?? photos[0];
 
   return (
     <div
@@ -173,22 +210,28 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({ roomId, onClose, on
       }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={room.room_type}
         onClick={(e) => e.stopPropagation()}
         style={{
           backgroundColor: 'white',
           borderRadius: '1rem',
           maxWidth: '900px',
           width: '100%',
-          maxHeight: '90vh',
-          display: 'flex',
-          flexDirection: 'row',
-          overflow: 'hidden',
+          maxHeight: '85dvh',
+          position: 'relative',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 310px), 1fr))',
+          overflowY: 'auto',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
         }}
       >
         {/* Left side - Image Gallery */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '1.5rem' }}>
+        <div style={{ minWidth: 0, padding: '1rem' }}>
           <button
+            type="button"
+            aria-label="Close room details"
             onClick={onClose}
             style={{
               position: 'absolute',
@@ -210,11 +253,11 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({ roomId, onClose, on
             ×
           </button>
           
-          <div style={{ position: 'relative', flex: 1, minHeight: '300px', marginBottom: '1rem' }}>
+          <div style={{ position: 'relative', height: 'clamp(160px, 34dvh, 300px)', marginBottom: '0.5rem' }}>
             {currentImage && (
               <img
-                src={currentImage.image_url}
-                alt={currentImage.alt_text || room.room_type}
+                src={currentImage.url}
+                alt={currentImage.label}
                 style={{
                   width: '100%',
                   height: '100%',
@@ -223,9 +266,11 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({ roomId, onClose, on
                 }}
               />
             )}
-            {room.images.length > 1 && (
+            {photos.length > 1 && (
               <>
                 <button
+                  type="button"
+                  aria-label="Previous photo"
                   onClick={handlePrevImage}
                   style={{
                     position: 'absolute',
@@ -245,6 +290,8 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({ roomId, onClose, on
                   ←
                 </button>
                 <button
+                  type="button"
+                  aria-label="Next photo"
                   onClick={handleNextImage}
                   style={{
                     position: 'absolute',
@@ -268,39 +315,45 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({ roomId, onClose, on
           </div>
 
           {/* Thumbnails */}
-          {room.images.length > 1 && (
+          {photos.length > 1 && (
             <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
-              {room.images.map((image, index) => (
-                <img
-                  key={image.id}
-                  src={image.image_url}
-                  alt={image.alt_text || `Room image ${index + 1}`}
+              {photos.map((photo, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  aria-label={`Show photo ${index + 1}: ${photo.label}`}
+                  aria-pressed={index === currentImageIndex}
                   onClick={() => handleImageClick(index)}
                   style={{
-                    width: '60px',
-                    height: '60px',
-                    objectFit: 'cover',
+                    width: '48px',
+                    height: '48px',
+                    padding: 0,
+                    overflow: 'hidden',
                     borderRadius: '0.25rem',
                     cursor: 'pointer',
                     border: index === currentImageIndex ? '2px solid #3b82f6' : '2px solid transparent',
                     flexShrink: 0,
                   }}
-                />
+                >
+                  <img src={photo.url} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </button>
               ))}
             </div>
           )}
+          <small>{currentImage.label}</small>
         </div>
 
         {/* Right side - Room Details */}
         <div
           style={{
             flex: 1,
-            padding: '1.5rem',
+            padding: '1rem',
+            paddingTop: '2.75rem',
             borderLeft: '1px solid #e5e7eb',
             display: 'flex',
             flexDirection: 'column',
             overflowY: 'auto',
-            maxHeight: '90vh',
+            maxHeight: '430px',
           }}
         >
           <h2 style={{ fontFamily: "'Courier New', Courier, monospace", margin: '0 0 1rem 0' }}>

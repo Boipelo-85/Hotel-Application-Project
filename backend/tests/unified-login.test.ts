@@ -37,7 +37,7 @@ async function fixture(context: TestContext, { adminExists = true } = {}) {
     else if (sql.includes('INSERT INTO users')) rows = [{ ...customer, id: '3', name: values[0], email: values[1], password_hash: values[2], email_verified: false }];
     else if (sql.includes('INSERT INTO auth_sessions')) sessions.set(values[0].toString('hex'), values[1]);
     else if (sql.includes('DELETE FROM auth_sessions')) sessions.delete(values[0].toString('hex'));
-    else if (sql.includes('FROM auth_sessions')) rows = sessions.has(values[0].toString('hex')) ? [admin] : [];
+    else if (sql.includes('FROM auth_sessions')) { const id = sessions.get(values[0].toString('hex')); rows = id ? [id === '2' ? customer : id === '3' ? { ...customer, id: '3', role: 'branch_manager' } : admin] : []; }
     else if (sql.includes('SELECT') && sql.includes('COUNT')) rows = [{}];
     return { rows, rowCount: rows.length };
   };
@@ -115,13 +115,16 @@ test('registration reserves the configured admin email even before seeding', asy
 test('staff API requires authentication and role checks, and the old login endpoint is removed', async context => {
   const f = await fixture(context);
   const customerCookie = 'access_token=' + generateAccessToken({ userId: '2', email: f.customer.email, role: 'customer' }, config);
+  f.sessions.set(hashSessionToken(customerCookie.split('=')[1]).toString('hex'), '2');
   for (const path of ['/dashboard/stats', '/dashboard/recent-bookings', '/reports/branches', '/reports/users', '/reports/availability', '/reports/revenue', '/users', '/bookings']) {
     assert.equal((await fetch(f.base + '/api/v1/admin' + path)).status, 401, path);
     assert.equal((await fetch(f.base + '/api/v1/admin' + path, { headers: { Cookie: customerCookie } })).status, 403, path);
   }
   const managerCookie = 'access_token=' + generateAccessToken({ userId: '3', email: 'manager@example.test', role: 'branch_manager' }, config);
+  f.sessions.set(hashSessionToken(managerCookie.split('=')[1]).toString('hex'), '3');
   assert.equal((await fetch(f.base + '/api/v1/admin/dashboard/stats', { headers: { Cookie: managerCookie } })).status, 200);
   const adminCookie = 'access_token=' + generateAccessToken({ userId: '1', email: admin.email, role: 'admin' }, config);
+  f.sessions.set(hashSessionToken(adminCookie.split('=')[1]).toString('hex'), '1');
   assert.equal((await f.post('/admin/login', { email: admin.email, password: config.ADMIN_LOGIN_PASSWORD }, adminCookie)).status, 404);
 });
 

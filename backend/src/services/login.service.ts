@@ -7,7 +7,8 @@ import { AppError } from '../utils/errors.js';
 import { verifyPassword } from '../utils/password.js';
 import { findUserByEmail } from '../repositories/user.repository.js';
 import { createRefreshToken, revokeAllUserTokens } from '../repositories/refresh-token.repository.js';
-import { generateAccessToken, generateRefreshToken } from '../utils/jwt.js';
+import { issueAccessToken } from './access-token.service.js';
+import { generateRefreshToken } from '../utils/jwt.js';
 import type { AuthenticatedUser } from '../types/models.js';
 
 export interface LoginInput {
@@ -70,8 +71,8 @@ export async function loginUser(
     await revokeAllUserTokens(client, user.id);
 
     // Generate new tokens
-    const accessToken = generateAccessToken(
-      { userId: user.id, email: user.email, role: user.role },
+    const accessToken = await issueAccessToken(client,
+{ userId: user.id, email: user.email, role: user.role },
       config,
     );
     const refreshToken = generateRefreshToken(user.id, config);

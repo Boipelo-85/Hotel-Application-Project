@@ -5,7 +5,11 @@ import type { BookingRow } from '../types/models.js';
 export async function findBookingById(bookingId: string, client?: PoolClient) {
   const execute = client ? client.query.bind(client) : query;
   return execute<BookingRow & { manager_user_id: string | null }>(
-    `SELECT b.*, h.name AS branch_name, r.room_type,
+    `SELECT b.*, EXISTS (
+       SELECT 1 FROM payments p
+       WHERE p.booking_id = b.id AND p.status = 'successful'
+         AND to_jsonb(p)->>'refund_requested_at' IS NOT NULL
+     ) AS refund_pending, h.name AS branch_name, r.room_type,
            h.manager_user_id
     FROM bookings b
     JOIN rooms r ON r.id = b.room_id

@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { verifyPayment, type PaymentVerification } from '../redux/paymentSlice';
 import type { AppDispatch } from '../redux/store';
 import Loading from '../components/Loading';
+import ProtectedRoute from '../components/ProtectedRoute';
 
-const PaymentCallback: React.FC = () => {
+const CustomerPaymentCallback: React.FC = () => {
   const [searchParams] = useSearchParams();
   const reference = searchParams.get('reference') ?? searchParams.get('trxref');
   const dispatch = useDispatch<AppDispatch>();
@@ -141,4 +142,9 @@ const linkButtonStyle: React.CSSProperties = {
   textDecoration: 'none',
 };
 
-export default PaymentCallback;
+export default function PaymentCallback() {
+  const [params] = useSearchParams();
+  const guestId = params.get('guestBookingId');
+  if (guestId && /^\d+$/.test(guestId)) return <Navigate to={`/guest-bookings/${guestId}?${params.toString()}`} replace />;
+  return <ProtectedRoute><CustomerPaymentCallback /></ProtectedRoute>;
+}

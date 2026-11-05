@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 interface Property {
   id: string;
@@ -20,6 +20,7 @@ interface HomesGuestsLoveProps {
 }
 
 const HomesGuestsLove: React.FC<HomesGuestsLoveProps> = ({ filterProvince }) => {
+  const location = useLocation();
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
@@ -150,7 +151,7 @@ const HomesGuestsLove: React.FC<HomesGuestsLoveProps> = ({ filterProvince }) => 
       <div className="homes-guests-love__scroll-container">
         <div id="cards-container" className="homes-guests-love__cards">
           {filteredProperties.map((property) => (
-            <Link key={property.id} to={`/branches/${property.id}`} className="homes-guests-love__card-link">
+            <Link key={property.id} to={`/branches/${property.id}`} state={{ returnTo: `${location.pathname}${location.search}` }} className="homes-guests-love__card-link">
               <div className="homes-guests-love__card">
                 <div className="homes-guests-love__card-image">
                   <img

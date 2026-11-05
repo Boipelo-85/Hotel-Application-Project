@@ -21,12 +21,6 @@ const PROVINCES = [
   'Mpumalanga',
 ] as const;
 
-const SAMPLE_IMAGES = [
-  'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800',
-  'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800',
-  'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800',
-  'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800',
-];
 
 const AddHotel: React.FC = () => {
   const navigate = useNavigate();

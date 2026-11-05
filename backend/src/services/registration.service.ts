@@ -5,7 +5,8 @@ import { AppError } from '../utils/errors.js';
 import { hashPassword, validatePasswordStrength, validatePhoneNumber } from '../utils/password.js';
 import { createUser, findUserByEmail } from '../repositories/user.repository.js';
 import { createRefreshToken } from '../repositories/refresh-token.repository.js';
-import { generateAccessToken, generateRefreshToken } from '../utils/jwt.js';
+import { issueAccessToken } from './access-token.service.js';
+import { generateRefreshToken } from '../utils/jwt.js';
 import type { AuthenticatedUser } from '../types/models.js';
 
 export interface RegisterInput {
@@ -79,8 +80,8 @@ export async function registerUser(
     }
 
     // Generate tokens
-    const accessToken = generateAccessToken(
-      { userId: user.id, email: user.email, role: user.role },
+    const accessToken = await issueAccessToken(client,
+{ userId: user.id, email: user.email, role: user.role },
       config,
     );
     const refreshToken = generateRefreshToken(user.id, config);

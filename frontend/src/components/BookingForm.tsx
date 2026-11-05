@@ -14,6 +14,7 @@ interface BookingFormProps {
   firstName: string;
   lastName: string;
   email: string;
+  onEmailChange?: (value: string) => void;
   phone: string;
   country: string;
   address: string;
@@ -49,6 +50,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
   firstName,
   lastName,
   email,
+  onEmailChange,
   phone,
   country,
   address,
@@ -90,6 +92,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
           Last name
           <input autoComplete="family-name" minLength={1} maxLength={60} required value={lastName} onChange={(event) => onLastNameChange(event.target.value)} style={fieldStyle} />
         </label>
+        {onEmailChange && <label>Email address<input type="email" autoComplete="email" required maxLength={320} value={email} onChange={event => onEmailChange(event.target.value)} style={fieldStyle} /></label>}
         <label>
           Phone number
           <input autoComplete="tel" type="tel" maxLength={50} required value={phone} onChange={(event) => onPhoneChange(event.target.value)} style={fieldStyle} />

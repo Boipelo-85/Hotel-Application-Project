@@ -6,6 +6,7 @@ import {
   saveUserProfile,
   updateUserRole as saveUserRole,
 } from '../repositories/user.repository.js';
+import { revokeAllUserTokens } from '../repositories/refresh-token.repository.js';
 import { deleteUserAuthCodes } from '../repositories/auth.repository.js';
 import { deleteUserSessions } from '../repositories/session.repository.js';
 import type { AuthenticatedUser } from '../types/models.js';
@@ -47,6 +48,7 @@ export async function deleteUserAccount(userId: string): Promise<void> {
     if (!user || !user.is_active) throw new AppError(404, 'User not found', 'NOT_FOUND');
     await deactivateUserRecord(client, userId);
     await deleteUserSessions(client, userId);
+    await revokeAllUserTokens(client, userId);
     await deleteUserAuthCodes(client, user.email);
   });
 }

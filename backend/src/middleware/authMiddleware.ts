@@ -1,30 +1,13 @@
 import type { RequestHandler } from 'express';
 import type { AppConfig } from '../config/env.js';
 import { getSessionUser } from '../services/auth.service.js';
-import { verifyAccessToken } from '../utils/jwt.js';
 import { AppError } from '../utils/errors.js';
 
 type AuthenticatedUser = NonNullable<Parameters<RequestHandler>[0]['auth']>;
-type UserRole = AuthenticatedUser['role'];
 
-function isUserRole(role: string): role is UserRole {
-  return role === 'customer' || role === 'branch_manager' || role === 'admin';
-}
-
-async function getAuthenticatedUser(token: string, config: AppConfig): Promise<AuthenticatedUser | null> {
-  try {
-    const claims = verifyAccessToken(token, config);
-    if (claims.userId && claims.email && isUserRole(claims.role)) {
-      return { userId: claims.userId, role: claims.role, email: claims.email };
-    }
-  } catch {
-    // Legacy OTP sessions are opaque tokens, not JWTs.
-  }
-
-  const sessionUser = await getSessionUser(token);
-  return sessionUser
-    ? { userId: sessionUser.id, role: sessionUser.role, email: sessionUser.email }
-    : null;
+async function getAuthenticatedUser(token: string, _config: AppConfig): Promise<AuthenticatedUser | null> {
+  const user = await getSessionUser(token);
+  return user ? { userId: user.id, role: user.role, email: user.email } : null;
 }
 
 export function getCookie(requestHeader: string | undefined, name: string): string | undefined {

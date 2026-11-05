@@ -61,16 +61,14 @@ export function refreshController(config: AppConfig, cookieName: string): Reques
 
 export function logoutController(config: AppConfig, cookieName: string): RequestHandler {
   return async (request, response) => {
+    const accessToken = getCookie(request.headers.cookie, 'access_token');
+    if (accessToken) await revokeSession(accessToken);
     const sessionToken = getCookie(request.headers.cookie, cookieName);
     if (sessionToken) await revokeSession(sessionToken);
     const refreshToken = getCookie(request.headers.cookie, 'refresh_token');
 
     if (refreshToken) {
-      try {
-        await logoutUser(refreshToken);
-      } catch (error) {
-        // Ignore errors during logout
-      }
+      await logoutUser(refreshToken);
     }
 
     // Clear cookies
@@ -111,11 +109,7 @@ export function logoutAllController(config: AppConfig, cookieName: string): Requ
       return;
     }
 
-    try {
-      await logoutAllSessions(request.auth.userId);
-    } catch (error) {
-      // Ignore errors during logout
-    }
+    await logoutAllSessions(request.auth.userId);
 
     // Clear cookies
     response.clearCookie('access_token', {

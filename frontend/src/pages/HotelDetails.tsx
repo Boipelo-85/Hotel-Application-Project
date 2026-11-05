@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchBranchById } from '../redux/hotelSlice';
 import { fetchRooms } from '../redux/roomSlice';
 import { fetchBranchReviews } from '../redux/reviewSlice';
 import type { AppDispatch, RootState } from '../redux/store';
 import Loading from '../components/Loading';
+import { safeReturnPath } from '../utils/navigation';
 import FavouriteButton from '../components/FavouriteButton';
 import ReviewList from '../components/ReviewList';
 import ImageGallery from '../components/ImageGallery';
@@ -22,6 +23,7 @@ const HotelDetails: React.FC = () => {
   const { branchId } = useParams<{ branchId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
   const { currentBranch, loading, error } = useSelector((state: RootState) => state.hotels);
   const rooms = useSelector((state: RootState) => state.rooms.rooms);
@@ -39,10 +41,11 @@ const HotelDetails: React.FC = () => {
   const checkOut = searchParams.get('checkOut') || localCheckOut;
   const guests = searchParams.get('guests') || localGuests;
   const quantity = searchParams.get('rooms') || '1';
-  const requestedReturnTo = searchParams.get('returnTo');
-  const backToResults = requestedReturnTo &&
-    (requestedReturnTo === '/hotels' || requestedReturnTo.startsWith('/hotels?'))
-    ? requestedReturnTo
+  const requestedReturnTo = searchParams.get('returnTo') ?? (location.state as { returnTo?: unknown } | null)?.returnTo;
+  const safeReturnTo = safeReturnPath(requestedReturnTo);
+  const backToResults = typeof requestedReturnTo === 'string' && safeReturnTo === requestedReturnTo &&
+    ['/', '/hotels', '/favourites'].includes(safeReturnTo.split('?')[0])
+    ? safeReturnTo
     : '/hotels';
   const hasRequestedStay = Boolean(checkIn && checkOut);
   const noMatchingRooms = !roomsLoading && hasRequestedStay && rooms.length > 0 &&
@@ -123,10 +126,6 @@ const HotelDetails: React.FC = () => {
           {branchId && <FavouriteButton branchId={branchId} />}
         </div>
       </div>
-      {currentBranch.description && <p style={{ marginTop: '1rem' }}>{currentBranch.description}</p>}
-      <p style={{ fontWeight: 'bold', color: '#047857' }}>
-        From {currentBranch.currency} {currentBranch.price_per_night}/night
-      </p>
       {currentBranch.contact_email && (
         <p style={{ color: '#666' }}>
           {currentBranch.contact_email}
@@ -136,18 +135,6 @@ const HotelDetails: React.FC = () => {
 
       <ImageGallery images={currentBranch.images} name={currentBranch.name} />
 
-      <h2 style={{ marginTop: '2rem' }}>Facilities</h2>
-      {currentBranch.amenities.length > 0 ? (
-        <ul style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem 2rem', paddingLeft: '1.25rem' }}>
-          {currentBranch.amenities.map((amenity) => (
-            <li key={amenity.id}>
-              {amenity.name}{amenity.category ? ` · ${amenity.category}` : ''}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>Facilities have not been listed yet.</p>
-      )}
       {Object.keys(currentBranch.policies || {}).length > 0 && (
         <>
           <h2 style={{ marginTop: '2rem' }}>Policies</h2>
@@ -164,6 +151,7 @@ const HotelDetails: React.FC = () => {
 
       <h2 style={{ marginTop: '2rem' }}>Location</h2>
       <Map
+        showExternalLink={false}
         name={currentBranch.name}
         address={`${currentBranch.address}, ${currentBranch.city}, ${currentBranch.province}`}
         latitude={currentBranch.latitude}

@@ -162,6 +162,8 @@ export function createPaystackProvider(options: PaystackOptions): PaymentProvide
         .digest('hex')
         .slice(0, 16);
       const reference = `HB-${safeReferencePart(request.bookingReference)}-${idempotencyToken}`;
+      const callback = new URL(options.callbackUrl);
+      if (request.guestBookingId) callback.searchParams.set('guestBookingId', request.guestBookingId);
       const data = await paystack<{ authorization_url?: string; reference?: string }>(
         '/transaction/initialize',
         {
@@ -171,7 +173,7 @@ export function createPaystackProvider(options: PaystackOptions): PaymentProvide
             amount: Number(toSubunits(request.amount, request.currency)),
             currency: request.currency.toUpperCase(),
             reference,
-            callback_url: options.callbackUrl,
+            callback_url: callback.toString(),
             channels: request.paymentMethod === 'eft' ? ['eft'] : ['card'],
             metadata: {
               booking_reference: request.bookingReference,

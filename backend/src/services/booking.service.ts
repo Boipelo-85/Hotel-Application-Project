@@ -1,3 +1,4 @@
+import { enqueueBookingEmail } from '../repositories/booking-email.repository.js';
 import { randomBytes } from 'node:crypto';
 import { inTransaction } from '../config/database.js';
 import type { AuthenticatedUser, BookingRow } from '../types/models.js';
@@ -185,7 +186,7 @@ export async function listBranchBookings(
 
 export async function cancelBooking(
   bookingId: string,
-  userId: string,
+  userId: string | null,
   isAdmin: boolean,
 ): Promise<BookingRow> {
   return inTransaction(async (client) => {
@@ -206,6 +207,7 @@ export async function cancelBooking(
       throw new AppError(409, 'A paid booking requires a configured refund provider before cancellation', 'REFUND_UNAVAILABLE');
     }
     const cancelled = await saveBookingStatus(client, bookingId, 'cancelled');
+    await enqueueBookingEmail(client, bookingId, 'cancelled');
     if (booking.user_id) {
       await insertBookingNotification(client, booking.user_id, 'booking_cancelled',
         'Your reservation was cancelled.',
@@ -326,6 +328,7 @@ export async function updateBookingStatus(
       }
     }
     const updated = await saveBookingStatus(client, bookingId, status);
+    if (status === 'confirmed' || status === 'cancelled') await enqueueBookingEmail(client, bookingId, status);
     if (booking.user_id) {
       await insertBookingNotification(client, booking.user_id, `booking_${status}`,
         `Your reservation was ${status}.`,

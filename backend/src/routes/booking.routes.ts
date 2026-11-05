@@ -47,9 +47,9 @@ export function bookingRoutes(config: AppConfig, cookieName: string): Router {
     '/lookup',
     validateBody(guestBookingLookupSchema),
     createRateLimitMiddleware(config, 'booking:guest-lookup', 10, 15 * 60),
-    lookupGuestBookingController,
+    lookupGuestBookingController(config),
   );
-  router.post('/', createOptionalAuthMiddleware(cookieName, config), validateBody(createBookingSchema), createBooking);
+  router.post('/', createOptionalAuthMiddleware(cookieName, config), validateBody(createBookingSchema), createBooking(config));
 
   // Require auth for all other booking operations
   router.use(auth);

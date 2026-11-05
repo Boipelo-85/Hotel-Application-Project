@@ -5,6 +5,7 @@ export interface CheckoutRequest {
   currency: string;
   paymentMethod: 'card' | 'eft';
   customerEmail?: string;
+  guestBookingId?: string;
 }
 
 export interface CheckoutSession {

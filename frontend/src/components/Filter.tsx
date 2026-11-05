@@ -21,16 +21,17 @@ const Filter: React.FC<FilterProps> = ({ onFilterChange, availableAmenities = []
     new Set(initialFilters.amenities ?? []),
   );
 
+  const amenitiesKey = JSON.stringify(initialFilters.amenities ?? []);
   useEffect(() => {
     setMinPrice(String(initialFilters.minPrice ?? ''));
     setMaxPrice(String(initialFilters.maxPrice ?? ''));
     setMinStarRating(String(initialFilters.minStarRating ?? ''));
-    setSelectedAmenities(new Set(initialFilters.amenities ?? []));
+    setSelectedAmenities(new Set(JSON.parse(amenitiesKey) as string[]));
   }, [
     initialFilters.minPrice,
     initialFilters.maxPrice,
     initialFilters.minStarRating,
-    initialFilters.amenities?.join(','),
+    amenitiesKey,
   ]);
 
   const handleAmenityToggle = (amenityId: string) => {

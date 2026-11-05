@@ -22,10 +22,6 @@ function formatDate(dateString: string): string {
   return `${weekday},${day}`;
 }
 
-function formatDateRange(checkIn: string, checkOut: string): string {
-  return `${formatDate(checkIn)} - ${formatDate(checkOut)}`;
-}
-
 interface SearchBarProps {
   initialDestination?: string;
   initialCheckIn?: string;

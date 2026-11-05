@@ -1,3 +1,4 @@
+import { deliverBookingEmails } from './services/booking-email.service.js';
 import { createServer } from 'node:http';
 import type { Server } from 'node:http';
 import { closeDatabase, initializeDatabase } from './config/database.js';
@@ -27,7 +28,7 @@ async function start(): Promise<Server> {
   await seedAdminUser(config);
   await pruneExpiredData();
   maintenanceTimer = setInterval(() => {
-    void pruneExpiredData().catch(
+    void pruneExpiredData().then(() => deliverBookingEmails(config)).catch(
       (error: unknown) => {
         console.error(
           'Expired-record maintenance failed',
@@ -38,6 +39,8 @@ async function start(): Promise<Server> {
   }, MAINTENANCE_INTERVAL_MS);
 
   maintenanceTimer.unref();
+  void deliverBookingEmails(config).catch(() => console.warn('Booking email worker could not start; will retry'));
+  if (!config.SMTP_HOST || !config.SMTP_FROM) console.warn('Booking emails are queued until SMTP is configured');
   if (config.PAYSTACK_SECRET_KEY) {
     installPaymentProvider(createPaystackProvider({
       secretKey: config.PAYSTACK_SECRET_KEY,

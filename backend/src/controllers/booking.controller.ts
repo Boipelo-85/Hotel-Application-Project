@@ -1,3 +1,5 @@
+import { grantGuestBooking } from '../middleware/guestBookingMiddleware.js';
+import type { AppConfig } from '../config/env.js';
 import type { RequestHandler } from 'express';
 import {
   cancelBooking as cancelBookingService,
@@ -16,14 +18,18 @@ function authenticated(request: Parameters<RequestHandler>[0]) {
   return request.auth;
 }
 
-export const createBookingController: RequestHandler = async (request, response) => {
+export const createBookingController = (config: AppConfig): RequestHandler => async (request, response) => {
   const userId = request.auth?.userId ?? null;
-  response.status(201).json({ booking: await createBookingService(userId, request.body) });
+  const booking = await createBookingService(userId, request.body);
+  if (!userId) grantGuestBooking(response, config, booking.id);
+  response.status(201).json({ booking });
 };
 
-export const lookupGuestBookingController: RequestHandler = async (request, response) => {
+export const lookupGuestBookingController = (config: AppConfig): RequestHandler => async (request, response) => {
   const { reference, email } = request.body as { reference: string; email: string };
-  response.json({ booking: await lookupGuestBookingService(reference, email) });
+  const booking = await lookupGuestBookingService(reference, email);
+  grantGuestBooking(response, config, booking.id);
+  response.json({ booking });
 };
 
 export const listBookingsController: RequestHandler = async (request, response) => {

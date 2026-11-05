@@ -3,7 +3,7 @@ export function safeReturnPath(value: unknown): string {
     value.startsWith('/') &&
     !value.startsWith('//') &&
     !value.includes('\\') &&
-    !/[\u0000-\u001f\u007f]/.test(value)
+    !Array.from(value).some(char => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)
     ? value
     : '/';
 }

@@ -26,7 +26,7 @@ export async function findRefreshToken(client: PoolClient, token: string) {
   return client.query(
     `SELECT id, user_id, token_hash, expires_at, revoked, created_at
      FROM refresh_tokens
-     WHERE token_hash = $1 AND revoked = FALSE AND expires_at > NOW()`,
+     WHERE token_hash = $1 AND revoked = FALSE AND expires_at > NOW() FOR UPDATE`,
     [tokenHash],
   );
 }

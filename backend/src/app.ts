@@ -12,6 +12,7 @@ import { errorMiddleware } from './middleware/errorMiddleware.js';
 import { notFoundMiddleware } from './middleware/notFoundMiddleware.js';
 import { requestLoggerMiddleware } from './middleware/requestLoggerMiddleware.js';
 
+import { guestBookingRoutes } from './routes/guest-booking.routes.js';
 import { apiRoutes } from './routes/index.js';
 import { configurePassport } from './config/passport.js';
 
@@ -112,6 +113,7 @@ export function createApp(config: AppConfig): Express {
     next();
   });
 
+  app.use(`${API_PREFIX}/guest-bookings`, guestBookingRoutes(config));
   app.use(API_PREFIX,apiRoutes(config, cookieName),);
   app.use(notFoundMiddleware);
   app.use(errorMiddleware);

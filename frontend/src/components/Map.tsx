@@ -21,9 +21,10 @@ interface MapProps {
   address: string;
   latitude: number | string | null;
   longitude: number | string | null;
+  showExternalLink?: boolean;
 }
 
-const Map: React.FC<MapProps> = ({ name, address, latitude, longitude }) => {
+const Map: React.FC<MapProps> = ({ name, address, latitude, longitude, showExternalLink = true }) => {
   const coordinates = parseCoordinates(latitude, longitude);
   const mapUrl = coordinates
     ? `https://www.openstreetmap.org/?mlat=${coordinates.latitude}&mlon=${coordinates.longitude}#map=15/${coordinates.latitude}/${coordinates.longitude}`
@@ -40,12 +41,12 @@ const Map: React.FC<MapProps> = ({ name, address, latitude, longitude }) => {
             <Popup><strong>{name}</strong><br />{address}</Popup>
           </Marker>
         </MapContainer>
-      ) : <p>Map coordinates have not been added for this branch yet. You can search for its address below.</p>}
-      <p style={{ marginBottom: 0 }}>
+      ) : <p>Map coordinates have not been added for this branch yet.{showExternalLink && ' You can search for its address below.'}</p>}
+      {showExternalLink && <p style={{ marginBottom: 0 }}>
         <a href={mapUrl} target="_blank" rel="noreferrer" style={{ color: '#2563eb' }}>
           Open {coordinates ? 'map' : 'address'} in OpenStreetMap
         </a>
-      </p>
+      </p>}
     </section>
   );
 };

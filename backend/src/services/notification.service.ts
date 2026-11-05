@@ -8,24 +8,16 @@ import {
 } from '../repositories/notification.repository.js';
 
 export async function sendVerificationCode(config: AppConfig, email: string, code: string): Promise<void> {
-  // Check if SMTP is properly configured
-  if (!config.SMTP_HOST || !config.SMTP_FROM || !config.SMTP_USER || !config.SMTP_PASSWORD) {
-    // Development mode: log code to console instead of sending email
-    console.log('='.repeat(60));
-    console.log('📧 VERIFICATION CODE (Development Mode)');
-    console.log('='.repeat(60));
-    console.log(`Email: ${email}`);
-    console.log(`Code: ${code}`);
-    console.log(`Expires in: ${config.OTP_TTL_MINUTES} minutes`);
-    console.log('='.repeat(60));
-    return;
+  if (!config.SMTP_HOST || !config.SMTP_FROM) {
+    throw new AppError(503, 'Email delivery is not configured', 'EMAIL_UNAVAILABLE');
   }
 
   const transporter = nodemailer.createTransport({
     host: config.SMTP_HOST,
     port: config.SMTP_PORT,
     secure: config.SMTP_SECURE,
-    auth: { user: config.SMTP_USER, pass: config.SMTP_PASSWORD },
+    auth: config.SMTP_USER ? { user: config.SMTP_USER, pass: config.SMTP_PASSWORD } : undefined,
+    connectionTimeout: 5000, greetingTimeout: 5000, socketTimeout: 10000,
   });
   await transporter.sendMail({
     from: config.SMTP_FROM,
