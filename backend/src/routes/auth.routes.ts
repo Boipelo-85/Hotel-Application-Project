@@ -73,7 +73,7 @@ export function authRoutes(config: AppConfig, cookieName: string): Router {
     sameOrigin,
     createRateLimitMiddleware(config, 'auth:login-ip', authLimit, windowSeconds),
     validateBody(loginSchema),
-    loginController(config),
+    loginController(config, cookieName),
   );
 
   // Refresh Token

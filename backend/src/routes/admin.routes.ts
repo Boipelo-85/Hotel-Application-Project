@@ -3,11 +3,9 @@ import { z } from 'zod';
 import type { AppConfig } from '../config/env.js';
 import { requireAdmin, requireRoles } from '../middleware/adminMiddleware.js';
 import { createAuthMiddleware } from '../middleware/authMiddleware.js';
-import { createRateLimitMiddleware } from '../middleware/rateLimitMiddleware.js';
 import { validateBody, validateParams, validateQuery } from '../middleware/validationMiddleware.js';
 import { uploadBranchImage, uploadRoomImage, uploadMultipleBranchImages, uploadMultipleRoomImages } from '../middleware/uploadMiddleware.js';
 import {
-  adminLoginController,
   getDashboardStatsController,
   getAdminBookingsController,
   getRecentBookingsController,
@@ -47,21 +45,8 @@ export function adminRoutes(config: AppConfig, cookieName: string): Router {
   const router = Router();
   const auth = createAuthMiddleware(cookieName, config);
 
-  // Admin Login (public route with rate limiting)
-  const loginSchema = z.object({
-    email: z.string().trim().email().max(320),
-    password: z.string().min(6).max(200),
-  }).strict();
-
-  router.post(
-    '/login',
-    createRateLimitMiddleware(config, 'admin:login-ip', 5, 15 * 60),
-    validateBody(loginSchema),
-    adminLoginController(config, cookieName),
-  );
-
-  // All other admin routes require authentication
-  router.use(auth);
+  // Every staff endpoint requires both a session and an allowed role.
+  router.use(auth, requireRoles('admin', 'branch_manager'));
 
   // Dashboard Stats
   router.get('/dashboard/stats', getDashboardStatsController);
@@ -87,12 +72,13 @@ export function adminRoutes(config: AppConfig, cookieName: string): Router {
   })), getRevenueReportController);
 
   // User Management
-  router.get('/users', validateQuery(z.object({
+  router.get('/users', requireAdmin, validateQuery(z.object({
     page: z.string().optional(),
     limit: z.string().optional(),
   })), getAllUsersController);
   router.patch(
     '/users/:userId',
+    requireAdmin,
     validateParams(z.object({ userId: id })),
     validateBody(z.object({
       role: z.enum(['customer', 'branch_manager', 'admin']).optional(),

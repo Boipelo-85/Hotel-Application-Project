@@ -32,7 +32,7 @@ const ManageRooms: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [branches, setBranches] = useState<ManagedBranch[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [branchId, setBranchId] = useState(searchParams.get('branchId') || '');
+  const branchId = searchParams.get('branchId') || '';
   const [roomType, setRoomType] = useState('Standard');
   const [capacity, setCapacity] = useState('2');
   const [quantity, setQuantity] = useState('1');
@@ -73,8 +73,7 @@ const ManageRooms: React.FC = () => {
         const list = data?.branches || [];
         setBranches(list);
         if (!branchId && list[0]) {
-          setBranchId(String(list[0].id));
-          setSearchParams({ branchId: String(list[0].id) });
+          setSearchParams({ branchId: String(list[0].id) }, { replace: true });
         }
       } catch (loadError) {
         setError(loadError instanceof Error ? loadError.message : 'Failed to load branches');
@@ -334,7 +333,6 @@ const ManageRooms: React.FC = () => {
         <select
           value={branchId}
           onChange={(event) => {
-            setBranchId(event.target.value);
             setSearchParams({ branchId: event.target.value });
           }}
           style={fieldStyle}

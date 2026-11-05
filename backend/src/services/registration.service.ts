@@ -33,6 +33,9 @@ export async function registerUser(
 
   // Validate email format (basic check, Zod will handle full validation in controller)
   const normalizedEmail = input.email.trim().toLowerCase();
+  if (config.ADMIN_LOGIN_EMAIL && normalizedEmail === config.ADMIN_LOGIN_EMAIL.trim().toLowerCase()) {
+    throw new AppError(409, 'Email already registered', 'EMAIL_EXISTS');
+  }
 
   // Validate password strength
   const passwordValidation = validatePasswordStrength(input.password);

@@ -36,11 +36,9 @@ const ManageBookings: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [branches, setBranches] = useState<ManagedBranch[]>([]);
   const [bookings, setBookings] = useState<BranchBooking[]>([]);
-  const [branchId, setBranchId] = useState(searchParams.get('branchId') || '');
+  const branchId = searchParams.get('branchId') || '';
   const requestedStatus = searchParams.get('status') || '';
-  const [statusFilter, setStatusFilter] = useState(
-    BOOKING_STATUSES.includes(requestedStatus as (typeof BOOKING_STATUSES)[number]) ? requestedStatus : '',
-  );
+  const statusFilter = BOOKING_STATUSES.includes(requestedStatus as (typeof BOOKING_STATUSES)[number]) ? requestedStatus : '';
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,10 +55,9 @@ const ManageBookings: React.FC = () => {
       const list = data?.branches || [];
       setBranches(list);
       if (!branchId && list[0] && !isAdmin) {
-        setBranchId(String(list[0].id));
         const nextParams = new URLSearchParams(searchParams);
         nextParams.set('branchId', String(list[0].id));
-        setSearchParams(nextParams);
+        setSearchParams(nextParams, { replace: true });
       }
       setLoading(false);
     };
@@ -135,7 +132,6 @@ const ManageBookings: React.FC = () => {
         <select
           value={branchId}
           onChange={(event) => {
-            setBranchId(event.target.value);
             const nextParams = new URLSearchParams(searchParams);
             if (event.target.value) nextParams.set('branchId', event.target.value);
             else nextParams.delete('branchId');
@@ -156,7 +152,6 @@ const ManageBookings: React.FC = () => {
             value={statusFilter}
             onChange={(e) => {
               const nextStatus = e.target.value;
-              setStatusFilter(nextStatus);
               const nextParams = new URLSearchParams(searchParams);
               if (nextStatus) nextParams.set('status', nextStatus);
               else nextParams.delete('status');

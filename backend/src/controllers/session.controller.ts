@@ -1,6 +1,7 @@
 import type { RequestHandler } from 'express';
 import type { AppConfig } from '../config/env.js';
 import { refreshSession, logoutUser, logoutAllSessions } from '../services/session.service.js';
+import { revokeSession } from '../services/auth.service.js';
 import { getCookie } from '../middleware/authMiddleware.js';
 
 export function refreshController(config: AppConfig, cookieName: string): RequestHandler {
@@ -60,6 +61,8 @@ export function refreshController(config: AppConfig, cookieName: string): Reques
 
 export function logoutController(config: AppConfig, cookieName: string): RequestHandler {
   return async (request, response) => {
+    const sessionToken = getCookie(request.headers.cookie, cookieName);
+    if (sessionToken) await revokeSession(sessionToken);
     const refreshToken = getCookie(request.headers.cookie, 'refresh_token');
 
     if (refreshToken) {

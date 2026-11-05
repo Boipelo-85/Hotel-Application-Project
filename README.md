@@ -45,3 +45,11 @@ Password registration creates an unverified customer account. Successful email-c
 Google and Facebook sign-in use JWT cookies without Passport server sessions. Each redirect includes a random state bound to a short-lived HTTP-only browser cookie, and callbacks with missing or mismatched state are rejected. Google sign-in requires a verified provider email. OAuth does not automatically link an existing account by matching its email: use that account's original sign-in method. An authenticated account-linking flow is not currently implemented.
 
 The alternate simple registration endpoint also always creates customers, regardless of a role supplied in the request.
+
+### One shared sign-in page
+
+Use `/login` for customers and staff. The configured administrator signs in with `ADMIN_LOGIN_EMAIL` and `ADMIN_LOGIN_PASSWORD`; `seedAdminUser()` and the administrator row remain unchanged. The shared login endpoint checks that email before regular password authentication, rejects incorrect administrator passwords with the generic login error, and creates a cryptographically random session with only its hash stored in `auth_sessions`. Regular password accounts retain their existing JWT login flow.
+
+Admins and branch managers are sent to `/admin`. Customers return to their requested page or the home page. `/admin/login` redirects to `/login`, and the former `POST /api/v1/admin/login` endpoint has been removed. Public registration rejects the configured administrator email. All staff API routes require authentication and a staff role; user-management actions additionally require an administrator.
+
+For frontend navigation checks, run `npm --prefix frontend run build` first, then `npm --prefix frontend run test:navigation`. The browser tests use the production preview with sample API responses; they do not modify a live database or initiate real payments.

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -54,6 +54,15 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const [children, setChildren] = useState(initialChildren);
   const [isOccupancyDropdownOpen, setIsOccupancyDropdownOpen] = useState(false);
   const [travelingWithPets, setTravelingWithPets] = useState(false);
+
+  useEffect(() => {
+    setDestination(initialDestination);
+    setCheckIn(initialCheckIn ? parseLocalDate(initialCheckIn) : null);
+    setCheckOut(initialCheckOut ? parseLocalDate(initialCheckOut) : null);
+    setRooms(initialRooms);
+    setAdults(initialAdults);
+    setChildren(initialChildren);
+  }, [initialDestination, initialCheckIn, initialCheckOut, initialRooms, initialAdults, initialChildren]);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();

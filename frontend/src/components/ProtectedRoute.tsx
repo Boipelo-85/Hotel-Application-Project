@@ -6,14 +6,14 @@ import Loading from './Loading';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
-  const { isAuthenticated, loading } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, loading, initialized } = useSelector((state: RootState) => state.auth);
 
-  if (loading && !isAuthenticated) {
+  if (!initialized || (loading && !isAuthenticated)) {
     return <Loading message="Checking your session..." />;
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}` }} />;
+    return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}${location.hash}` }} />;
   }
 
   return <>{children}</>;

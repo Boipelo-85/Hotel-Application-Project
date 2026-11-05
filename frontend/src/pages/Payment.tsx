@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchBookingById } from '../redux/bookingSlice';
 import type { PaymentMethod } from '../redux/paymentSlice';
@@ -9,14 +9,14 @@ import Loading from '../components/Loading';
 const Payment: React.FC = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { currentBooking, loading: bookingLoading, error: bookingError } = useSelector((state: RootState) => state.bookings);
   const booking = currentBooking?.id === bookingId ? currentBooking : null;
   const returnState = location.state as { paymentMethod?: PaymentMethod } | null;
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
-    returnState?.paymentMethod === 'eft' ? 'eft' : 'card',
-  );
+  const selectedMethod = searchParams.get('method') ?? returnState?.paymentMethod;
+  const paymentMethod: PaymentMethod = selectedMethod === 'eft' ? 'eft' : 'card';
 
   useEffect(() => {
     if (bookingId) {
@@ -27,7 +27,7 @@ const Payment: React.FC = () => {
   const handleReview = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!bookingId) return;
-    navigate(`/bookings/${bookingId}/payment/review`, { state: { paymentMethod } });
+    navigate(`/bookings/${bookingId}/payment/review?method=${paymentMethod}`);
   };
 
   if (bookingLoading && !booking) return <Loading message="Loading payment..." />;
@@ -35,6 +35,8 @@ const Payment: React.FC = () => {
     return <div style={{ padding: '2rem', color: '#991b1b' }}>{bookingError}</div>;
   }
   if (!booking) return <Loading message="Loading payment..." />;
+
+  if (booking.status !== 'pending') return <Navigate to={`/bookings/${booking.id}`} replace />;
 
   return (
     <div style={{ padding: '2rem', maxWidth: '640px', margin: '0 auto' }}>
@@ -70,7 +72,7 @@ const Payment: React.FC = () => {
                 name="paymentMethod"
                 value={method}
                 checked={paymentMethod === method}
-                onChange={() => setPaymentMethod(method)}
+                onChange={() => setSearchParams({ method }, { replace: true })}
               />
               {label}
             </label>

@@ -23,7 +23,7 @@ const AdminDashboard: React.FC = () => {
 
   const handleLogout = async () => {
     await dispatch(logout());
-    navigate('/admin/login', { replace: true });
+    navigate('/login', { replace: true });
   };
 
   useEffect(() => {

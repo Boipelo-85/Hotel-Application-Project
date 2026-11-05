@@ -1,3 +1,5 @@
+import BranchLocationFields from '../../components/BranchLocationFields';
+import { parseCoordinates } from '../../utils/coordinates';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { parseApiError } from '../../services/api';
@@ -32,6 +34,8 @@ const AddHotel: React.FC = () => {
   const [city, setCity] = useState('');
   const [province, setProvince] = useState('');
   const [address, setAddress] = useState('');
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
   const [pricePerNight, setPricePerNight] = useState('100');
   const [currency, setCurrency] = useState('USD');
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -51,11 +55,15 @@ const AddHotel: React.FC = () => {
     setAddress(`${Math.floor(Math.random() * 999) + 1} Main Street, ${randomCity}`);
     setPricePerNight(String(Math.floor(Math.random() * 500) + 100));
     setCurrency('ZAR');
+    setLatitude('');
+    setLongitude('');
     setImageAltText(`Beautiful hotel in ${randomCity}, ${randomProvince}`);
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    const coordinates = parseCoordinates(latitude, longitude);
+    if (!coordinates) { setError('Enter a valid latitude (-90 to 90) and longitude (-180 to 180).'); return; }
 
     if (!imageFile) {
       setError('Image file is required');
@@ -76,6 +84,7 @@ const AddHotel: React.FC = () => {
           city,
           province,
           address,
+          ...coordinates,
           pricePerNight: Number(pricePerNight),
           currency: currency.toUpperCase(),
         }),
@@ -135,6 +144,8 @@ const AddHotel: React.FC = () => {
           </select>
         </label>
         <label>Address<input required value={address} onChange={(event) => setAddress(event.target.value)} style={fieldStyle} /></label>
+        <BranchLocationFields latitude={latitude} longitude={longitude} onLatitudeChange={setLatitude} onLongitudeChange={setLongitude}
+          name={name} address={`${address}, ${city}, ${province}`} />
         <label>Price per night<input required type="number" min={0} step="0.01" value={pricePerNight} onChange={(event) => setPricePerNight(event.target.value)} style={fieldStyle} /></label>
         <label>Currency<input required maxLength={3} value={currency} onChange={(event) => setCurrency(event.target.value)} style={fieldStyle} /></label>
         <label>Image (required)

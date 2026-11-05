@@ -1,3 +1,4 @@
+import { deleteUserSessions } from '../repositories/session.repository.js';
 import type { PoolClient } from 'pg';
 import type { AppConfig } from '../config/env.js';
 import { inTransaction } from '../config/database.js';
@@ -80,5 +81,6 @@ export async function logoutUser(refreshToken: string): Promise<void> {
 export async function logoutAllSessions(userId: string): Promise<void> {
   await inTransaction(async (client: PoolClient) => {
     await revokeAllUserTokens(client, userId);
+    await deleteUserSessions(client, userId);
   });
 }

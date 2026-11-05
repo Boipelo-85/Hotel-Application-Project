@@ -14,6 +14,8 @@ interface AuthState {
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;
+  initialized: boolean;
+  sessionChecking: boolean;
 }
 
 const initialState: AuthState = {
@@ -21,6 +23,8 @@ const initialState: AuthState = {
   loading: false,
   error: null,
   isAuthenticated: false,
+  initialized: false,
+  sessionChecking: false,
 };
 
 // Async thunks
@@ -65,14 +69,17 @@ export const verifyCode = createAsyncThunk(
 export const getCurrentUser = createAsyncThunk(
   'auth/getCurrentUser',
   async () => {
-    const response = await fetch('/api/v1/auth/me', {
-      credentials: 'include',
-    });
+    let response = await fetch('/api/v1/auth/me', { credentials: 'include' });
+    if (response.status === 401) {
+      const refreshed = await fetch('/api/v1/auth/refresh', { method: 'POST', credentials: 'include' });
+      if (refreshed.ok) response = await fetch('/api/v1/auth/me', { credentials: 'include' });
+    }
     if (!response.ok) {
       throw new Error('Not authenticated');
     }
     return await response.json();
-  }
+  },
+  { condition: (_, { getState }) => !(getState() as { auth: AuthState }).auth.sessionChecking },
 );
 
 export const logout = createAsyncThunk('auth/logout', async () => {
@@ -97,7 +104,7 @@ export const loginWithEmailPassword = createAsyncThunk(
       });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        return rejectWithValue(data.message || data.error || 'Invalid credentials');
+        return rejectWithValue(data.error?.message || data.message || (typeof data.error === 'string' ? data.error : 'Invalid credentials'));
       }
       const data = await response.json();
       return data.user;
@@ -141,24 +148,6 @@ export const registerAccount = createAsyncThunk(
   },
 );
 
-export const loginAdmin = createAsyncThunk(
-  'auth/loginAdmin',
-  async ({ email, password }: { email: string; password: string }) => {
-    const response = await fetch('/api/v1/admin/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email, password }),
-    });
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.message || 'Invalid credentials');
-    }
-    const data = await response.json();
-    return data.user;
-  }
-);
-
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -197,14 +186,19 @@ const authSlice = createSlice({
       })
       // Get Current User
       .addCase(getCurrentUser.pending, (state) => {
+        state.sessionChecking = true;
         state.loading = true;
       })
       .addCase(getCurrentUser.fulfilled, (state, action) => {
+        state.initialized = true;
+        state.sessionChecking = false;
         state.loading = false;
         state.user = action.payload.user;
         state.isAuthenticated = true;
       })
       .addCase(getCurrentUser.rejected, (state) => {
+        state.initialized = true;
+        state.sessionChecking = false;
         state.loading = false;
         state.user = null;
         state.isAuthenticated = false;
@@ -236,20 +230,6 @@ const authSlice = createSlice({
       .addCase(registerAccount.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string || action.error.message || 'Registration failed';
-      })
-      // Admin Login
-      .addCase(loginAdmin.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(loginAdmin.fulfilled, (state, action) => {
-        state.loading = false;
-        state.user = action.payload;
-        state.isAuthenticated = true;
-      })
-      .addCase(loginAdmin.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || 'Login failed';
       })
       // Logout
       .addCase(logout.fulfilled, (state) => {

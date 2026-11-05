@@ -34,6 +34,13 @@ const Booking: React.FC = () => {
   const [address, setAddress] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
 
+  useEffect(() => {
+    setCheckIn(searchParams.get('checkIn') || isoDate(1));
+    setCheckOut(searchParams.get('checkOut') || isoDate(2));
+    setGuests(searchParams.get('guests') || '2');
+    setQuantity(searchParams.get('quantity') || '1');
+  }, [searchParams]);
+
   const room = rooms.find((item) => String(item.id) === roomId);
   const stayNights = (Date.parse(`${checkOut}T00:00:00Z`) - Date.parse(`${checkIn}T00:00:00Z`)) / 86_400_000;
   const nights = Number.isFinite(stayNights) && stayNights > 0 ? stayNights : 0;

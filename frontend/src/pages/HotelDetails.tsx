@@ -69,7 +69,7 @@ const HotelDetails: React.FC = () => {
     params.quantity = quantity;
     console.log('Fetching rooms for branch:', branchId, 'with params:', params);
     void dispatch(fetchRooms({ branchId, params }));
-  }, [dispatch, branchId, checkIn, checkOut, guests]);
+  }, [dispatch, branchId, checkIn, checkOut, guests, quantity]);
 
   const handleDateChange = () => {
     if (Boolean(localCheckIn) !== Boolean(localCheckOut)) {
@@ -478,7 +478,7 @@ const HotelDetails: React.FC = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         if (isAvailable && canAccommodate) {
-                          window.location.href = `/book?${params.toString()}`;
+                          navigate(`/book?${params.toString()}`);
                         }
                       }}
                       disabled={!isAvailable || !canAccommodate}

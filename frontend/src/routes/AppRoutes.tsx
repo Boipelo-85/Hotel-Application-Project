@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Navigate, Routes, Route } from 'react-router-dom';
 import Home from '../pages/Home';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
@@ -17,7 +17,6 @@ import Profile from '../pages/Profile';
 import Favourites from '../pages/Favourites';
 import Notifications from '../pages/Notifications';
 import NotFound from '../pages/NotFound';
-import AdminLogin from '../pages/admin/AdminLogin';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import ManageHotels from '../pages/admin/ManageHotels';
 import AddHotel from '../pages/admin/AddHotel';
@@ -34,7 +33,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
-      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin/login" element={<Navigate to="/login" replace />} />
       <Route path="/hotels" element={<Hotels />} />
       <Route path="/hotels/:branchId" element={<HotelDetails />} />
       <Route path="/branches/:branchId" element={<HotelDetails />} />

@@ -28,7 +28,7 @@ function hashCode(config: AppConfig, email: string, code: string): Buffer {
   return createHmac('sha256', config.OTP_PEPPER).update(`${email}:${code}`).digest();
 }
 
-async function createSession(
+export async function createSession(
   client: PoolClient,
   userId: string,
   config: AppConfig,

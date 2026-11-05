@@ -14,7 +14,7 @@ const Navbar: React.FC = () => {
 
   const handleLogout = async () => {
     await dispatch(logout());
-    navigate('/');
+    navigate(location.pathname.startsWith('/admin') ? '/login' : '/');
   };
 
   return (
@@ -24,9 +24,6 @@ const Navbar: React.FC = () => {
           Grand-Rest Hotel
         </Link>
         <div className="navbar__links">
-          <Link to="/admin/login" className="admin_section">
-            Admin
-          </Link>
           {isAuthenticated ? (
             <>
               <Link to="/bookings" className="navbar__link">
@@ -57,7 +54,7 @@ const Navbar: React.FC = () => {
           ) : (
             !isAuthPage && (
               <>
-                <Link to="/booking-lookup" className="navbar__link">Find booking</Link>
+                {/* <Link to="/booking-lookup" className="navbar__link">Find booking</Link> */}
                 <Link to="/login" className="navbar__sign-in">Sign In</Link>
               </>
             )

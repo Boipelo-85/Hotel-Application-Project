@@ -17,7 +17,7 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { loading, error, isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { loading, error, isAuthenticated, user } = useSelector((state: RootState) => state.auth);
   const from = safeReturnPath(
     (location.state as { from?: unknown } | null)?.from ?? sessionStorage.getItem('auth:returnTo'),
   );
@@ -29,9 +29,9 @@ const Login: React.FC = () => {
   useEffect(() => {
     if (isAuthenticated) {
       sessionStorage.removeItem('auth:returnTo');
-      navigate(from, { replace: true });
+      navigate(user?.role === 'admin' || user?.role === 'branch_manager' ? '/admin' : from, { replace: true });
     }
-  }, [isAuthenticated, navigate, from]);
+  }, [isAuthenticated, user?.role, navigate, from]);
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchBookingById } from '../redux/bookingSlice';
 import { initiatePayment, type PaymentMethod } from '../redux/paymentSlice';
@@ -22,20 +22,22 @@ function nightsBetween(checkIn: string, checkOut: string): number {
 const ReviewBooking: React.FC = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { currentBooking, loading: bookingLoading, error: bookingError } = useSelector((state: RootState) => state.bookings);
   const { loading: paymentLoading, error: paymentError } = useSelector((state: RootState) => state.payments);
   const booking = currentBooking?.id === bookingId ? currentBooking : null;
   const state = location.state as ReviewLocationState | null;
-  const paymentMethod = isPaymentMethod(state?.paymentMethod) ? state.paymentMethod : 'card';
+  const requestedMethod = searchParams.get('method') ?? state?.paymentMethod;
+  const paymentMethod = isPaymentMethod(requestedMethod) ? requestedMethod : 'card';
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   useEffect(() => {
-    if (bookingId && !booking) {
+    if (bookingId) {
       void dispatch(fetchBookingById(bookingId));
     }
-  }, [bookingId, booking, dispatch]);
+  }, [bookingId, dispatch]);
 
   const handleConfirm = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -52,6 +54,8 @@ const ReviewBooking: React.FC = () => {
     return <div style={{ padding: '2rem', color: '#991b1b' }}>{bookingError}</div>;
   }
   if (!booking) return <Loading message="Loading booking review..." />;
+
+  if (booking.status !== 'pending') return <Navigate to={`/bookings/${booking.id}`} replace />;
 
   const nights = nightsBetween(booking.check_in, booking.check_out);
   const paymentLabel = paymentMethod === 'card' ? 'Credit or debit card' : 'Instant EFT / bank payment';
@@ -107,7 +111,7 @@ const ReviewBooking: React.FC = () => {
         </button>
       </form>
       <p style={{ marginTop: '1.25rem' }}>
-        <Link to={`/bookings/${booking.id}/payment`} state={{ paymentMethod }}>Change payment method</Link>
+        <Link to={`/bookings/${booking.id}/payment?method=${paymentMethod}`}>Change payment method</Link>
       </p>
       <p>
         <button type="button" onClick={() => navigate(`/bookings/${booking.id}`)} style={textButtonStyle}>Back to booking</button>

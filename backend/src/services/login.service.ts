@@ -1,3 +1,5 @@
+import { verifyAdminCredentials, getAdminUserByEmail } from './admin.service.js';
+import { createSession } from './auth.service.js';
 import type { PoolClient } from 'pg';
 import type { AppConfig } from '../config/env.js';
 import { inTransaction } from '../config/database.js';
@@ -13,17 +15,26 @@ export interface LoginInput {
   password: string;
 }
 
-export interface LoginResult {
-  user: AuthenticatedUser;
-  accessToken: string;
-  refreshToken: string;
-}
+export type LoginResult =
+  | { user: AuthenticatedUser; token: string }
+  | { user: AuthenticatedUser; accessToken: string; refreshToken: string };
 
 export async function loginUser(
   config: AppConfig,
   input: LoginInput,
 ): Promise<LoginResult> {
   const normalizedEmail = input.email.trim().toLowerCase();
+
+  // A configured admin email must never fall through to password-hash login.
+  if (config.ADMIN_LOGIN_EMAIL && normalizedEmail === config.ADMIN_LOGIN_EMAIL.trim().toLowerCase()) {
+    if (!await verifyAdminCredentials(normalizedEmail, input.password, config)) {
+      throw new AppError(401, 'Invalid email or password', 'INVALID_PASSWORD');
+    }
+    const user = await getAdminUserByEmail(normalizedEmail);
+    if (!user) throw new AppError(401, 'Invalid email or password', 'INVALID_PASSWORD');
+    const token = await inTransaction(client => createSession(client, user.id, config));
+    return { user, token };
+  }
 
   const result = await inTransaction(async (client: PoolClient) => {
     // Find user by email

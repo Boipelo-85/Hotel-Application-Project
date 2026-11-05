@@ -1,3 +1,5 @@
+import BranchLocationFields from '../../components/BranchLocationFields';
+import { parseCoordinates } from '../../utils/coordinates';
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { parseApiError, readJson } from '../../services/api';
@@ -30,6 +32,8 @@ interface ManagedBranch {
   price_per_night: string;
   currency: string;
   publication_status?: string;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
 }
 
 const EditHotel: React.FC = () => {
@@ -39,6 +43,8 @@ const EditHotel: React.FC = () => {
   const [city, setCity] = useState('');
   const [province, setProvince] = useState('');
   const [address, setAddress] = useState('');
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
   const [description, setDescription] = useState('');
   const [pricePerNight, setPricePerNight] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +72,8 @@ const EditHotel: React.FC = () => {
       setCity(match.city);
       setProvince(match.province);
       setAddress(match.address);
+      setLatitude(match.latitude == null ? '' : String(match.latitude));
+      setLongitude(match.longitude == null ? '' : String(match.longitude));
       setDescription(match.description || '');
       setPricePerNight(String(match.price_per_night));
       setLoading(false);
@@ -75,6 +83,8 @@ const EditHotel: React.FC = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    const coordinates = parseCoordinates(latitude, longitude);
+    if (!coordinates) { setError('Enter a valid latitude (-90 to 90) and longitude (-180 to 180).'); return; }
     if (!branchId) return;
     setSaving(true);
     setError(null);
@@ -88,6 +98,7 @@ const EditHotel: React.FC = () => {
         city,
         province,
         address,
+        ...coordinates,
         description: description || null,
         pricePerNight: Number(pricePerNight),
       }),
@@ -119,6 +130,8 @@ const EditHotel: React.FC = () => {
           </select>
         </label>
         <label>Address<input required value={address} onChange={(event) => setAddress(event.target.value)} style={fieldStyle} /></label>
+        <BranchLocationFields latitude={latitude} longitude={longitude} onLatitudeChange={setLatitude} onLongitudeChange={setLongitude}
+          name={name} address={`${address}, ${city}, ${province}`} />
         <label>Description<textarea value={description} onChange={(event) => setDescription(event.target.value)} style={{ ...fieldStyle, minHeight: '6rem' }} /></label>
         <label>Price per night<input required type="number" min={0} step="0.01" value={pricePerNight} onChange={(event) => setPricePerNight(event.target.value)} style={fieldStyle} /></label>
         {error && <p style={{ color: 'red' }}>{error}</p>}

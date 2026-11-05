@@ -13,7 +13,7 @@ const PaymentCallback: React.FC = () => {
   const [result, setResult] = useState<PaymentVerification | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
-  const started = useRef(false);
+  const started = useRef<string | null>(null);
 
   const checkPayment = useCallback(async () => {
     if (!reference) return;
@@ -29,10 +29,10 @@ const PaymentCallback: React.FC = () => {
   }, [dispatch, reference]);
 
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
+    if (!reference || started.current === reference) return;
+    started.current = reference;
     void checkPayment();
-  }, [checkPayment]);
+  }, [checkPayment, reference]);
 
   useEffect(() => {
     if (result?.status === 'successful' && result.bookingStatus === 'confirmed') {

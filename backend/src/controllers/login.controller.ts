@@ -3,29 +3,31 @@ import type { AppConfig } from '../config/env.js';
 import { loginUser } from '../services/login.service.js';
 import type { LoginInput } from '../services/login.service.js';
 
-export function loginController(config: AppConfig): RequestHandler {
+export function loginController(config: AppConfig, cookieName: string): RequestHandler {
   return async (request, response) => {
     const input: LoginInput = request.body;
 
     try {
       const result = await loginUser(config, input);
 
-      // Set HTTP-only cookies for tokens
-      response.cookie('access_token', result.accessToken, {
+      const cookieOptions = {
         httpOnly: true,
         secure: config.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 15 * 60 * 1000, // 15 minutes
+        sameSite: 'lax' as const,
         path: '/',
-      });
-
-      response.cookie('refresh_token', result.refreshToken, {
-        httpOnly: true,
-        secure: config.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        path: '/',
-      });
+      };
+      if ('token' in result) {
+        response.clearCookie('access_token', cookieOptions);
+        response.clearCookie('refresh_token', cookieOptions);
+        response.cookie(cookieName, result.token, {
+          ...cookieOptions,
+          maxAge: config.SESSION_TTL_HOURS * 60 * 60 * 1000,
+        });
+      } else {
+        response.clearCookie(cookieName, cookieOptions);
+        response.cookie('access_token', result.accessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
+        response.cookie('refresh_token', result.refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
+      }
 
       response.status(200).json({
         user: {
