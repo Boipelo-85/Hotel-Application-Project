@@ -37,3 +37,11 @@ The API is mounted at `/api/v1`. It models one hotel brand (`hotel_brand`, expos
 ## Validation
 
 Run `npm --prefix backend run typecheck`, `npm --prefix backend test`, and `npm --prefix backend audit`. The two reservation concurrency integration tests are skipped unless `TEST_DATABASE_URL` points to a separate database with the schema applied; those tests insert and clean up their own fixtures.
+
+### Authentication behaviour
+
+Password registration creates an unverified customer account. Successful email-code verification proves email ownership; SMTP must be configured for delivery. Existing verification flags are preserved because historical password and verified accounts cannot reliably be distinguished automatically.
+
+Google and Facebook sign-in use JWT cookies without Passport server sessions. Each redirect includes a random state bound to a short-lived HTTP-only browser cookie, and callbacks with missing or mismatched state are rejected. Google sign-in requires a verified provider email. OAuth does not automatically link an existing account by matching its email: use that account's original sign-in method. An authenticated account-linking flow is not currently implemented.
+
+The alternate simple registration endpoint also always creates customers, regardless of a role supplied in the request.

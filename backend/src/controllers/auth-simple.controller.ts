@@ -4,7 +4,7 @@ import type { UserInput } from '../types/models.js';
 import bcrypt from 'bcrypt';
 
 export const registerController: RequestHandler = async (request, response) => {
-  const { fullname, email, password, role } = request.body as UserInput;
+  const { fullname, email, password } = request.body as UserInput;
 
   // Check if user already exists
   const existingUser = await findUserByEmail(email);
@@ -19,7 +19,7 @@ export const registerController: RequestHandler = async (request, response) => {
     fullname,
     email,
     password: hashedPassword,
-    role: role || 'customer',
+    role: 'customer',
   });
 
   // Remove password from response

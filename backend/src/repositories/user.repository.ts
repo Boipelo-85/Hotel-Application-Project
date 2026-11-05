@@ -67,7 +67,7 @@ export async function createUser(
   const normalizedEmail = email.trim().toLowerCase();
   return client.query<AuthenticatedUser & { is_active: boolean }>(
     `INSERT INTO users (name, email, password_hash, phone, role, email_verified)
-     VALUES ($1, $2, $3, $4, 'customer', TRUE)
+     VALUES ($1, $2, $3, $4, 'customer', FALSE)
      RETURNING id, name, email, role, email_verified, phone, is_active, created_at, updated_at`,
     [name, normalizedEmail, passwordHash, phone],
   );

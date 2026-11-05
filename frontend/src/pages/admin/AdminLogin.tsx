@@ -32,38 +32,44 @@ const AdminLogin: React.FC = () => {
   };
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
       minHeight: '100vh',
       fontFamily: 'Courier New, monospace',
-      backgroundColor: '#f5f5f5'
+      backgroundColor: '#f1f1f1',
+      padding: '1.5rem',
     }}>
       <div style={{
-        backgroundColor: 'white',
-        padding: '2rem',
-        borderRadius: '0.5rem',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        backgroundColor: '#f9f9f9',
+        border: '1px solid #d9d9d9',
+        borderRadius: '0.65rem',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
         width: '100%',
-        maxWidth: '400px'
+        maxWidth: '440px',
+        padding: '2rem 2rem 1.5rem',
       }}>
-        <h1 style={{ 
-          textAlign: 'center', 
-          marginBottom: '1.5rem',
-          fontSize: '1.5rem',
-          fontWeight: 'bold'
+        <h1 style={{
+          textAlign: 'center',
+          margin: '0 0 1.75rem',
+          fontSize: '2.2rem',
+          fontWeight: 700,
+          lineHeight: 1.2,
+          color: '#1f1f1f',
+          letterSpacing: '-0.04em',
         }}>
           Admin Login
         </h1>
-        
+
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '1rem' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '0.5rem',
-              fontSize: '0.9rem',
-              fontWeight: 'bold'
+            <label style={{
+              display: 'block',
+              marginBottom: '0.55rem',
+              fontSize: '1rem',
+              fontWeight: 700,
+              color: '#1f1f1f',
             }}>
               Email
             </label>
@@ -72,24 +78,30 @@ const AdminLogin: React.FC = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
               style={{
                 width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #ccc',
-                borderRadius: '0.25rem',
-                fontSize: '1rem',
-                fontFamily: 'Courier New, monospace'
+                boxSizing: 'border-box',
+                padding: '0.85rem 0.9rem',
+                border: '1px solid #d0d0d0',
+                borderRadius: '0.4rem',
+                backgroundColor: '#dfeaf5',
+                fontSize: '1.1rem',
+                fontFamily: 'Courier New, monospace',
+                color: '#1f1f1f',
+                outline: 'none',
               }}
               placeholder="admin@grandrest.com"
             />
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '0.5rem',
-              fontSize: '0.9rem',
-              fontWeight: 'bold'
+            <label style={{
+              display: 'block',
+              marginBottom: '0.55rem',
+              fontSize: '1rem',
+              fontWeight: 700,
+              color: '#1f1f1f',
             }}>
               Password
             </label>
@@ -98,13 +110,18 @@ const AdminLogin: React.FC = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="current-password"
               style={{
                 width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #ccc',
-                borderRadius: '0.25rem',
-                fontSize: '1rem',
-                fontFamily: 'Courier New, monospace'
+                boxSizing: 'border-box',
+                padding: '0.85rem 0.9rem',
+                border: '1px solid #d0d0d0',
+                borderRadius: '0.4rem',
+                backgroundColor: '#f5f5f5',
+                fontSize: '1.1rem',
+                fontFamily: 'Courier New, monospace',
+                color: '#1f1f1f',
+                outline: 'none',
               }}
               placeholder="••••••••"
             />
@@ -112,12 +129,15 @@ const AdminLogin: React.FC = () => {
 
           {error && (
             <div style={{
-              backgroundColor: '#fee',
-              color: '#c33',
-              padding: '0.75rem',
+              backgroundColor: '#f7dfe0',
+              color: '#d7525d',
               borderRadius: '0.25rem',
+              padding: '0.8rem 0.9rem',
               marginBottom: '1rem',
-              fontSize: '0.9rem'
+              fontSize: '1rem',
+              lineHeight: 1.4,
+              textAlign: 'center',
+              border: '1px solid rgba(215, 82, 93, 0.18)',
             }}>
               {error}
             </div>
@@ -128,31 +148,33 @@ const AdminLogin: React.FC = () => {
             disabled={loading}
             style={{
               width: '100%',
-              padding: '0.75rem',
-              backgroundColor: '#1f2937',
-              color: 'white',
+              padding: '0.9rem 1rem',
+              backgroundColor: '#1f2e3b',
+              color: '#ffffff',
               border: 'none',
-              borderRadius: '0.25rem',
-              fontSize: '1rem',
-              fontWeight: 'bold',
+              borderRadius: '0.35rem',
+              fontSize: '1.05rem',
+              fontWeight: 700,
               cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.6 : 1
+              opacity: loading ? 0.7 : 1,
+              fontFamily: 'Courier New, monospace',
             }}
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
-        <div style={{ 
-          marginTop: '1.5rem', 
+        <div style={{
+          marginTop: '1.5rem',
           textAlign: 'center',
-          fontSize: '0.9rem'
+          fontSize: '1rem',
         }}>
-          <Link 
-            to="/" 
-            style={{ 
-              color: '#1f2937',
-              textDecoration: 'none'
+          <Link
+            to="/"
+            style={{
+              color: '#1f1f1f',
+              textDecoration: 'none',
+              fontFamily: 'Courier New, monospace',
             }}
           >
             ← Back to Home

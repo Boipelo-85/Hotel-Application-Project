@@ -3,7 +3,7 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as FacebookStrategy } from 'passport-facebook';
 import type { AppConfig } from './env.js';
 import { inTransaction } from '../config/database.js';
-import { findUserByOAuth, findUserByEmail, createUserWithOAuth, linkOAuthToUser } from '../repositories/user.repository.js';
+import { findUserByOAuth, findUserByEmail, createUserWithOAuth } from '../repositories/user.repository.js';
 import { createRefreshToken } from '../repositories/refresh-token.repository.js';
 import { generateAccessToken, generateRefreshToken } from '../utils/jwt.js';
 import type { AuthenticatedUser } from '../types/models.js';
@@ -27,6 +27,9 @@ export function configurePassport(config: AppConfig): void {
               return done(new Error('No email in Google profile'));
             }
 
+            if (profile._json?.email_verified !== true) {
+              return done(new Error('Google email is not verified'));
+            }
             const googleId = profile.id;
             const normalizedEmail = email.toLowerCase();
 
@@ -48,9 +51,8 @@ export function configurePassport(config: AppConfig): void {
                 if (!user.is_active) {
                   throw new Error('Account has been deactivated');
                 }
-                // Link Google account to existing user
-                await linkOAuthToUser(client, user.id, 'google', googleId);
-                return { user, isNew: false };
+                // Require an authenticated linking flow rather than matching emails.
+                throw new Error('Sign in with the existing account method');
               }
 
               // Create new user with Google OAuth
@@ -126,9 +128,8 @@ export function configurePassport(config: AppConfig): void {
                 if (!user.is_active) {
                   throw new Error('Account has been deactivated');
                 }
-                // Link Facebook account to existing user
-                await linkOAuthToUser(client, user.id, 'facebook', facebookId);
-                return { user, isNew: false };
+                // Require an authenticated linking flow rather than matching emails.
+                throw new Error('Sign in with the existing account method');
               }
 
               // Create new user with Facebook OAuth
@@ -166,11 +167,4 @@ export function configurePassport(config: AppConfig): void {
     );
   }
 
-  passport.serializeUser((data: any, done) => {
-    done(null, data);
-  });
-
-  passport.deserializeUser((data: any, done) => {
-    done(null, data);
-  });
 }

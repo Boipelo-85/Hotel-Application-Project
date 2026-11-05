@@ -1,13 +1,19 @@
 import React, { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import { Footer } from './components/Footer';
 import AppRoutes from './routes/AppRoutes';
 import { getCurrentUser } from './redux/authSlice';
-import type { AppDispatch } from './redux/store';
+import type { RootState, AppDispatch } from './redux/store';
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
+  const location = useLocation();
+  const currentBooking = useSelector((state: RootState) => state.bookings.currentBooking);
+  const confirmedBooking = currentBooking?.status === 'confirmed' && location.pathname === '/bookings/' + currentBooking.id;
+  const guestConfirmation = location.pathname === '/booking-confirmation' && location.state?.booking?.status === 'confirmed';
+  const isConfirmation = confirmedBooking || guestConfirmation;
 
   useEffect(() => {
     void dispatch(getCurrentUser());
@@ -15,11 +21,11 @@ function App() {
 
   return (
     <div className="app-shell">
-      <Navbar />
-      <main className="app-main">
+      {!isConfirmation && <Navbar />}
+      <main className={isConfirmation ? "app-main app-main--confirmation" : "app-main"}>
         <AppRoutes />
       </main>
-      <Footer />
+      {!isConfirmation && <Footer />}
     </div>
   );
 }
