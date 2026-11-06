@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { parseApiError, readJson } from '../../services/api';
 import Loading from '../../components/Loading';
+import PhotoEditor, { type EditablePhoto } from '../../components/PhotoEditor';
 
 const fieldStyle: React.CSSProperties = {
   width: '100%',
@@ -34,6 +35,7 @@ interface ManagedBranch {
   publication_status?: string;
   latitude?: number | string | null;
   longitude?: number | string | null;
+  images?: EditablePhoto[];
 }
 
 const EditHotel: React.FC = () => {
@@ -134,6 +136,7 @@ const EditHotel: React.FC = () => {
           name={name} address={`${address}, ${city}, ${province}`} />
         <label>Description<textarea value={description} onChange={(event) => setDescription(event.target.value)} style={{ ...fieldStyle, minHeight: '6rem' }} /></label>
         <label>Price per night<input required type="number" min={0} step="0.01" value={pricePerNight} onChange={(event) => setPricePerNight(event.target.value)} style={fieldStyle} /></label>
+        {branch && <PhotoEditor key={branch.id} label="Branch" apiPath={`/api/v1/admin/branches/${branch.id}`} initialPhotos={branch.images} />}
         {error && <p style={{ color: 'red' }}>{error}</p>}
         {message && <p style={{ color: '#047857' }}>{message}</p>}
         <button type="submit" disabled={saving} style={{ padding: '0.75rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '0.25rem' }}>

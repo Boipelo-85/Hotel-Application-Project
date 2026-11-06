@@ -24,6 +24,12 @@ const testConfig = testDatabaseUrl
     })
   : undefined;
 
+function firstRow<Row>(rows: readonly Row[]): Row {
+  const row = rows[0];
+  assert.ok(row, 'Expected query to return a row');
+  return row;
+}
+
 if (testConfig) {
   initializeDatabase(testConfig);
 }
@@ -87,13 +93,13 @@ async function createFixture(
       VALUES ($1, 'Test room', 2, 1, 100, 'USD')
       RETURNING id
     `,
-    [branch.rows[0].id],
+    [firstRow(branch.rows).id],
   );
 
   return {
-    userId: user.rows[0].id,
-    branchId: branch.rows[0].id,
-    roomId: room.rows[0].id,
+    userId: firstRow(user.rows).id,
+    branchId: firstRow(branch.rows).id,
+    roomId: firstRow(room.rows).id,
   };
 }
 
@@ -246,6 +252,7 @@ test(
 
       const rejection = rejected[0];
 
+      assert.ok(rejection, 'Expected one booking request to be rejected');
       assert.ok(rejection.status === 'rejected');
       assert.ok(rejection.reason instanceof AppError);
       assert.equal(rejection.reason.code, 'NO_INVENTORY');
@@ -259,7 +266,7 @@ test(
         [fixture.roomId],
       );
 
-      assert.equal(Number(bookingCount.rows[0].count), 1);
+      assert.equal(Number(firstRow(bookingCount.rows).count), 1);
     } finally {
       await cleanupFixture(fixture);
     }
@@ -286,8 +293,8 @@ test(
         [[polokwane.branchId, pretoria.branchId]],
       );
 
-      assert.equal(Number(brand.rows[0].count), 1);
-      assert.equal(Number(branches.rows[0].count), 1);
+      assert.equal(Number(firstRow(brand.rows).count), 1);
+      assert.equal(Number(firstRow(branches.rows).count), 1);
 
       const pretoriaResults = await listBranches(undefined, 'pretoria');
       const matchingBranchIds = pretoriaResults.map(

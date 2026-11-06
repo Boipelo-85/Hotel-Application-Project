@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { parseApiError, readJson } from '../../services/api';
 import Loading from '../../components/Loading';
+import PhotoEditor, { type EditablePhoto } from '../../components/PhotoEditor';
 
 interface ManagedBranch {
   id: string;
@@ -17,7 +18,7 @@ interface Room {
   price_per_night?: string;
   currency: string;
   description?: string;
-  images?: Array<{ id: string; image_url: string; alt_text?: string | null }>;
+  images?: EditablePhoto[];
 }
 
 const fieldStyle: React.CSSProperties = {
@@ -489,6 +490,17 @@ const ManageRooms: React.FC = () => {
                   <label>Quantity<input required type="number" min={1} max={1000} value={editForm.quantity} onChange={(event) => setEditForm({ ...editForm, quantity: event.target.value })} style={fieldStyle} /></label>
                   <label>Price per night<input required type="number" min={0} max={1000000} step="0.01" value={editForm.price} onChange={(event) => setEditForm({ ...editForm, price: event.target.value })} style={fieldStyle} /></label>
                   <label>Description<textarea maxLength={5000} value={editForm.description} onChange={(event) => setEditForm({ ...editForm, description: event.target.value })} style={fieldStyle} rows={3} /></label>
+                  <PhotoEditor
+                    key={selectedRoom.id}
+                    label="Room"
+                    apiPath={`/api/v1/admin/rooms/${selectedRoom.id}`}
+                    roomDetailsUrl={`/api/v1/rooms/${selectedRoom.id}`}
+                    onChange={(images) => {
+                      const roomId = selectedRoom.id;
+                      setRooms(current => current.map(room => room.id === roomId ? { ...room, images } : room));
+                      setSelectedRoom(current => current?.id === roomId ? { ...current, images } : current);
+                    }}
+                  />
                   <button type="submit" disabled={saving} style={{ padding: '0.75rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '0.25rem', cursor: saving ? 'not-allowed' : 'pointer' }}>
                     {saving ? 'Saving...' : 'Save changes'}
                   </button>

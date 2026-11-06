@@ -28,7 +28,7 @@ const HotelCard: React.FC<HotelCardProps> = ({
   address,
   starRating,
   price,
-  currency = 'USD',
+  currency = 'ZAR',
   subtitle,
   imageUrl,
   imageAlt,

@@ -123,7 +123,11 @@ export async function searchAvailableBranches(input: {
 
 export async function listManagedBranches(user: Pick<AuthenticatedUser, 'id' | 'role'>) {
   return query(
-    `SELECT h.*, brand.name AS brand_name FROM branches h
+    `SELECT h.*, brand.name AS brand_name,
+      COALESCE((SELECT jsonb_agg(jsonb_build_object(
+        'id', i.id::TEXT, 'image_url', i.image_url, 'alt_text', i.alt_text, 'display_order', i.display_order
+      ) ORDER BY i.display_order, i.id) FROM branch_images i WHERE i.branch_id = h.id), '[]'::JSONB) AS images
+    FROM branches h
     JOIN hotel_brand brand ON brand.id = h.brand_id
      WHERE ($1 = 'admin' OR h.manager_user_id = $2)
      ORDER BY h.updated_at DESC LIMIT 500`,
