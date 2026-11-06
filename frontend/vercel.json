@@ -4,11 +4,11 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://hotel-application-project.onrender.com*"
+      "destination": "https://hotel-application-project.onrender.com/api/:path*"
     },
     {
       "source": "/uploads/:path*",
-      "destination": "https://hotel-application-project.onrender.com"
+      "destination": "https://hotel-application-project.onrender.com/uploads/:path*"
     },
     {
       "source": "/((?!api/|uploads/).*)",
