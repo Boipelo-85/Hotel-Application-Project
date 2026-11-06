@@ -46,6 +46,9 @@ const AdminDashboard: React.FC = () => {
         )}
         <Link to="/admin/rooms" style={navLinkStyle}>Rooms</Link>
         <Link to="/admin/bookings" style={navLinkStyle}>Bookings</Link>
+        {user?.role === 'admin' && (
+          <Link to="/admin/favourites" style={navLinkStyle}>Favourites</Link>
+        )}
         <button
           type="button"
           onClick={() => void handleLogout()}

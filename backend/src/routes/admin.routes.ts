@@ -37,6 +37,7 @@ import {
 } from '../controllers/room.controller.js';
 import { updateHotelBrandController } from '../controllers/hotel-brand.controller.js';
 import { refundBookingController } from '../controllers/payment.controller.js';
+import { listAdminFavouritesController } from '../controllers/favourite.controller.js';
 
 const id = z.string().regex(/^\d+$/);
 
@@ -50,6 +51,7 @@ export function adminRoutes(config: AppConfig, cookieName: string): Router {
 
   // Dashboard Stats
   router.get('/dashboard/stats', getDashboardStatsController);
+  router.get('/favourites', requireAdmin, listAdminFavouritesController);
   router.get('/dashboard/recent-bookings', validateQuery(z.object({ limit: z.string().optional() })), getRecentBookingsController);
   router.get(
     '/bookings',

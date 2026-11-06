@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('guest can reserve, pay, return from checkout and request cancellation without signing in', async ({ page }) => {
+test('new bookings require sign-in and existing guest bookings can still be paid and cancelled', async ({ page }) => {
   const booking = { id: '7', user_id: null, booking_reference: 'HB-GUEST-TEST', guest_email: 'guest@example.test',
     room_id: '1', check_in: '2099-01-01', check_out: '2099-01-03', guests: 2, quantity: 1,
     total_amount: '2400.00', currency: 'ZAR', status: 'pending', expires_at: new Date(Date.now() + 900000).toISOString(),
@@ -13,10 +13,6 @@ test('guest can reserve, pay, return from checkout and request cancellation with
     const path = new URL(request.url()).pathname.replace('/api/v1', '');
     if (path === '/auth/me' || path === '/auth/refresh') return route.fulfill({ status: 401, json: { message: 'Sign in required' } });
     if (path === '/rooms/1') return route.fulfill({ json: { room: { id: '1', room_type: 'Standard Queen', price: '1200.00', currency: 'ZAR', capacity: 2, quantity: 5 } } });
-    if (path === '/bookings' && request.method() === 'POST') {
-      expect(request.postDataJSON().guestEmail).toBe('guest@example.test');
-      return route.fulfill({ status: 201, json: { booking } });
-    }
     if (path === '/guest-bookings/7/checkout') {
       expect(request.postDataJSON()).toEqual({ paymentMethod: 'eft' });
       expect(request.headers()['idempotency-key']).toBeTruthy();
@@ -37,15 +33,11 @@ test('guest can reserve, pay, return from checkout and request cancellation with
     return route.fulfill({ json: { notifications: [], branches: [] } });
   });
   await page.goto('/book?roomId=1&checkIn=2099-01-01&checkOut=2099-01-03');
-  await page.getByRole('button', { name: 'Continue as guest' }).click();
-  await page.getByLabel('First name').fill('Guest');
-  await page.getByLabel('Last name').fill('Traveler');
-  await page.getByLabel('Email address', { exact: true }).fill('guest@example.test');
-  await page.getByLabel('Phone number').fill('0712345678');
-  await page.getByLabel('Country / region').fill('South Africa');
-  await page.getByLabel('Address', { exact: true }).fill('1 Test Street');
-  await page.getByRole('button', { name: 'Continue to payment', exact: true }).click();
-  await expect(page).toHaveURL(/\/guest-bookings\/7$/);
+  await expect(page.getByRole('heading', { name: 'Choose how to continue' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Sign in', exact: true }).last()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Continue as guest' })).toHaveCount(0);
+
+  await page.goto('/guest-bookings/7');
   await page.getByLabel('Payment method').selectOption('eft');
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Continue to secure payment' }).click();

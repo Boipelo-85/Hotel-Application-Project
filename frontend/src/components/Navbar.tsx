@@ -29,7 +29,7 @@ const Navbar: React.FC = () => {
               <Link to="/bookings" className="navbar__link">
                 My Bookings
               </Link>
-              <Link to="/favourites" className="navbar__link">
+              <Link to={user?.role === 'admin' && location.pathname.startsWith('/admin') ? '/admin/favourites' : '/favourites'} className="navbar__link">
                 Favourites
               </Link>
               <Link to="/notifications" className="navbar__link">

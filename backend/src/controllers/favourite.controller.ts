@@ -2,6 +2,7 @@ import type { RequestHandler } from 'express';
 import { AppError, getRouteParam } from '../utils/errors.js';
 import {
   addFavourite as addFavouriteService,
+  getAdminFavourites,
   getFavourites as getFavouritesService,
   removeFavourite as removeFavouriteService,
 } from '../services/favourite.service.js';
@@ -13,6 +14,10 @@ function userId(request: Parameters<RequestHandler>[0]): string {
 
 export const listFavouritesController: RequestHandler = async (request, response) => {
   response.json({ favourites: await getFavouritesService(userId(request)) });
+};
+
+export const listAdminFavouritesController: RequestHandler = async (_request, response) => {
+  response.set('Cache-Control', 'no-store').json({ favourites: await getAdminFavourites() });
 };
 
 export const addFavouriteController: RequestHandler = async (request, response) => {

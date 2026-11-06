@@ -23,6 +23,7 @@ const AddHotel = lazy(() => import('../pages/admin/AddHotel'));
 const EditHotel = lazy(() => import('../pages/admin/EditHotel'));
 const ManageRooms = lazy(() => import('../pages/admin/ManageRooms'));
 const ManageBookings = lazy(() => import('../pages/admin/ManageBookings'));
+const AdminFavourites = lazy(() => import('../pages/admin/AdminFavourites'));
 import ProtectedRoute from '../components/ProtectedRoute';
 import AdminRoute from '../components/AdminRoute';
 
@@ -153,6 +154,7 @@ const AppRoutes: React.FC = () => {
           </AdminRoute>
         }
       />
+      <Route path="/admin/favourites" element={<AdminRoute adminOnly><AdminFavourites /></AdminRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes></Suspense>
   );

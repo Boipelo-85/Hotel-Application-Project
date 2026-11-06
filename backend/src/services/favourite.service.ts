@@ -1,6 +1,11 @@
 import * as favouriteRepository from '../repositories/favourite.repository.js';
 import { AppError } from '../utils/errors.js';
 
+export async function getAdminFavourites() {
+  const result = await favouriteRepository.listAdminFavourites();
+  return result.rows;
+}
+
 export async function getFavourites(userId: string) {
   const result = await favouriteRepository.listUserFavourites(userId);
   return result.rows.filter((hotel) => hotel.publication_status === 'published');

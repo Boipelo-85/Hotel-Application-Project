@@ -5,7 +5,7 @@ import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import { addFavourite, fetchFavourites, removeFavourite } from '../redux/favouriteSlice';
 import type { AppDispatch, RootState } from '../redux/store';
 
-const FavouriteButton: React.FC<{ branchId: string; loadOnMount?: boolean }> = ({ branchId, loadOnMount = true }) => {
+const FavouriteButton: React.FC<{ branchId: string; loadOnMount?: boolean; className?: string }> = ({ branchId, loadOnMount = true, className }) => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const [message, setMessage] = useState('');
@@ -24,7 +24,7 @@ const FavouriteButton: React.FC<{ branchId: string; loadOnMount?: boolean }> = (
 
   const toggle = async () => {
     if (!isAuthenticated) {
-      navigate('/login', { state: { from: `/hotels/${branchId}` } });
+      navigate('/login', { state: { from: `/branches/${branchId}` } });
       return;
     }
     setMessage('');
@@ -38,7 +38,7 @@ const FavouriteButton: React.FC<{ branchId: string; loadOnMount?: boolean }> = (
   };
 
   return (
-    <span>
+    <span className={className}>
       <button
         type="button"
         onClick={() => void toggle()}
@@ -56,6 +56,7 @@ const FavouriteButton: React.FC<{ branchId: string; loadOnMount?: boolean }> = (
           transition: 'all 0.2s ease',
         }}
         title={isFavourite ? 'Remove from favourites' : 'Save to favourites'}
+        aria-pressed={isFavourite}
       >
         {isFavourite ? (
           <FaHeart style={{ color: '#e53935', fontSize: '1.25rem' }} />

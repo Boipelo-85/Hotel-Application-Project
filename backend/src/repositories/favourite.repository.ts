@@ -49,6 +49,17 @@ export async function listUserFavourites(userId: string) {
   );
 }
 
+export async function listAdminFavourites() {
+  return query(
+    `SELECT f.id, f.created_at, u.name AS user_name, u.email AS user_email,
+            b.name AS branch_name, b.city AS branch_city
+     FROM favourites f
+     JOIN users u ON u.id = f.user_id
+     JOIN branches b ON b.id = f.branch_id
+     ORDER BY f.created_at DESC, f.id DESC`,
+  );
+}
+
 export async function addFavourite(userId: string, branchId: string) {
   return query(
     `INSERT INTO favourites (user_id, branch_id)

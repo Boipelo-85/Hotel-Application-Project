@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import FavouriteButton from './FavouriteButton';
+import { fetchFavourites } from '../redux/favouriteSlice';
+import type { AppDispatch, RootState } from '../redux/store';
 
 interface Property {
   id: string;
@@ -21,7 +25,8 @@ interface HomesGuestsLoveProps {
 
 const HomesGuestsLove: React.FC<HomesGuestsLoveProps> = ({ filterProvince }) => {
   const location = useLocation();
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const dispatch = useDispatch<AppDispatch>();
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,17 +85,9 @@ const HomesGuestsLove: React.FC<HomesGuestsLoveProps> = ({ filterProvince }) => 
       )
     : properties;
 
-  const toggleFavorite = (id: string) => {
-    setFavorites((prev) => {
-      const newFavorites = new Set(prev);
-      if (newFavorites.has(id)) {
-        newFavorites.delete(id);
-      } else {
-        newFavorites.add(id);
-      }
-      return newFavorites;
-    });
-  };
+  useEffect(() => {
+    if (isAuthenticated) void dispatch(fetchFavourites());
+  }, [dispatch, isAuthenticated]);
 
   const scroll = (direction: 'left' | 'right') => {
     const container = document.getElementById('cards-container');
@@ -142,75 +139,54 @@ const HomesGuestsLove: React.FC<HomesGuestsLoveProps> = ({ filterProvince }) => 
   return (
     <section className="homes-guests-love">
       <div className="homes-guests-love__header">
-        <h2 className="homes-guests-love__title">Homes guests love</h2>
-        <Link to="/hotels" className="homes-guests-love__discover">
-          Discover homes
-        </Link>
+        <h2 className="homes-guests-love__title">Curated Homes. Unforgettable Stays.</h2>
       </div>
 
       <div className="homes-guests-love__scroll-container">
         <div id="cards-container" className="homes-guests-love__cards">
           {filteredProperties.map((property) => (
-            <Link key={property.id} to={`/branches/${property.id}`} state={{ returnTo: `${location.pathname}${location.search}` }} className="homes-guests-love__card-link">
-              <div className="homes-guests-love__card">
-                <div className="homes-guests-love__card-image">
-                  <img
-                    src={property.image}
-                    alt={property.name}
-                    className="homes-guests-love__card-img"
-                  />
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      toggleFavorite(property.id);
-                    }}
-                    className="homes-guests-love__favorite-btn"
-                    aria-label="Add to favorites"
-                  >
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill={favorites.has(property.id) ? '#ff4757' : 'none'}
-                      stroke={favorites.has(property.id) ? '#ff4757' : '#fff'}
-                      strokeWidth="2"
-                    >
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                    </svg>
-                  </button>
-                </div>
-
-                <div className="homes-guests-love__card-content">
-                  <h3 className="homes-guests-love__card-name">{property.name}</h3>
-                  
-                  <div className="homes-guests-love__card-stars">
-                    <span className="homes-guests-love__stars">{'★'.repeat(property.starRating)}</span>
+            <div key={property.id} className="homes-guests-love__card-item">
+              <Link to={`/branches/${property.id}`} state={{ returnTo: `${location.pathname}${location.search}` }} className="homes-guests-love__card-link">
+                <div className="homes-guests-love__card">
+                  <div className="homes-guests-love__card-image">
+                    <img
+                      src={property.image}
+                      alt={property.name}
+                      className="homes-guests-love__card-img"
+                    />
                   </div>
 
-                  <p className="homes-guests-love__card-location">{property.location}  </p>
+                  <div className="homes-guests-love__card-content">
+                    <h3 className="homes-guests-love__card-name">{property.name}</h3>
 
-                  {property.distanceDowntown && (
-                    <p className="homes-guests-love__card-distance">{property.distanceDowntown}</p>
-                  )}
-                  {property.distanceBeach && (
-                    <p className="homes-guests-love__card-distance">{property.distanceBeach}</p>
-                  )}
-                  
-                  {property.description && (
-                    <p className="homes-guests-love__card-description">{property.description}</p>
-                  )}
+                    <div className="homes-guests-love__card-stars">
+                      <span className="homes-guests-love__stars">{'★'.repeat(property.starRating)}</span>
+                    </div>
 
-                  <div className="homes-guests-love__card-price">
-                    <span className="homes-guests-love__price-label">Starting from</span>
-                    <span className="homes-guests-love__price-amount">
-                      {property.currency} {property.price}
-                    </span>
+                    <p className="homes-guests-love__card-location">{property.location}  </p>
+
+                    {property.distanceDowntown && (
+                      <p className="homes-guests-love__card-distance">{property.distanceDowntown}</p>
+                    )}
+                    {property.distanceBeach && (
+                      <p className="homes-guests-love__card-distance">{property.distanceBeach}</p>
+                    )}
+
+                    {property.description && (
+                      <p className="homes-guests-love__card-description">{property.description}</p>
+                    )}
+
+                    <div className="homes-guests-love__card-price">
+                      <span className="homes-guests-love__price-label">Starting from</span>
+                      <span className="homes-guests-love__price-amount">
+                        {property.currency} {property.price}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
+              <FavouriteButton branchId={property.id} loadOnMount={false} className="homes-guests-love__favorite-btn" />
+            </div>
           ))}
         </div>
 
