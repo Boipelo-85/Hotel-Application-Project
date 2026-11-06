@@ -52,6 +52,7 @@ const Navbar: React.FC = () => {
               </button>
             </>
           ) : (
+            
             !isAuthPage && (
               <>
                 {/* <Link to="/booking-lookup" className="navbar__link">Find booking</Link> */}
