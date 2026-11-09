@@ -34,7 +34,7 @@ const HomesGuestsLove: React.FC<HomesGuestsLoveProps> = ({ filterProvince }) => 
   useEffect(() => {
     const fetchBranches = async () => {
       try {
-        const response = await fetch('/api/v1/branches');
+        const response = await fetch('/api/v1/branches', { cache: 'no-store' });
         if (!response.ok) {
           throw new Error(`Failed to load properties (${response.status})`);
         }
@@ -57,7 +57,7 @@ const HomesGuestsLove: React.FC<HomesGuestsLoveProps> = ({ filterProvince }) => 
 
         const mappedProperties: Property[] = data.branches.map((branch) => ({
           id: String(branch.id),
-          image: branch.images?.[0]?.url || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800',
+          image: branch.images?.[0]?.url || '',
           name: branch.name,
           location: `${branch.city}, ${branch.province}`,
           province: branch.province,
@@ -75,7 +75,10 @@ const HomesGuestsLove: React.FC<HomesGuestsLoveProps> = ({ filterProvince }) => 
       }
     };
 
-    fetchBranches();
+    void fetchBranches();
+    const refresh = () => { void fetchBranches(); };
+    window.addEventListener('focus', refresh);
+    return () => window.removeEventListener('focus', refresh);
   }, []);
 
   const filteredProperties = filterProvince
@@ -149,11 +152,11 @@ const HomesGuestsLove: React.FC<HomesGuestsLoveProps> = ({ filterProvince }) => 
               <Link to={`/branches/${property.id}`} state={{ returnTo: `${location.pathname}${location.search}` }} className="homes-guests-love__card-link">
                 <div className="homes-guests-love__card">
                   <div className="homes-guests-love__card-image">
-                    <img
+                    {property.image ? <img
                       src={property.image}
                       alt={property.name}
                       className="homes-guests-love__card-img"
-                    />
+                    /> : <div role="img" aria-label={`No photo available for ${property.name}`} style={{ height: '100%', display: 'grid', placeItems: 'center', background: '#e5e7eb' }}>No photo available</div>}
                   </div>
 
                   <div className="homes-guests-love__card-content">

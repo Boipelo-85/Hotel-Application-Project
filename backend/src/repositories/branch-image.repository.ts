@@ -11,6 +11,7 @@ export async function insertBranchImage(
   branchId: string,
   input: { imageUrl: string; altText: string | null; displayOrder: number },
 ) {
+  await client.query('UPDATE branch_images SET display_order = display_order + 1 WHERE branch_id = $1 AND display_order >= $2', [branchId, input.displayOrder]);
   return client.query(
     `INSERT INTO branch_images (branch_id, image_url, alt_text, display_order)
      VALUES ($1, $2, $3, $4) RETURNING *`,

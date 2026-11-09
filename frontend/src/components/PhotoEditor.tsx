@@ -55,7 +55,7 @@ export default function PhotoEditor({ label, apiPath, initialPhotos, roomDetails
       const body = new FormData();
       if (file && !photo) {
         body.append('image', file);
-        body.append('displayOrder', String(Math.max(-1, ...photos.map(item => item.display_order ?? 0)) + 1));
+        body.append('displayOrder', label === 'Branch' ? '0' : String(Math.max(-1, ...photos.map(item => item.display_order ?? 0)) + 1));
       }
       const response = await fetch(photo ? `${apiPath}/images/${photo.id}` : `${apiPath}/upload-image`, {
         method: photo ? 'DELETE' : 'POST',
@@ -69,13 +69,13 @@ export default function PhotoEditor({ label, apiPath, initialPhotos, roomDetails
         updatedPhotos = photos.filter(item => item.id !== photo.id);
       } else {
         const data = await response.json() as { image: EditablePhoto };
-        updatedPhotos = [...photos, data.image];
+        updatedPhotos = label === 'Branch' ? [data.image, ...photos] : [...photos, data.image];
         setFile(null);
         setInputKey(key => key + 1);
       }
       setPhotos(updatedPhotos);
       onChange?.(updatedPhotos);
-      setMessage(photo ? 'Photo removed.' : 'Photo added.');
+      setMessage(photo ? 'Photo removed.' : label === 'Branch' ? 'Photo added and set as the branch cover.' : 'Photo added.');
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Could not update photos.');
     } finally {
@@ -86,7 +86,7 @@ export default function PhotoEditor({ label, apiPath, initialPhotos, roomDetails
   return (
     <fieldset style={{ minWidth: 0, padding: '0.75rem', border: '1px solid #ddd', borderRadius: '0.25rem' }}>
       <legend>{label} photos</legend>
-      <p>Photo changes save separately. To replace a photo, add the new one and then remove the old one.</p>
+      <p>{label === 'Branch' ? 'Photo changes save separately. New photos become the cover shown on branch cards. Older photos remain in the gallery.' : 'Photo changes save separately. To replace a photo, add the new one and then remove the old one.'}</p>
       {loading && <p role="status">Loading photos…</p>}
       {!loading && !error && photos.length === 0 && <p>No photos yet.</p>}
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
