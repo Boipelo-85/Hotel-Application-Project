@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { cancelBooking, fetchBookings, modifyBooking, type Booking } from '../redux/bookingSlice';
 import type { AppDispatch, RootState } from '../redux/store';
 import Loading from '../components/Loading';
+import ConfirmationButton from '../components/Modal';
 
 const MyBookings: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -11,6 +12,8 @@ const MyBookings: React.FC = () => {
   const [editingBookingId, setEditingBookingId] = useState<string | null>(null);
   const [savingBookingId, setSavingBookingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null);
   const [draft, setDraft] = useState({ checkIn: '', checkOut: '', guests: '1', quantity: '1' });
 
   useEffect(() => {
@@ -48,6 +51,22 @@ const MyBookings: React.FC = () => {
     }
   };
 
+  const cancelReservation = async (booking: Booking) => {
+    setActionError(null);
+    setActionMessage(null);
+    setCancellingBookingId(booking.id);
+    const result = await dispatch(cancelBooking(booking.id));
+    setCancellingBookingId(null);
+    if (cancelBooking.rejected.match(result)) {
+      setActionError(result.error.message || 'Unable to cancel this booking.');
+      return;
+    }
+    setEditingBookingId((current) => current === booking.id ? null : current);
+    setActionMessage(result.payload.status === 'cancelled'
+      ? 'Your booking was cancelled.'
+      : 'Cancellation requested. Your booking will be cancelled when the payment provider confirms the refund.');
+  };
+
   if (loading && bookings.length === 0) {
     return <Loading message="Loading bookings..." />;
   }
@@ -59,6 +78,7 @@ const MyBookings: React.FC = () => {
   return (
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
       <h1 style={{ marginBottom: '1.5rem' }}>My Bookings</h1>
+      {actionMessage && <p role="status">{actionMessage}</p>}
       {actionError && <p role="alert" style={{ color: '#991b1b' }}>{actionError}</p>}
       {bookings.length === 0 ? (
         <p>
@@ -97,20 +117,19 @@ const MyBookings: React.FC = () => {
                 {booking.status === 'pending' && (
                   <button type="button" onClick={() => startEditing(booking)}>Modify stay</button>
                 )}
-                {booking.status === 'pending' && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setActionError(null);
-                      const result = await dispatch(cancelBooking(String(booking.id)));
-                      if (cancelBooking.rejected.match(result)) {
-                        setActionError(result.error.message || 'Unable to cancel this booking.');
-                      }
-                    }}
-                    style={{ background: 'none', border: 'none', color: '#991b1b', cursor: 'pointer', padding: 0 }}
+                {!booking.refund_pending && (booking.status === 'pending' ||
+                  (booking.status === 'confirmed' && booking.check_in.slice(0, 10) > new Date().toISOString().slice(0, 10))) && (
+                  <ConfirmationButton
+                    disabled={cancellingBookingId !== null || savingBookingId === booking.id}
+                    title={`Cancel booking ${booking.booking_reference}?`}
+                    description={booking.status === 'confirmed' ? 'If you paid online, we’ll request a full refund.' : undefined}
+                    dismissLabel="Keep booking"
+                    confirmLabel="Cancel booking"
+                    onConfirm={() => cancelReservation(booking)}
+                    style={{ color: '#991b1b' }}
                   >
-                    Cancel
-                  </button>
+                    {cancellingBookingId === booking.id ? 'Cancelling…' : 'Cancel booking'}
+                  </ConfirmationButton>
                 )}
               </div>
               {editingBookingId === booking.id && (
@@ -132,9 +151,11 @@ const MyBookings: React.FC = () => {
                   </div>
                 </form>
               )}
-              {booking.status === 'confirmed' && (
-                <p style={{ color: '#6b7280' }}>Changes and cancellations for confirmed stays are not available online.</p>
-              )}
+              {booking.refund_pending && <p>Cancellation and refund in progress.</p>}
+              {booking.status === 'confirmed' && !booking.refund_pending &&
+                booking.check_in.slice(0, 10) <= new Date().toISOString().slice(0, 10) && (
+                  <p>Contact the hotel to cancel on or after check-in day.</p>
+                )}
             </div>
           ))}
         </div>

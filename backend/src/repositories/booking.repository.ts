@@ -103,7 +103,11 @@ export async function insertBookingNotification(
 
 export async function listUserBookings(userId: string, isAdmin: boolean) {
   return query<BookingRow>(
-    `SELECT b.*, h.name AS branch_name, r.room_type
+    `SELECT b.*, h.name AS branch_name, r.room_type, EXISTS (
+       SELECT 1 FROM payments p
+       WHERE p.booking_id = b.id AND p.status = 'successful'
+         AND to_jsonb(p)->>'refund_requested_at' IS NOT NULL
+     ) AS refund_pending
      FROM bookings b JOIN rooms r ON r.id = b.room_id
      JOIN branches h ON h.id = r.branch_id
      WHERE ($1::BOOLEAN OR b.user_id = $2)

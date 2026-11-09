@@ -106,8 +106,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
             className='input_destin'
             value={destination}
             onChange={(event) => setDestination(event.target.value)}
-
-            style={{width:'100%', border:'1px solid #dad9d9', outline:'none', fontSize:'1.5rem',borderRadius:'8px',height:'2.3rem'}}
+            placeholder='enter city or province'
+            style={{width:'100%', border:'1px solid #dad9d9', outline:'none', fontSize:'1.0rem',borderRadius:'8px',height:'2.3rem'}}
           />
       </div>
 

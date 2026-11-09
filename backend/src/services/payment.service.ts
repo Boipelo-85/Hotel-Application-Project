@@ -293,7 +293,7 @@ export async function verifyPaymentReference(
 export async function requestBookingRefund(
   bookingId: string,
   idempotencyKeyInput: string,
-  guestBookingId?: string,
+  customer?: { guestBookingId: string } | { userId: string },
 ): Promise<{ status: 'refund_requested' | 'refunded'; paymentId: string }> {
   const provider = getPaymentProvider();
   if (!provider) {
@@ -304,8 +304,14 @@ export async function requestBookingRefund(
     const booking = await findBookingByIdForUpdate(client, bookingId);
     if (!booking.rowCount) throw new AppError(404, 'Booking not found', 'NOT_FOUND');
     const reservation = booking.rows[0]!;
-    if (guestBookingId && (reservation.id !== guestBookingId || reservation.user_id !== null || reservation.status !== 'confirmed' || reservation.check_in <= new Date().toISOString().slice(0, 10))) {
-      throw new AppError(409, 'This stay cannot be cancelled online. Contact the hotel.', 'INVALID_BOOKING_STATE');
+    if (customer) {
+      const ownsBooking = 'userId' in customer
+        ? reservation.user_id === customer.userId
+        : reservation.user_id === null && reservation.id === customer.guestBookingId;
+      if (!ownsBooking) throw new AppError(404, 'Booking not found', 'NOT_FOUND');
+      if (reservation.status !== 'confirmed' || reservation.check_in <= new Date().toISOString().slice(0, 10)) {
+        throw new AppError(409, 'This stay cannot be cancelled online. Contact the hotel.', 'INVALID_BOOKING_STATE');
+      }
     }
     const result = await findLatestBookingPayment(client, bookingId);
     const row = result.rows[0];

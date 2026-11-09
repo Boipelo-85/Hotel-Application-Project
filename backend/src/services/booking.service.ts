@@ -199,6 +199,9 @@ export async function cancelBooking(
     if (booking.status === 'completed') {
       throw new AppError(409, 'Completed bookings cannot be cancelled', 'INVALID_BOOKING_STATE');
     }
+    if (!isAdmin && userId !== null && booking.status === 'confirmed' && booking.check_in <= new Date().toISOString().slice(0, 10)) {
+      throw new AppError(409, 'Contact the hotel to cancel a stay on or after check-in day.', 'INVALID_BOOKING_STATE');
+    }
     const payment = await listActivePaymentsForBooking(client, bookingId);
     if (payment.rows.some((row) => row.status === 'pending')) {
       throw new AppError(409, 'A checkout is in progress; wait for it to finish or expire before cancelling', 'PAYMENT_IN_PROGRESS');

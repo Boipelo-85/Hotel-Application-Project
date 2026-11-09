@@ -28,6 +28,7 @@ const HomesGuestsLove: React.FC<HomesGuestsLoveProps> = ({ filterProvince }) => 
   const dispatch = useDispatch<AppDispatch>();
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const [properties, setProperties] = useState<Property[]>([]);
+  const [unavailablePhotos, setUnavailablePhotos] = useState<Set<string>>(() => new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -106,10 +107,7 @@ const HomesGuestsLove: React.FC<HomesGuestsLoveProps> = ({ filterProvince }) => 
 
   if (loading) {
     return (
-      <section className="homes-guests-love">
-        <div className="homes-guests-love__header">
-          <h2 className="homes-guests-love__title">Homes guests love</h2>
-        </div>
+      <section className="homes-guests-love" aria-labelledby="home-branch-cards-title">
         <p style={{ padding: '2rem', color: '#666' }}>Loading properties...</p>
       </section>
     );
@@ -117,10 +115,7 @@ const HomesGuestsLove: React.FC<HomesGuestsLoveProps> = ({ filterProvince }) => 
 
   if (error) {
     return (
-      <section className="homes-guests-love">
-        <div className="homes-guests-love__header">
-          <h2 className="homes-guests-love__title">Homes guests love</h2>
-        </div>
+      <section className="homes-guests-love" aria-labelledby="home-branch-cards-title">
         <p role="alert" style={{ padding: '2rem', color: '#991b1b' }}>{error}</p>
       </section>
     );
@@ -128,10 +123,7 @@ const HomesGuestsLove: React.FC<HomesGuestsLoveProps> = ({ filterProvince }) => 
 
   if (filteredProperties.length === 0) {
     return (
-      <section className="homes-guests-love">
-        <div className="homes-guests-love__header">
-          <h2 className="homes-guests-love__title">Homes guests love</h2>
-        </div>
+      <section className="homes-guests-love" aria-labelledby="home-branch-cards-title">
         <p style={{ padding: '2rem', color: '#666' }}>
           {filterProvince ? `No properties found in ${filterProvince}` : 'No properties available yet.'}
         </p>
@@ -140,10 +132,7 @@ const HomesGuestsLove: React.FC<HomesGuestsLoveProps> = ({ filterProvince }) => 
   }
 
   return (
-    <section className="homes-guests-love">
-      <div className="homes-guests-love__header">
-        <h2 className="homes-guests-love__title">Curated Homes. Unforgettable Stays.</h2>
-      </div>
+    <section className="homes-guests-love" aria-labelledby="home-branch-cards-title">
 
       <div className="homes-guests-love__scroll-container">
         <div id="cards-container" className="homes-guests-love__cards">
@@ -152,9 +141,10 @@ const HomesGuestsLove: React.FC<HomesGuestsLoveProps> = ({ filterProvince }) => 
               <Link to={`/branches/${property.id}`} state={{ returnTo: `${location.pathname}${location.search}` }} className="homes-guests-love__card-link">
                 <div className="homes-guests-love__card">
                   <div className="homes-guests-love__card-image">
-                    {property.image ? <img
+                    {property.image && !unavailablePhotos.has(property.image) ? <img
                       src={property.image}
                       alt={property.name}
+                      onError={() => setUnavailablePhotos((previous) => new Set(previous).add(property.image))}
                       className="homes-guests-love__card-img"
                     /> : <div role="img" aria-label={`No photo available for ${property.name}`} style={{ height: '100%', display: 'grid', placeItems: 'center', background: '#e5e7eb' }}>No photo available</div>}
                   </div>

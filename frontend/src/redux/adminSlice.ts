@@ -38,6 +38,10 @@ interface RecentBooking {
   id: string;
   booking_reference: string;
   branch_name: string;
+  check_in: string;
+  check_out: string;
+  total_amount: string;
+  currency: string;
   status: string;
   user_name: string | null;
   user_email: string | null;

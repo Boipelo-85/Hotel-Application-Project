@@ -19,11 +19,14 @@ const Home: React.FC = () => {
 
   return (
     <div className="home-page">
-      <h1 className="home-page__title">Welcome to Grand-Rest Hotel</h1>
-      <p className="home-page__intro">
-        Search our branches by destination and dates, then book a room.
-      </p>
-      <SearchBar onSearch={setFilterProvince} />
+      <section className="home-page__hero" aria-labelledby="home-hero-title">
+        <h1 id="home-hero-title" className="home-page__title">Welcome to Grand-Rest Hotel</h1>
+        <p className="home-page__intro">
+          Search our branches by destination and dates, then book a room.
+        </p>
+        <SearchBar onSearch={setFilterProvince} />
+        <h2 id="home-branch-cards-title" className="home-page__cards-title">Curated Homes. Unforgettable Stays.</h2>
+      </section>
       <div className="home-page__gallery">
         <ImageGallery images={featuredImages} name="Featured Hotels" />
       </div>

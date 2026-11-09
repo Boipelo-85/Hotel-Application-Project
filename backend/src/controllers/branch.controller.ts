@@ -97,13 +97,17 @@ export const createAmenityController: RequestHandler = async (request, response)
   response.status(201).json({ amenity: await createAmenity(request.body.name, request.body.category) });
 };
 
+function branchUploadUrl(file: Express.Multer.File) {
+  return file.path.startsWith('https://') ? file.path : `/uploads/branches/${file.filename}`;
+}
+
 export const addBranchImageController: RequestHandler = async (request, response) => {
   const branchId = getRouteParam(request, 'branchId');
   const user = authenticated(request);
   
   // Handle file upload
   if (request.file) {
-    const imageUrl = `/uploads/branches/${request.file.filename}`;
+    const imageUrl = branchUploadUrl(request.file);
     const altText = request.body.altText || request.file.originalname;
     const displayOrder = request.body.displayOrder ? parseInt(request.body.displayOrder) : 0;
     const image = await addBranchImage(branchId, user, { imageUrl, altText, displayOrder });
@@ -115,7 +119,7 @@ export const addBranchImageController: RequestHandler = async (request, response
   if (request.files && Array.isArray(request.files)) {
     const images = await Promise.all(
       request.files.map(async (file: Express.Multer.File, index: number) => {
-        const imageUrl = `/uploads/branches/${file.filename}`;
+        const imageUrl = branchUploadUrl(file);
         const altText = file.originalname;
         const displayOrder = index;
         return await addBranchImage(branchId, user, { imageUrl, altText, displayOrder });

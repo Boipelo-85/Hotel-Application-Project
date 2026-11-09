@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { parseApiError } from '../services/api';
 
 export interface Booking {
   id: string;
@@ -101,13 +102,13 @@ export const createBooking = createAsyncThunk(
 
 export const cancelBooking = createAsyncThunk(
   'bookings/cancelBooking',
-  async (bookingId: string) => {
+  async (bookingId: string): Promise<Booking> => {
     const response = await fetch(`/api/v1/bookings/${bookingId}/cancel`, {
       method: 'POST',
       credentials: 'include',
     });
     if (!response.ok) {
-      throw new Error('Failed to cancel booking');
+      throw new Error(await parseApiError(response));
     }
     const data = await response.json();
     return data.booking;
@@ -192,20 +193,12 @@ const bookingSlice = createSlice({
         state.error = action.error.message || 'Failed to create booking';
       })
       // Cancel Booking
-      .addCase(cancelBooking.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
       .addCase(cancelBooking.fulfilled, (state, action) => {
-        state.loading = false;
-        const index = state.bookings.findIndex((b) => b.id === action.payload.id);
-        if (index !== -1) {
-          state.bookings[index] = action.payload;
+        const index = state.bookings.findIndex((booking) => booking.id === action.payload.id);
+        if (index !== -1) state.bookings[index] = { ...state.bookings[index], ...action.payload };
+        if (state.currentBooking?.id === action.payload.id) {
+          state.currentBooking = { ...state.currentBooking, ...action.payload };
         }
-      })
-      .addCase(cancelBooking.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || 'Failed to cancel booking';
       })
       .addCase(modifyBooking.pending, (state) => {
         state.loading = true;

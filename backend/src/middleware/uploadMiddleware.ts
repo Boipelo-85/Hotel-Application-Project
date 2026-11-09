@@ -1,6 +1,6 @@
 import multer from 'multer';
 import sharp from 'sharp';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, writeFile, unlink } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -32,6 +32,41 @@ export async function normalizeImage(buffer: Buffer): Promise<Buffer> {
   }
 }
 
+async function storeBranchPhoto(buffer: Buffer, filename: string): Promise<string | undefined> {
+  const cloud = process.env.CLOUDINARY_CLOUD_NAME?.trim();
+  const key = process.env.CLOUDINARY_API_KEY?.trim();
+  const secret = process.env.CLOUDINARY_API_SECRET?.trim();
+  if (!cloud && !key && !secret) return undefined;
+  if (!cloud || !key || !secret) {
+    throw new AppError(503, 'Branch photo storage is not fully configured', 'IMAGE_STORAGE_UNAVAILABLE');
+  }
+
+  const publicId = 'hotel-branches/' + filename.slice(0, -5);
+  const timestamp = String(Math.floor(Date.now() / 1000));
+  const signature = createHash('sha256').update('public_id=' + publicId + '&timestamp=' + timestamp + secret).digest('hex');
+  const form = new FormData();
+  form.set('file', new Blob([new Uint8Array(buffer)], { type: 'image/webp' }), filename);
+  form.set('api_key', key);
+  form.set('public_id', publicId);
+  form.set('timestamp', timestamp);
+  form.set('signature', signature);
+
+  try {
+    const response = await fetch('https://api.cloudinary.com/v1_1/' + encodeURIComponent(cloud) + '/image/upload', {
+      method: 'POST',
+      body: form,
+      signal: AbortSignal.timeout(20_000),
+    });
+    const result = await response.json();
+    if (response.ok && typeof result.secure_url === 'string' && new URL(result.secure_url).origin === 'https://res.cloudinary.com') {
+      return result.secure_url;
+    }
+  } catch {
+    // Keep provider credentials and response details out of the API error.
+  }
+  throw new AppError(503, 'Branch photo storage is unavailable. Please try again.', 'IMAGE_STORAGE_UNAVAILABLE');
+}
+
 function imageUpload(folder: 'branches' | 'rooms', multiple: boolean): RequestHandler {
   const parse = multiple ? parser.array('images', 10) : parser.single('image');
   return (req, res, next) => {
@@ -42,15 +77,18 @@ function imageUpload(folder: 'branches' | 'rooms', multiple: boolean): RequestHa
         const outputs = [];
         for (const file of files) outputs.push(await normalizeImage(file.buffer));
         const destination = path.join(uploadDir, folder);
-        await mkdir(destination, { recursive: true });
         const saved: string[] = [];
         try {
           for (let i = 0; i < files.length; i++) {
             const file = files[i]!;
             const filename = randomUUID() + '.webp';
-            const target = path.join(destination, filename);
-            saved.push(target);
-            await writeFile(target, outputs[i]!, { flag: 'wx' });
+            const cloudUrl = folder === 'branches' ? await storeBranchPhoto(outputs[i]!, filename) : undefined;
+            const target = cloudUrl ?? path.join(destination, filename);
+            if (!cloudUrl) {
+              await mkdir(destination, { recursive: true });
+              await writeFile(target, outputs[i]!, { flag: 'wx' });
+              saved.push(target);
+            }
             Object.assign(file, { filename, destination, path: target, mimetype: 'image/webp', size: outputs[i]!.length });
             file.buffer = Buffer.alloc(0);
           }

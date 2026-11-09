@@ -34,7 +34,7 @@ export function guestBookingRoutes(config: AppConfig): Router {
     const booking = (await findBookingById(id)).rows[0]!;
     if (booking.status === 'confirmed') {
       if (booking.check_in <= new Date().toISOString().slice(0, 10)) throw new AppError(409, 'Contact the hotel to cancel a stay that has started.', 'INVALID_BOOKING_STATE');
-      res.status(202).json(await requestBookingRefund(id, 'guest-cancellation', id));
+      res.status(202).json(await requestBookingRefund(id, 'guest-cancellation', { guestBookingId: id }));
       return;
     }
     res.json({ booking: await cancelBooking(id, null, false) });

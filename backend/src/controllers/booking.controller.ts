@@ -11,6 +11,7 @@ import {
   modifyBooking,
   updateBookingStatus,
 } from '../services/booking.service.js';
+import { requestBookingRefund } from '../services/payment.service.js';
 import { AppError, getRouteParam } from '../utils/errors.js';
 
 function authenticated(request: Parameters<RequestHandler>[0]) {
@@ -46,9 +47,16 @@ export const getBookingController: RequestHandler = async (request, response) =>
 
 export const cancelBookingController: RequestHandler = async (request, response) => {
   const user = authenticated(request);
-  response.json({
-    booking: await cancelBookingService(getRouteParam(request, 'bookingId'), user.userId, user.role === 'admin'),
-  });
+  const bookingId = getRouteParam(request, 'bookingId');
+  try {
+    response.json({ booking: await cancelBookingService(bookingId, user.userId, user.role === 'admin') });
+  } catch (error) {
+    if (user.role === 'admin' || !(error instanceof AppError) || error.code !== 'REFUND_UNAVAILABLE') throw error;
+
+    const refund = await requestBookingRefund(bookingId, 'account-cancellation', { userId: user.userId });
+    const booking = await getBookingService(bookingId, { id: user.userId, role: user.role });
+    response.status(refund.status === 'refund_requested' ? 202 : 200).json({ booking });
+  }
 };
 
 export const updateBookingStatusController: RequestHandler = async (request, response) => {
@@ -75,7 +83,12 @@ export const listBranchBookingsController: RequestHandler = async (request, resp
   });
 };
 
-export const deleteBookingController = cancelBookingController;
+export const deleteBookingController: RequestHandler = async (request, response) => {
+  const user = authenticated(request);
+  response.json({
+    booking: await cancelBookingService(getRouteParam(request, 'bookingId'), user.userId, user.role === 'admin'),
+  });
+};
 export const getBookings = listBookingsController;
 export const getBooking = getBookingController;
 export const createBooking = createBookingController;
