@@ -19,7 +19,9 @@ export const getDashboardStatsController: RequestHandler = async (_request, resp
 };
 
 export const getRecentBookingsController: RequestHandler = async (request, response) => {
+  if (!request.auth) throw new AppError(401, 'Authentication required', 'UNAUTHENTICATED');
   const limit = parseInt(request.query.limit as string) || 10;
+  const managerId = request.auth.role === 'admin' ? null : request.auth.userId;
   const result = await query(`
     SELECT
       b.id,
@@ -30,17 +32,18 @@ export const getRecentBookingsController: RequestHandler = async (request, respo
       b.currency,
       b.status,
       b.created_at,
-      u.name as user_name,
-      u.email as user_email,
+      COALESCE(u.name, b.guest_name) AS user_name,
+      COALESCE(u.email, b.guest_email) AS user_email,
       h.name as branch_name,
       r.room_type
     FROM bookings b
-    JOIN users u ON u.id = b.user_id
+    LEFT JOIN users u ON u.id = b.user_id
     JOIN rooms r ON r.id = b.room_id
     JOIN branches h ON h.id = r.branch_id
+    WHERE ($2::BIGINT IS NULL OR h.manager_user_id = $2)
     ORDER BY b.created_at DESC
     LIMIT $1
-  `, [limit]);
+  `, [limit, managerId]);
 
   response.json({ bookings: result.rows });
 };
@@ -67,8 +70,8 @@ export const getAdminBookingsController: RequestHandler = async (request, respon
       b.status,
       b.expires_at,
       b.created_at,
-      u.name AS user_name,
-      u.email AS user_email,
+      COALESCE(u.name, b.guest_name) AS user_name,
+      COALESCE(u.email, b.guest_email) AS user_email,
       u.phone AS user_phone,
       h.id AS branch_id,
       h.name AS branch_name,

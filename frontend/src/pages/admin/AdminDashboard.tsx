@@ -80,7 +80,9 @@ const AdminDashboard: React.FC = () => {
         <ul>
           {recentBookings.map((booking) => (
             <li key={booking.id} style={{ marginBottom: '0.5rem' }}>
-              {booking.booking_reference} — {booking.branch_name} ({booking.status})
+              <strong>{booking.booking_reference}</strong> — {booking.branch_name} ({booking.status})
+              <div>Booked by: {booking.user_name || 'Name unavailable'}</div>
+              <div style={{ overflowWrap: 'anywhere' }}>Email: {booking.user_email || 'Unavailable'}</div>
             </li>
           ))}
         </ul>

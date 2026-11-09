@@ -34,11 +34,20 @@ interface BranchReport {
   monthly_revenue: string;
 }
 
+interface RecentBooking {
+  id: string;
+  booking_reference: string;
+  branch_name: string;
+  status: string;
+  user_name: string | null;
+  user_email: string | null;
+}
+
 interface AdminState {
   dashboardStats: DashboardStats | null;
   users: User[];
   branchReports: BranchReport[];
-  recentBookings: any[];
+  recentBookings: RecentBooking[];
   loading: boolean;
   error: string | null;
 }
@@ -69,7 +78,7 @@ export const fetchDashboardStats = createAsyncThunk(
 
 export const fetchRecentBookings = createAsyncThunk(
   'admin/fetchRecentBookings',
-  async (limit: number = 10) => {
+  async (limit: number = 10): Promise<RecentBooking[]> => {
     const response = await fetch(`/api/v1/admin/dashboard/recent-bookings?limit=${limit}`, {
       credentials: 'include',
     });

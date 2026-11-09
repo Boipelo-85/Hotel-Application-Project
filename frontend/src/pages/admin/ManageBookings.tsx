@@ -187,8 +187,8 @@ const ManageBookings: React.FC = () => {
               <strong>{booking.booking_reference}</strong> · {booking.status}
               {booking.branch_name && <div>Branch: {booking.branch_name}</div>}
               {booking.room_type && <div>Room: {booking.room_type}</div>}
-              <div>Guest: {booking.user_name || 'Guest checkout'}</div>
-              {booking.user_email && <div>Email: <a href={`mailto:${booking.user_email}`}>{booking.user_email}</a></div>}
+              <div>Booked by: {booking.user_name || 'Name unavailable'}</div>
+              <div style={{ overflowWrap: 'anywhere' }}>Email: {booking.user_email ? <a href={`mailto:${booking.user_email}`} style={{ color: 'inherit' }}>{booking.user_email}</a> : 'Unavailable'}</div>
               {booking.user_phone && <div>Phone: <a href={`tel:${booking.user_phone}`}>{booking.user_phone}</a></div>}
               <div>Stay: {new Date(`${booking.check_in}T00:00:00`).toLocaleDateString()} → {new Date(`${booking.check_out}T00:00:00`).toLocaleDateString()}</div>
               <div>Guests: {booking.guests} · Rooms: {booking.quantity}</div>

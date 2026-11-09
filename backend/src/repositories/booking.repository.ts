@@ -115,7 +115,9 @@ export async function listUserBookings(userId: string, isAdmin: boolean) {
 export async function listBookingsForBranch(branchId: string) {
   return query<BookingRow>(
     `SELECT b.*, h.name AS branch_name, r.room_type,
-            u.name AS user_name, u.email AS user_email, u.phone AS user_phone
+            COALESCE(u.name, b.guest_name) AS user_name,
+            COALESCE(u.email, b.guest_email) AS user_email,
+            u.phone AS user_phone
      FROM bookings b JOIN rooms r ON r.id = b.room_id
      JOIN branches h ON h.id = r.branch_id
      LEFT JOIN users u ON u.id = b.user_id
