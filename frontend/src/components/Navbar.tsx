@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '../redux/store';
 import { logout } from '../redux/authSlice';
+import SignOutButton from './SignOutButton';
 
 const Navbar: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -43,13 +44,9 @@ const Navbar: React.FC = () => {
                   Admin
                 </Link>
               )}
-              <button
-                type="button"
-                onClick={() => void handleLogout()}
-                className="navbar__button"
-              >
+              <SignOutButton className="navbar__button" onConfirm={handleLogout}>
                 Sign out
-              </button>
+              </SignOutButton>
             </>
           ) : (
             

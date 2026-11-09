@@ -5,6 +5,7 @@ import { fetchDashboardStats, fetchRecentBookings } from '../../redux/adminSlice
 import { logout } from '../../redux/authSlice';
 import type { AppDispatch, RootState } from '../../redux/store';
 import Loading from '../../components/Loading';
+import SignOutButton from '../../components/SignOutButton';
 
 const navLinkStyle: React.CSSProperties = {
   display: 'inline-block',
@@ -39,7 +40,7 @@ const AdminDashboard: React.FC = () => {
       <p style={{ color: '#666' }}>
         Signed in as {user?.name} ({user?.role}).
       </p>
-      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', margin: '1rem 0 1.5rem' }}>
+      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', margin: '1rem 0 1.5rem'}}>
         <Link to="/admin/hotels" style={navLinkStyle}>Branches</Link>
         {user?.role === 'admin' && (
           <Link to="/admin/hotels/new" style={navLinkStyle}>Add branch</Link>
@@ -49,9 +50,8 @@ const AdminDashboard: React.FC = () => {
         {user?.role === 'admin' && (
           <Link to="/admin/favourites" style={navLinkStyle}>Favourites</Link>
         )}
-        <button
-          type="button"
-          onClick={() => void handleLogout()}
+        <SignOutButton
+          onConfirm={handleLogout}
           style={{
             ...navLinkStyle,
             backgroundColor: '#dc2626',
@@ -60,7 +60,7 @@ const AdminDashboard: React.FC = () => {
           }}
         >
           Logout
-        </button>
+        </SignOutButton>
       </div>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {dashboardStats && (

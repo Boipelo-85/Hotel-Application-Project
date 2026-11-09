@@ -216,7 +216,24 @@ for (const role of ['admin', 'branch_manager']) {
     await expect(page).toHaveURL(/\/admin$/);
     await expect(page.getByRole('heading', { name: 'Staff dashboard' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Admin', exact: true })).toHaveCount(1);
-    await page.getByRole('button', { name: 'Logout', exact: true }).click();
+    const popup = page.getByRole('dialog', { name: 'Are you sure you want to sign out?' });
+    const headerSignOut = page.getByRole('navigation').getByRole('button', { name: 'Sign out', exact: true });
+    const dashboardLogout = page.getByRole('button', { name: 'Logout', exact: true });
+    const cancel = popup.getByRole('button', { name: 'Cancel' });
+
+    await headerSignOut.click();
+    await expect(cancel).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(popup).toBeHidden();
+    await expect(headerSignOut).toBeFocused();
+
+    await dashboardLogout.click();
+    await cancel.click();
+    await expect(popup).toBeHidden();
+    await expect(page).toHaveURL(/\/admin$/);
+
+    await (role === 'admin' ? dashboardLogout : headerSignOut).click();
+    await popup.getByRole('button', { name: 'Sign out', exact: true }).click();
     await expect(page).toHaveURL(/\/login$/);
   });
   test('already signed-in ' + role + ' opening login goes to the dashboard', async ({ page }) => {

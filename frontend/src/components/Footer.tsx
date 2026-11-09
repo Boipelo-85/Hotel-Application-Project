@@ -11,7 +11,7 @@ export const Footer = () => {
           <div className="footer-section-item">
             <h3>Grand-Rest Hotel</h3>
             <p>
-                 Your home away from home. Experience luxury and comfort at our branches worldwide.
+                 Your home away. Experience luxury and comfort at our branches worldwide.
             </p>
           </div> 
           <div className="footer-section-item">
