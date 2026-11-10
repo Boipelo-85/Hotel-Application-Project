@@ -12,6 +12,7 @@ const Navbar: React.FC = () => {
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
   
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const isBrandDark = isAuthPage || location.pathname.startsWith('/admin');
 
   const handleLogout = async () => {
     await dispatch(logout());
@@ -21,7 +22,7 @@ const Navbar: React.FC = () => {
   return (
     <nav className="navbar">
       <div className="navbar__container">
-        <Link to="/" className="navbar__brand">
+        <Link to="/" className={`navbar__brand${isBrandDark ? ' navbar__brand--dark' : ''}`}>
           Grand-Rest Hotel
         </Link>
         <div className="navbar__links">
