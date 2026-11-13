@@ -25,7 +25,7 @@ const Navbar: React.FC = () => {
         <Link to="/" className={`navbar__brand${isBrandDark ? ' navbar__brand--dark' : ''}`}>
           Grand-Rest Hotel
         </Link>
-        <div className="navbar__links">
+        <div className={`navbar__links${isAuthenticated && location.pathname === '/' ? ' navbar__links--light' : ''}`}>
           {isAuthenticated ? (
             <>
               <Link to="/bookings" className="navbar__link">

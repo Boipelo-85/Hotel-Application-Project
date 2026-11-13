@@ -63,7 +63,7 @@ const Register: React.FC = () => {
   };
 
   return (
-    <section className="register-page">
+    <section className="register-page auth-card">
       <header className="register-page__header">
         <h1 className="register-page__title">Create your account</h1>
         <p className="register-page__intro">

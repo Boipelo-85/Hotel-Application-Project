@@ -69,6 +69,7 @@ const HomesGuestsLove: React.FC<HomesGuestsLoveProps> = ({ filterProvince }) => 
         }));
 
         setProperties(mappedProperties);
+        setError(null);
       } catch (error) {
         setError(error instanceof Error ? error.message : 'Failed to load properties');
       } finally {

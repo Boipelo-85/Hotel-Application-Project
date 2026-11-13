@@ -51,7 +51,7 @@ const Login: React.FC = () => {
   };
 
   return (
-    <section className="register-page login-card">
+    <section className="register-page auth-card">
       <header className="register-page__header">
         <h1 className="register-page__title">Sign in to your account</h1>
         <p className="register-page__intro">

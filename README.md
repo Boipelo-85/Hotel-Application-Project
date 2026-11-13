@@ -43,6 +43,8 @@ You’ll need Node.js 24 with npm and Docker with Docker Compose. Run these comm
 
 6. Open [http://localhost:5173](http://localhost:5173).
 
+To run the frontend against the deployed backend and see its published branches, set `HOTEL_API_ORIGIN=https://hotel-application-project.onrender.com` in `frontend/.env.development.local` and restart Vite. Without that setting, Vite uses the local backend on port 3000.
+
 ## Use the app
 
 - **Book a stay.** Search by destination, travel dates, rooms, and guests. Choose an available room type and book as a guest or sign in.

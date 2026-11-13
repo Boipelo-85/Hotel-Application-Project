@@ -109,7 +109,7 @@ const MyBookings: React.FC = () => {
                 Total: {booking.currency} {booking.total_amount}
               </p>
               <p style={{ fontWeight: 600, marginBottom: '0.75rem' }}>{booking.status.toUpperCase()}</p>
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <div className="my-bookings__actions">
                 <Link to={`/bookings/${booking.id}`}>View</Link>
                 {booking.status === 'pending' && (
                   <Link to={`/bookings/${booking.id}/payment`}>Pay</Link>
@@ -117,7 +117,8 @@ const MyBookings: React.FC = () => {
                 {booking.status === 'pending' && (
                   <button type="button" onClick={() => startEditing(booking)}>Modify stay</button>
                 )}
-                {!booking.refund_pending && (booking.status === 'pending' ||
+              </div>
+              {!booking.refund_pending && (booking.status === 'pending' ||
                   (booking.status === 'confirmed' && booking.check_in.slice(0, 10) > new Date().toISOString().slice(0, 10))) && (
                   <ConfirmationButton
                     disabled={cancellingBookingId !== null || savingBookingId === booking.id}
@@ -126,12 +127,11 @@ const MyBookings: React.FC = () => {
                     dismissLabel="Keep booking"
                     confirmLabel="Cancel booking"
                     onConfirm={() => cancelReservation(booking)}
-                    style={{ color: '#991b1b' }}
+                    className="my-bookings__cancel"
                   >
                     {cancellingBookingId === booking.id ? 'Cancelling…' : 'Cancel booking'}
                   </ConfirmationButton>
                 )}
-              </div>
               {editingBookingId === booking.id && (
                 <form
                   onSubmit={(event) => {
